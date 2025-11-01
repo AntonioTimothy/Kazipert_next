@@ -1,11 +1,11 @@
 module.exports = {
   apps: [
     {
-      name: "kazipert-system",
+      name: "kazipert-live",
       script: "node_modules/next/dist/bin/next",
       args: "start",
       cwd: "./",
-      instances: "2", // or 1 for single instance
+      instances: "2",
       exec_mode: "cluster",
       env: {
         NODE_ENV: "production",

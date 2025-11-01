@@ -3,10 +3,46 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "next build",
     "dev": "next dev",
-    "lint": "next lint",
-    "start": "next start"
+    "dev:test": "cp .env.test .env && next dev",
+    "dev:live": "cp .env.live .env && next dev -p 3001",
+    "build": "next build",
+    "build:test": "cp .env.test .env && next build",
+    "build:live": "cp .env.live .env && next build",
+    "start": "next start",
+    "start:test": "cp .env.test .env && next start -p 3001",
+    "start:live": "cp .env.live .env && next start",
+    
+    "live": "npm run build:live && pm2 start ecosystem.config.js --only kazipert-live",
+    "live:start": "pm2 start ecosystem.config.js --only kazipert-live",
+    "live:stop": "pm2 stop kazipert-live",
+    "live:restart": "pm2 restart kazipert-live",
+    "live:logs": "pm2 logs kazipert-live",
+    "live:monit": "pm2 monit kazipert-live",
+    
+    "test:dev": "npm run dev:test",
+    "test:build": "npm run build:test",
+    
+    "pm2:setup": "npm run build:live && pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop all",
+    "pm2:restart": "pm2 restart all",
+    "pm2:delete": "pm2 delete all",
+    "pm2:list": "pm2 list",
+    "pm2:logs": "pm2 logs",
+    
+    "db:push": "prisma db push",
+    "db:push:test": "dotenv -e .env.test -- prisma db push",
+    "db:push:live": "dotenv -e .env.live -- prisma db push",
+    "db:seed": "prisma db seed",
+    "db:seed:test": "dotenv -e .env.test -- prisma db seed",
+    "db:seed:live": "dotenv -e .env.live -- prisma db seed",
+    "db:reset": "prisma migrate reset",
+    "db:reset:test": "dotenv -e .env.test -- prisma migrate reset",
+    "db:reset:live": "dotenv -e .env.live -- prisma migrate reset",
+    
+    "env:test": "cp .env.test .env",
+    "env:live": "cp .env.live .env",
+    "env:show": "echo \"Current environment:\" && head -n 3 .env"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -83,6 +119,7 @@
     "@types/nodemailer": "^7.0.2",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "dotenv-cli": "^11.0.0",
     "postcss": "^8.5",
     "tailwindcss": "^4.1.9",
     "tw-animate-css": "1.3.3",
