@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 263.97 102.02">
+  <style>
+/* Animate the logo paths themselves */
+path, polygon, rect, circle, ellipse {
+  stroke: #1E8A59;
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 400;
+  stroke-dashoffset: 400;
+  animation: draw 3s ease-in-out infinite alternate;
+}
+
+@keyframes draw {
+  to { stroke-dashoffset: 0; }
+}
+</style><defs>
+    <style>
+      .cls-1 {
+        fill: #f8e942;
+      }
+
+      .cls-2 {
+        fill: #8684bf;
+      }
+
+      .cls-3 {
+        fill: #108d95;
+      }
+
+      .cls-4 {
+        fill: #babbbd;
+      }
+    </style>
+  </defs>
+  <g>
+    <g>
+      <path class="cls-3" d="M101.3,101.78l79.52-32.91c1.09-.51.91-1.57.73-1.94-.4-.84-1.67-.64-1.67-.64l-60.92,8.93-2.3-61.67s-.01-.88-.63-1.17-1.94-.35-2.16.72l-18.75,83.68s-.54,2.22,1.27,3.9c.71.66,2.74,1.85,4.92,1.1Z" />
+      <circle class="cls-4" cx="146.3" cy="42.36" r="13.48" />
+    </g>
+    <g>
+      <path class="cls-2" d="M80.38,101.78L.86,68.87c-1.09-.51-.91-1.57-.73-1.94.4-.84,1.67-.64,1.67-.64l60.92,8.93,2.3-61.67s.01-.88.63-1.17,1.94-.35,2.16.72l18.75,83.68s.54,2.22-1.27,3.9c-.71.66-2.74,1.85-4.92,1.1Z" />
+      <circle class="cls-4" cx="35.38" cy="42.36" r="13.48" />
+    </g>
+  </g>
+  <polygon class="cls-1" points="90.84 44.61 111.42 0 70.27 0 90.84 44.61" />
+</svg>

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Preview with File Selection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(to right, #4a00e0, #8e2de2);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .content {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .upload-area {
+            border: 3px dashed #8e2de2;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
+        }
+
+        .upload-area:hover {
+            background-color: #f0f2ff;
+            border-color: #4a00e0;
+        }
+
+        .upload-icon {
+            font-size: 60px;
+            color: #8e2de2;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            font-size: 14px;
+            color: #666;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(to right, #4a00e0, #8e2de2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(142, 45, 226, 0.3);
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(142, 45, 226, 0.4);
+        }
+
+        .preview-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .preview-title {
+            font-size: 20px;
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .preview-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+            border-radius: 12px;
+            background-color: #f8f9fa;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #image-preview {
+            max-width: 100%;
+            max-height: 400px;
+            display: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .placeholder-text {
+            color: #999;
+            font-size: 18px;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .image-info {
+            background-color: #f0f2ff;
+            border-radius: 10px;
+            padding: 15px;
+            display: none;
+        }
+
+        .info-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #4a00e0;
+            margin-bottom: 10px;
+        }
+
+        .info-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .info-value {
+            color: #333;
+        }
+
+        .instructions {
+            background-color: #f8f9fa;
+            border-left: 4px solid #8e2de2;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 10px;
+        }
+
+        .instructions h3 {
+            color: #4a00e0;
+            margin-bottom: 8px;
+        }
+
+        .instructions ul {
+            padding-left: 20px;
+            color: #555;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 600px) {
+            .content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .upload-text {
+                font-size: 16px;
+            }
+            
+            .info-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Image Preview Tool</h1>
+            <p>Select an image from your computer to preview it</p>
+        </div>
+        
+        <div class="content">
+            <div class="upload-section">
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Click to select an image</div>
+                    <div class="upload-subtext">Supports JPG, PNG, GIF, and WebP formats</div>
+                </div>
+                
+                <input type="file" id="file-input" accept="image/*">
+                <button class="upload-btn" id="upload-btn">Select Image</button>
+            </div>
+            
+            <div class="preview-section">
+                <h2 class="preview-title">Image Preview</h2>
+                <div class="preview-container">
+                    <img id="image-preview" alt="Image preview">
+                    <div class="placeholder-text" id="placeholder-text">No image selected</div>
+                </div>
+                
+                <div class="image-info" id="image-info">
+                    <div class="info-title">Image Information</div>
+                    <div class="info-details">
+                        <div class="info-item">
+                            <span class="info-label">Name:</span>
+                            <span class="info-value" id="info-name">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Size:</span>
+                            <span class="info-value" id="info-size">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Type:</span>
+                            <span class="info-value" id="info-type">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Dimensions:</span>
+                            <span class="info-value" id="info-dimensions">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="instructions">
+                <h3>How to use:</h3>
+                <ul>
+                    <li>Click the "Select Image" button or the dashed area</li>
+                    <li>Choose an image from your computer</li>
+                    <li>The image will appear in the preview area</li>
+                    <li>View image details in the information panel</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('file-input');
+            const uploadBtn = document.getElementById('upload-btn');
+            const uploadArea = document.getElementById('upload-area');
+            const imagePreview = document.getElementById('image-preview');
+            const placeholderText = document.getElementById('placeholder-text');
+            const imageInfo = document.getElementById('image-info');
+            const infoName = document.getElementById('info-name');
+            const infoSize = document.getElementById('info-size');
+            const infoType = document.getElementById('info-type');
+            const infoDimensions = document.getElementById('info-dimensions');
+            
+            // Open file dialog when button or upload area is clicked
+            uploadBtn.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            uploadArea.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            // Handle file selection
+            fileInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                
+                if (file) {
+                    // Check if the file is an image
+                    if (!file.type.match('image.*')) {
+                        alert('Please select a valid image file (JPG, PNG, GIF, WebP).');
+                        return;
+                    }
+                    
+                    // Create a FileReader to read the image
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        // Set the image preview source
+                        imagePreview.src = e.target.result;
+                        imagePreview.style.display = 'block';
+                        placeholderText.style.display = 'none';
+                        
+                        // Display image information
+                        infoName.textContent = file.name;
+                        infoSize.textContent = formatFileSize(file.size);
+                        infoType.textContent = file.type;
+                        
+                        // Get image dimensions
+                        const img = new Image();
+                        img.onload = function() {
+                            infoDimensions.textContent = `${img.width} × ${img.height} pixels`;
+                        };
+                        img.src = e.target.result;
+                        
+                        // Show the image info panel
+                        imageInfo.style.display = 'block';
+                    };
+                    
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Helper function to format file size
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+        });
+    </script>
+</body>
+</html>

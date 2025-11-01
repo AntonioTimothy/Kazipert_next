@@ -1,0 +1,13 @@
+"use client"
+
+import { useTheme } from '@/contexts/ThemeContext'
+
+function MyComponent() {
+  const { currentTheme, setTheme } = useTheme()
+  
+  return (
+    <div style={{ color: currentTheme.colors.primary }}>
+      Themed content
+    </div>
+  )
+}

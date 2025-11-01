@@ -1,0 +1,255 @@
+// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String         @id @default(cuid())
+  email             String         @unique
+  phone             String?        @unique
+  password          String
+  fullName          String?
+  firstName         String?
+  lastName          String?
+  gender            String?        
+  country           String?        
+  role              Role           @default(EMPLOYEE)
+  company           String?
+  permissions       Json?
+  adminStatus       AdminStatus?   @default(PENDING)
+  kycId             String?        
+  verified          Boolean        @default(false)
+  emailVerified     Boolean        @default(false)
+  phoneVerified     Boolean        @default(false)
+  otp               String?        
+  otpExpires        DateTime?
+  resetToken        String?        
+  resetTokenExpires DateTime?
+  requiresPasswordChange Boolean   @default(false)
+  lastLogin         DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // Relations
+  refreshTokens     RefreshToken[]
+  userPermissions   UserPermission[]
+  profile           Profile?
+  systemSettings    SystemSettings?
+  
+  // Add these new relations for onboarding
+  onboardingProgress OnboardingProgress?
+  kycDetails        KycDetails?
+  studioSession     StudioSession?
+  medicalRecord     MedicalRecord?
+  
+  @@map("users")
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  avatar      String?
+  bio         String?
+  timezone    String?  @default("Africa/Dar_es_Salaam")
+  language    String?  @default("en")
+  currency    String?  @default("USD")
+  theme       String?  @default("light")
+  notifications Json?  // Store notification preferences as JSON
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("profiles")
+}
+
+model SystemSettings {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workingHours    Json?    // Store as {start: "09:00", end: "17:00"}
+  businessSettings Json?   // Store business-specific settings
+  securitySettings Json?   // Store 2FA, password policies, etc.
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("system_settings")
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  category    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  userPermissions UserPermission[]
+  
+  @@map("permissions")
+}
+
+model UserPermission {
+  id           String     @id @default(cuid())
+  userId       String
+  permissionId String
+  granted      Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  // Relations
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, permissionId])
+  @@map("user_permissions")
+}
+
+model OtpVerification {
+  id        String   @id @default(cuid())
+  email     String?
+  phone     String?
+  otp       String   
+  type      OtpType  
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  @@map("otp_verifications")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  @@map("refresh_tokens")
+}
+
+// Onboarding models - SINGLE DEFINITION
+model OnboardingProgress {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStep Int      @default(1)
+  completed   Boolean  @default(false)
+  data        Json?    // Store all onboarding data including KYC details
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("onboarding_progress")
+}
+
+model KycDetails {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Personal Details
+  dateOfBirth       DateTime?
+  county            String?
+  physicalAddress   String?
+  
+  // Identity Details
+  idNumber          String?
+  passportNumber    String?
+  passportIssueDate DateTime?
+  passportExpiryDate DateTime?
+  kraPin            String?
+  
+  // Work Details
+  workExperience    String?
+  skills            String[] // Store as JSON array
+  languages         Json?    // Store as {english: 'fluent', arabic: 'basic'}
+  
+  // Documents
+  profilePicture    String?
+  idDocumentFront   String?
+  idDocumentBack    String?
+  passportDocument  String?
+  kraDocument       String?
+  goodConductUrl   String?
+  educationCertUrl String?
+  workCertUrl      String?
+  medicalDocument  String?
+  
+  // Verification Status
+  profileVerified   Boolean @default(false)
+  idVerified        Boolean @default(false)
+  faceVerified      Boolean @default(false)
+  medicalVerified   Boolean @default(false)
+  paymentVerified   Boolean @default(false)
+  
+  // Payment
+  paymentStatus     String? @default("pending")
+  mpesaNumber       String?
+  transactionCode   String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("kyc_details")
+}
+
+model StudioSession {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studioName  String?
+  studioLocation String?
+  sessionDate DateTime?
+  photos      Json?    // Store array of photo URLs
+  faceMatchScore Float? // 0-100 score from face recognition
+  verified    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("studio_sessions")
+}
+
+model MedicalRecord {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hospitalName String?
+  testDate    DateTime?
+  results     Json?    // Store medical test results
+  fitToWork   Boolean? @default(false)
+  documentUrl String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("medical_records")
+}
+
+enum Role {
+  EMPLOYER
+  EMPLOYEE
+  ADMIN
+  SUPER_ADMIN
+  HOSPITAL_ADMIN
+  PHOTO_STUDIO_ADMIN
+  EMBASSY_ADMIN
+}
+
+enum OtpType {
+  EMAIL
+  PHONE
+  LOGIN
+  ADMIN_INVITE
+}
+
+enum AdminStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
