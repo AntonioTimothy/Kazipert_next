@@ -34,6 +34,7 @@ export function proxy(request: NextRequest) {
     const accessToken = request.cookies.get('access_token')?.value;
 
     if (!accessToken) {
+        console.log('🔐 No access token found, redirecting to login');
         // Redirect to login if no token found
         const loginUrl = new URL('/login', request.url);
         loginUrl.searchParams.set('redirect', pathname);
@@ -43,6 +44,7 @@ export function proxy(request: NextRequest) {
     // Verify access token
     const decoded = verifyAccessToken(accessToken);
     if (!decoded) {
+        console.log('❌ Invalid access token, clearing cookies and redirecting');
         // Token invalid, clear cookies and redirect to login
         const response = NextResponse.redirect(new URL('/login', request.url));
         response.cookies.delete('access_token');
@@ -50,34 +52,26 @@ export function proxy(request: NextRequest) {
         return response;
     }
 
-    // Role-based route protection
+    console.log('✅ Token verified for user:', decoded.email, 'role:', decoded.role);
+
+    // Role-based route protection - ONLY CHECK NEW PORTAL STRUCTURE
     const userRole = decoded.role;
 
-    // Worker routes (old structure)
-    if (pathname.startsWith('/worker') && userRole !== 'EMPLOYEE') {
-        return NextResponse.redirect(new URL('/unauthorized', request.url));
-    }
+    // Remove old structure checks - they're causing the redirect loop
+    // Only check the new portal structure
 
-    // Employer routes (old structure)
-    if (pathname.startsWith('/employer') && userRole !== 'EMPLOYER') {
-        return NextResponse.redirect(new URL('/unauthorized', request.url));
-    }
-
-    // Admin routes (old structure)
-    if (pathname.startsWith('/admin') && !['ADMIN', 'SUPER_ADMIN', 'HOSPITAL_ADMIN', 'PHOTO_STUDIO_ADMIN', 'EMBASSY_ADMIN'].includes(userRole)) {
-        return NextResponse.redirect(new URL('/unauthorized', request.url));
-    }
-
-    // New portal structure protection
     if (pathname.startsWith('/portals/worker') && userRole !== 'EMPLOYEE') {
+        console.log('🚫 Access denied: Worker portal requires EMPLOYEE role, user has:', userRole);
         return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
 
     if (pathname.startsWith('/portals/employer') && userRole !== 'EMPLOYER') {
+        console.log('🚫 Access denied: Employer portal requires EMPLOYER role, user has:', userRole);
         return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
 
     if (pathname.startsWith('/portals/admin') && !['ADMIN', 'SUPER_ADMIN', 'HOSPITAL_ADMIN', 'PHOTO_STUDIO_ADMIN', 'EMBASSY_ADMIN'].includes(userRole)) {
+        console.log('🚫 Access denied: Admin portal requires admin role, user has:', userRole);
         return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
 
@@ -86,16 +80,15 @@ export function proxy(request: NextRequest) {
     response.headers.set('x-user-id', decoded.userId);
     response.headers.set('x-user-role', userRole);
 
+    console.log('✅ Access granted to:', pathname, 'for role:', userRole);
+
     return response;
 }
 
 // CORRECT: Export config for proxy
 export const config = {
     matcher: [
-        '/portals/:path*',
-        '/worker/:path*',
-        '/employer/:path*',
-        '/admin/:path*',
+        // Remove old structure paths to avoid conflicts
         '/portals/:path*',
         '/dashboard/:path*',
         '/profile/:path*',

@@ -1,7 +1,7 @@
 // app/login/page.tsx - UPDATED WITH ONBOARDING REDIRECTION
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, Suspense } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -127,7 +127,8 @@ function OtpInput({ onComplete }: { onComplete: (code: string) => void }) {
   );
 }
 
-export default function LoginPage() {
+// Create a separate component that uses useSearchParams
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [slide, setSlide] = useState(0);
@@ -202,17 +203,17 @@ export default function LoginPage() {
   const getOnboardingRoute = (role: string) => {
     switch (role) {
       case 'EMPLOYEE':
-        return '/portals/worker/onboarding';
+        return '/portals';
       case 'EMPLOYER':
-        return '/portals/employer/onboarding';
+        return '/portals';
       case 'ADMIN':
       case 'SUPER_ADMIN':
       case 'HOSPITAL_ADMIN':
       case 'PHOTO_STUDIO_ADMIN':
       case 'EMBASSY_ADMIN':
-        return '/portals/admin/onboarding';
+        return '/portals';
       default:
-        return '/portals/worker/onboarding'; // Default fallback
+        return '/portals'; // Default fallback
     }
   };
 
@@ -235,10 +236,10 @@ export default function LoginPage() {
 
   const handleSuccessfulLogin = async (data: any) => {
     setSuccess("Login successful! Redirecting...");
-  
+
     console.log("Login successful, user role:", data.user.role);
     console.log("Requires onboarding:", data.requiresOnboarding);
-  
+
     // Store minimal user data in sessionStorage for client-side use
     if (data.user) {
       sessionStorage.setItem("user", JSON.stringify({
@@ -253,33 +254,33 @@ export default function LoginPage() {
         kycVerified: data.user.kycVerified,
       }));
     }
-  
+
     // IMPORTANT: Add a small delay and use router.refresh() before redirect
     setTimeout(async () => {
       try {
         // Refresh the router to ensure server components re-render with new auth state
         router.refresh();
-        
+
         // Wait a bit more for the refresh to complete
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         // Redirect based on user data from API response
         if (data.requiresOnboarding) {
           const onboardingRoute = getOnboardingRoute(data.user.role);
-          console.log("Redirecting to onboarding:", onboardingRoute);
+          console.log("Redirecting to onboarding:>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", onboardingRoute);
           router.push(onboardingRoute);
         } else {
           const dashboardRoute = getDashboardRoute(data.user.role);
-          console.log("Redirecting to dashboard:", dashboardRoute);
+          console.log("Redirecting to dashboard:<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", dashboardRoute);
           router.push(dashboardRoute);
         }
       } catch (error) {
-        console.error("Redirect error:", error);
+        console.error("Redirect error: **********************************************", error);
         // Fallback: try direct navigation
-        const redirectPath = data.requiresOnboarding 
+        const redirectPath = data.requiresOnboarding
           ? getOnboardingRoute(data.user.role)
           : getDashboardRoute(data.user.role);
-        console.log("Fallback redirect to:", redirectPath);
+        console.log("Fallback redirect to:*********************************************", redirectPath);
         window.location.href = redirectPath;
       }
     }, 1000);
@@ -665,5 +666,21 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main component that wraps with Suspense
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFD700] mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
