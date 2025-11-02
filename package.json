@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:test": "cp .env.test .env && next dev",
+    "dev:test": "cp .env.test .env && next dev -p 3003",
     "dev:live": "cp .env.live .env && next dev -p 3001",
     "build": "next build",
     "build:test": "cp .env.test .env && next build",

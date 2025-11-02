@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
                     }
                 });
 
-        const result = await otpService.sendPhoneOtp(phone);
+        const result = await otpService.sendPhoneOtp(phone , otp);
 
         if (!result.success) {
             return NextResponse.json(

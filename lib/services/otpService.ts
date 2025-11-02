@@ -10,7 +10,7 @@ export interface OtpResult {
 export class OtpService {
     private otpStore = new Map<string, { otp: string; expiresAt: number }>();
 
-    async sendPhoneOtp(phoneNumber: string): Promise<OtpResult> {
+    async sendPhoneOtp(phoneNumber: string, otp: string): Promise<OtpResult> {
         try {
             console.log('📞 Sending phone OTP to:', phoneNumber);
 
@@ -24,7 +24,7 @@ export class OtpService {
             }
 
             // Generate OTP
-            const otp = this.generateOtp();
+            // const otp = this.generateOtp();
             const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
 
             // Store OTP (in production, use a proper database)
