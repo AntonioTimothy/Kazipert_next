@@ -70,6 +70,7 @@ export const navigationConfig: NavigationItem[] = [
         icon: Briefcase,
         roles: ["employee"]
     },
+   
     {
         name: "Wallet",
         href: "/portals/worker/wallet",
@@ -77,10 +78,11 @@ export const navigationConfig: NavigationItem[] = [
         roles: ["employee"]
     },
     {
-        name: "Services",
-        href: "/portals/worker/services",
-        icon: Shield,
-        roles: ["employee"]
+        name: "Tickets",
+        href: "/portals/worker/support",
+        icon: MessageSquare,
+        roles: ["employee"],
+        badge: "3"
     },
     {
         name: "Classes",
@@ -89,11 +91,20 @@ export const navigationConfig: NavigationItem[] = [
         roles: ["employee"]
     },
     {
-        name: "Messages",
-        href: "/portals/worker/support",
-        icon: MessageSquare,
+        name: "Services",
+        href: "/portals/worker/services",
+        icon: Shield,
         roles: ["employee"]
     },
+
+    {
+        name: "Settings",
+        href: "/portals/worker/settings",
+        icon: Settings,
+        roles: ["employee"]
+    },
+    
+    
 
     // Employer Navigation - Updated to portals structure
     {
