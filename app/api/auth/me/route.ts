@@ -1,46 +1,68 @@
-// app/api/auth/me/route.ts
-import { NextRequest, NextResponse } from 'next/server'
-import { verifyToken, getAccessToken, refreshAccessToken } from '@/lib/auth'
+// app/api/auth/me/route.ts - UPDATED
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyAccessToken } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { cookies } from 'next/headers';
 
 export async function GET(request: NextRequest) {
     try {
-        let accessToken = await getAccessToken()
+        const cookieStore = await cookies();
+        const accessToken = cookieStore.get('access_token')?.value;
 
-        // Try to refresh token if needed
+        console.log('Auth check - Access token exists:', !!accessToken);
+
         if (!accessToken) {
-            accessToken = await refreshAccessToken()
-            if (!accessToken) {
-                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-            }
+            console.log('No access token found in cookies');
+            return NextResponse.json({ user: null }, { status: 200 });
         }
 
-        // Verify the token
-        const payload = verifyToken(accessToken)
+        const decoded = verifyAccessToken(accessToken);
+        console.log('Token decoded:', !!decoded);
 
-        // Fetch user data from your database
-        // This is just an example - replace with your actual user fetching logic
-        const user = await fetchUserFromDatabase(payload.userId)
+        if (!decoded) {
+            console.log('Invalid or expired token');
+            // Clear invalid tokens
+            const response = NextResponse.json({ user: null }, { status: 200 });
+            response.cookies.delete('access_token');
+            response.cookies.delete('refresh_token');
+            return response;
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.userId },
+            include: {
+                profile: true,
+                userPermissions: {
+                    include: {
+                        permission: true
+                    }
+                },
+                onboardingProgress: true,
+                kycDetails: true
+            }
+        });
 
         if (!user) {
-            return NextResponse.json({ error: 'User not found' }, { status: 404 })
+            console.log('User not found in database');
+            return NextResponse.json({ user: null }, { status: 200 });
         }
-// TODO: to chage ony return required fields to avoid sending sensitive data
-        return NextResponse.json(user)
+
+        const userSession = {
+            id: user.id,
+            email: user.email,
+            name: user.fullName || user.firstName || user.email,
+            role: user.role,
+            avatar: user.profile?.avatar,
+            isSuperAdmin: user.role === 'SUPER_ADMIN',
+            onboardingCompleted: user.onboardingProgress?.completed || false,
+            kycVerified: user.kycDetails?.profileVerified || false,
+        };
+
+        console.log('Returning user data for:', userSession.email);
+        return NextResponse.json({ user: userSession }, { status: 200 });
+
     } catch (error) {
-        console.error('Failed to fetch user data:', error)
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-    }
-}
-
-async function fetchUserFromDatabase(userId: string) {
-    // Replace this with your actual database query
-    // Example using Prisma:
-    // return await prisma.user.findUnique({ where: { id: userId } })
-
-    return {
-        id: userId,
-        email: 'user@example.com',
-        role: 'worker',
-        name: 'John Doe'
+        console.error('Get user error:', error);
+        return NextResponse.json({ user: null }, { status: 200 });
     }
 }

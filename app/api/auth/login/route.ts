@@ -1,8 +1,10 @@
+// app/api/auth/login/route.ts - UPDATED VERSION
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { emailService } from '@/lib/services/emailService';
-import { generateAccessToken, generateRefreshToken } from '@/lib/auth';
+import { generateAccessToken, generateRefreshToken, generateSessionToken } from '@/lib/auth';
+import { cookies } from 'next/headers';
 
 function generateOtp(): string {
     return Math.floor(1000 + Math.random() * 9000).toString();
@@ -10,9 +12,9 @@ function generateOtp(): string {
 
 export async function POST(request: NextRequest) {
     try {
-        const { email, password } = await request.json();
+        const { email, password, rememberMe = false } = await request.json();
 
-        console.log('Login attempt for email:', email);
+        console.log('Login attempt for email:', email, 'Remember Me:', rememberMe);
 
         if (!email || !password) {
             return NextResponse.json(
@@ -21,9 +23,19 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Find user by email
+        // Find user by email with permissions
         const user = await prisma.user.findUnique({
-            where: { email }
+            where: { email },
+            include: {
+                profile: true,
+                userPermissions: {
+                    include: {
+                        permission: true
+                    }
+                },
+                onboardingProgress: true,
+                kycDetails: true
+            }
         });
 
         if (!user) {
@@ -54,6 +66,12 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Update last login
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLogin: new Date() }
+        });
+
         // For enhanced security, always require OTP for login
         const otp = generateOtp();
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
@@ -81,10 +99,31 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Generate session data (without tokens until OTP verification)
+        const sessionData = {
+            userId: user.id,
+            email: user.email,
+            role: user.role,
+            requiresOtp: true,
+            rememberMe,
+            tempAuth: generateSessionToken() // Temporary token for OTP phase
+        };
+
+        // Store temporary session data in HTTP-only cookie
+        const cookieStore = await cookies();
+        cookieStore.set('temp_session', JSON.stringify(sessionData), {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 10 * 60, // 10 minutes for OTP verification
+            path: '/',
+        });
+
         // In development, include debug OTP
         const responseData: any = {
             message: 'Verification code sent to your email',
             requiresOtp: true,
+            tempAuth: sessionData.tempAuth // For client-side state management
         };
 
         if (process.env.NODE_ENV === 'development' || emailResult.debugOtp) {

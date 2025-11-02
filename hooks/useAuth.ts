@@ -1,44 +1,56 @@
 // hooks/useAuth.ts
-'use client'
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+export function useAuth() {
+    const [user, setUser] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
-interface AuthState {
-    user: any | null
-    setUser: (user: any) => void
-    clearUser: () => void
-    syncWithSessionStorage: () => void
-}
+    useEffect(() => {
+        checkAuth();
+    }, []);
 
-export const useAuth = create<AuthState>()(
-    persist(
-        (set, get) => ({
-            user: null,
-            setUser: (user) => {
-                set({ user })
-                // Sync with sessionStorage for client-side persistence
-                if (typeof window !== 'undefined') {
-                    sessionStorage.setItem('user', JSON.stringify(user))
-                }
-            },
-            clearUser: () => {
-                set({ user: null })
-                if (typeof window !== 'undefined') {
-                    sessionStorage.removeItem('user')
-                }
-            },
-            syncWithSessionStorage: () => {
-                if (typeof window !== 'undefined') {
-                    const storedUser = sessionStorage.getItem('user')
-                    if (storedUser) {
-                        set({ user: JSON.parse(storedUser) })
-                    }
-                }
+    const checkAuth = async () => {
+        try {
+            const res = await fetch('/api/auth/me', {
+                credentials: 'include'
+            });
+
+            if (res.ok) {
+                const userData = await res.json();
+                setUser(userData);
+            } else {
+                setUser(null);
             }
-        }),
-        {
-            name: 'auth-storage',
+        } catch (error) {
+            console.error('Auth check failed:', error);
+            setUser(null);
+        } finally {
+            setLoading(false);
         }
-    )
-)
+    };
+
+    const logout = async () => {
+        try {
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Logout failed:', error);
+        } finally {
+            setUser(null);
+            router.push('/login');
+        }
+    };
+
+    return {
+        user,
+        loading,
+        logout,
+        isAuthenticated: !!user,
+        isSuperAdmin: user?.role === 'SUPER_ADMIN',
+        isAdmin: ['ADMIN', 'SUPER_ADMIN'].includes(user?.role || ''),
+    };
+}

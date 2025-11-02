@@ -1,3 +1,4 @@
+// components/portal-layout.tsx - IMPROVED VERSION
 "use client"
 
 import type React from "react"
@@ -8,6 +9,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useNavigation } from "@/hooks/useNavigation"
+import { RefreshCw } from "lucide-react"
 
 import { 
   Menu, 
@@ -49,18 +51,18 @@ import { ThemeChanger } from '@/components/ThemeChanger'
 
 interface PortalLayoutProps {
   children: React.ReactNode
- 
   user: {
     name: string
     email: string
     avatar?: string
     role: string
     verified?: boolean
+    onboardingCompleted?: boolean
   }
   notificationCount?: number
 }
 
-// Custom Dropdown Components
+// Custom Dropdown Components (keep the same as before)
 interface CustomDropdownProps {
   trigger: React.ReactNode
   children: React.ReactNode
@@ -330,28 +332,42 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
   const router = useRouter()
   const { currentTheme } = useTheme()
   
-  // Dynamic navigation based on user role and permissions
+  // Dynamic navigation based on user role and permissions - WITH DEBUGGING
   const { 
     navigation, 
     getCurrentRouteName, 
     getMobileNavigation,
-    isLoading 
+    isLoading,
+    error: navError 
   } = useNavigation()
+
+  console.log("🔍 PortalLayout Debug:", {
+    user: user?.email,
+    pathname,
+    navigationItems: navigation?.length,
+    isLoading,
+    navError
+  })
 
   const handleLogout = async () => {
     try {
+      console.log("🚪 Starting logout process...")
+      
       // Call logout API first
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include'
       })
-  
+
       if (!response.ok) {
         throw new Error('Logout API call failed')
       }
-  
+
+      console.log("✅ Logout API call successful")
+      
       // Clear all user data from storage
       sessionStorage.removeItem("user")
       sessionStorage.removeItem("onboarding_state")
@@ -369,10 +385,10 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
         key.startsWith('auth_')
       )
       appKeys.forEach(key => localStorage.removeItem(key))
-  
+
       // Clear session storage completely for security
       sessionStorage.clear()
-  
+
       // Clear any service worker caches if used
       if ('caches' in window) {
         caches.keys().then(cacheNames => {
@@ -381,9 +397,9 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
           })
         })
       }
-  
-      console.log('Logout successful - all data cleared')
-  
+
+      console.log('✅ Logout successful - all data cleared')
+
       // Redirect to login page
       router.push("/login")
       
@@ -391,9 +407,9 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
       setTimeout(() => {
         window.location.reload()
       }, 100)
-  
+
     } catch (error) {
-      console.error('Logout error:', error)
+      console.error('❌ Logout error:', error)
       
       // Even if API call fails, clear client-side data and redirect
       sessionStorage.clear()
@@ -411,8 +427,13 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
 
   // Get flat navigation for mobile (no nested items)
   const getFlatNavigationForMobile = () => {
+    if (!navigation) {
+      console.log("⚠️ No navigation available for mobile")
+      return []
+    }
+    
     const flatNav: any[] = []
-    navigation?.forEach(item => {
+    navigation.forEach(item => {
       // Add parent item if it has a direct href
       if (item.href !== '#') {
         flatNav.push(item)
@@ -427,17 +448,6 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
 
   const mobileNav = getFlatNavigationForMobile()
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-theme-primary" />
-          <p className="text-theme-text-muted">Loading</p>
-        </div>
-      </div>
-    )
-  }
-
   // Get user initials for avatar
   const getUserInitials = (name: string | undefined | null) => {
     if (!name || typeof name !== 'string') {
@@ -450,6 +460,40 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
       .join('')
       .toUpperCase()
       .slice(0, 2)
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-background via-background-light to-background-light/50">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-text-muted">Loading navigation...</p>
+          <p className="text-xs text-text-muted mt-2">Please wait while we load your dashboard</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state if navigation fails
+  if (navError) {
+    console.error("❌ Navigation error:", navError)
+    return (
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-background via-background-light to-background-light/50">
+        <div className="text-center max-w-md p-6">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-text mb-2">Navigation Error</h2>
+          <p className="text-text-muted mb-4">We're having trouble loading your navigation menu.</p>
+          <Button 
+            onClick={() => window.location.reload()}
+            style={{ backgroundColor: currentTheme.colors.primary }}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Reload Page
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -477,7 +521,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
         {/* Logo Section */}
         <div className="flex items-center justify-between p-4 border-b border-border/40">
           <Link 
-            href="/" 
+            href="/portals" 
             className={cn(
               "flex items-center gap-3 transition-all duration-300",
               sidebarCollapsed ? "justify-center w-full" : ""
@@ -516,23 +560,30 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          {navigation?.map((item) => {
-            const isActive = pathname === item.href
-            return (
-              <NavigationItem
-                key={item.name}
-                item={item}
-                isActive={isActive}
-                sidebarCollapsed={sidebarCollapsed}
-                currentTheme={currentTheme}
-                pathname={pathname}
-                onItemClick={() => setSidebarOpen(false)}
-              />
-            )
-          })}
+          {navigation && navigation.length > 0 ? (
+            navigation.map((item) => {
+              const isActive = pathname === item.href
+              return (
+                <NavigationItem
+                  key={item.name}
+                  item={item}
+                  isActive={isActive}
+                  sidebarCollapsed={sidebarCollapsed}
+                  currentTheme={currentTheme}
+                  pathname={pathname}
+                  onItemClick={() => setSidebarOpen(false)}
+                />
+              )
+            })
+          ) : (
+            <div className="text-center p-4">
+              <AlertCircle className="h-8 w-8 text-text-muted mx-auto mb-2" />
+              <p className="text-xs text-text-muted">No navigation items available</p>
+            </div>
+          )}
 
-          {/* Complete Profile CTA */}
-          {!sidebarCollapsed && (
+          {/* Complete Profile CTA - Only show if onboarding is not completed */}
+          {!sidebarCollapsed && !user.onboardingCompleted && (
             <div 
               className="mt-4 p-3 rounded-xl border border-border/50"
               style={{
@@ -544,7 +595,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                 <span className="text-xs font-bold text-text">Complete Profile</span>
               </div>
               <p className="text-xs text-text-muted mb-3">Verify your account to access all features</p>
-              <Link href="/worker/onboarding" className="block">
+              <Link href={`/portals/${user.role.toLowerCase()}/onboarding`} className="block">
                 <Button 
                   className="w-full h-8 text-text font-semibold shadow-md hover:shadow-lg transition-all duration-300 rounded-lg text-xs"
                   style={{
@@ -579,6 +630,17 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-text truncate">{user?.name}</p>
                 <p className="text-xs text-text-muted truncate capitalize">{user?.role}</p>
+                {user.onboardingCompleted ? (
+                  <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
+                    <CheckCircle className="h-3 w-3" />
+                    Verified
+                  </p>
+                ) : (
+                  <p className="text-xs text-amber-600 flex items-center gap-1 mt-1">
+                    <Clock className="h-3 w-3" />
+                    Pending Verification
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -608,7 +670,9 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
             <div className="flex items-center gap-2 text-sm text-text-muted">
               <Home className="h-4 w-4 text-primary" />
               <span>/</span>
-              <span className="font-semibold text-text">{getCurrentRouteName()}</span>
+              <span className="font-semibold text-text">
+                {getCurrentRouteName() || "Dashboard"}
+              </span>
             </div>
           </div>
 
@@ -662,21 +726,23 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                   </div>
                   <ScrollableDropdownContent maxHeight="280px">
                     <div className="space-y-2">
+                      {!user.onboardingCompleted && (
+                        <div 
+                          className="p-2 rounded-lg border border-border/30"
+                          style={{ backgroundColor: `${currentTheme.colors.primary}05` }}
+                        >
+                          <p className="text-sm font-medium text-text">Complete your profile</p>
+                          <p className="text-xs text-text-muted mt-1">Verify your account to unlock all features</p>
+                          <span className="text-xs text-primary mt-1 block">Just now</span>
+                        </div>
+                      )}
                       <div 
                         className="p-2 rounded-lg border border-border/30"
                         style={{ backgroundColor: `${currentTheme.colors.primary}05` }}
                       >
-                        <p className="text-sm font-medium text-text">Complete your profile</p>
-                        <p className="text-xs text-text-muted mt-1">Verify your account to unlock all features</p>
-                        <span className="text-xs text-primary mt-1 block">Just now</span>
-                      </div>
-                      <div 
-                        className="p-2 rounded-lg border border-border/30"
-                        style={{ backgroundColor: `${currentTheme.colors.primary}05` }}
-                      >
-                        <p className="text-sm font-medium text-text">Profile viewed</p>
-                        <p className="text-xs text-text-muted mt-1">Your profile was viewed by 5 employers</p>
-                        <span className="text-xs text-primary mt-1 block">5 hours ago</span>
+                        <p className="text-sm font-medium text-text">Welcome to Kazipert!</p>
+                        <p className="text-xs text-text-muted mt-1">Start exploring your dashboard</p>
+                        <span className="text-xs text-primary mt-1 block">Today</span>
                       </div>
                     </div>
                   </ScrollableDropdownContent>
@@ -729,7 +795,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                         ) : (
                           <>
                             <Clock className="h-3 w-3" />
-                            Pending Verification
+                            Pending
                           </>
                         )}
                       </span>
@@ -804,16 +870,20 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                   >
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div className="p-2 rounded-lg bg-background/50 border border-border/30">
-                        <div className="text-sm font-bold text-text">12</div>
-                        <div className="text-xs text-text-muted">Jobs</div>
+                        <div className="text-sm font-bold text-text">Active</div>
+                        <div className="text-xs text-text-muted">Status</div>
                       </div>
                       <div className="p-2 rounded-lg bg-background/50 border border-border/30">
-                        <div className="text-sm font-bold text-text">5</div>
-                        <div className="text-xs text-text-muted">Applied</div>
+                        <div className="text-sm font-bold text-text">
+                          {user.onboardingCompleted ? "Complete" : "Pending"}
+                        </div>
+                        <div className="text-xs text-text-muted">Profile</div>
                       </div>
                       <div className="p-2 rounded-lg bg-background/50 border border-border/30">
-                        <div className="text-sm font-bold text-text">3</div>
-                        <div className="text-xs text-text-muted">Messages</div>
+                        <div className="text-sm font-bold text-text">
+                          {user.verified ? "Yes" : "No"}
+                        </div>
+                        <div className="text-xs text-text-muted">Verified</div>
                       </div>
                     </div>
                   </div>
@@ -822,7 +892,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                   <div>
                     <CustomDropdownLabel>ACCOUNT</CustomDropdownLabel>
                     
-                    <CustomDropdownItem>
+                    <CustomDropdownItem onClick={() => router.push(`/portals/${user.role.toLowerCase()}/profile`)}>
                       <div className="flex items-center gap-3">
                         <div 
                           className="p-2 rounded-lg"
@@ -838,8 +908,39 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                       </div>
                     </CustomDropdownItem>
 
-                    {/* ... other menu items with same pattern ... */}
+                    {!user.onboardingCompleted && (
+                      <CustomDropdownItem onClick={() => router.push(`/portals/${user.role.toLowerCase()}/onboarding`)}>
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="p-2 rounded-lg"
+                            style={{ backgroundColor: `${currentTheme.colors.primary}10` }}
+                          >
+                            <CheckCircle className="h-4 w-4 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <span className="font-semibold text-text text-sm">Complete Verification</span>
+                            <p className="text-xs text-text-muted">Finish your profile setup</p>
+                          </div>
+                          <ChevronRightIcon className="h-4 w-4 text-primary/60" />
+                        </div>
+                      </CustomDropdownItem>
+                    )}
 
+                    <CustomDropdownItem onClick={() => router.push(`/portals/${user.role.toLowerCase()}/settings`)}>
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="p-2 rounded-lg"
+                          style={{ backgroundColor: `${currentTheme.colors.primary}10` }}
+                        >
+                          <Settings className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <span className="font-semibold text-text text-sm">Settings</span>
+                          <p className="text-xs text-text-muted">Manage your preferences</p>
+                        </div>
+                        <ChevronRightIcon className="h-4 w-4 text-primary/60" />
+                      </div>
+                    </CustomDropdownItem>
                   </div>
 
                   <CustomDropdownSeparator />
@@ -848,7 +949,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                   <div>
                     <CustomDropdownLabel>SUPPORT</CustomDropdownLabel>
                     
-                    <CustomDropdownItem>
+                    <CustomDropdownItem onClick={() => router.push(`/portals/${user.role.toLowerCase()}/support`)}>
                       <div className="flex items-center gap-3">
                         <div 
                           className="p-2 rounded-lg"
@@ -909,74 +1010,78 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
         </main>
 
         {/* Enhanced Mobile Bottom Navigation */}
-        <nav 
-          className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between border-t border-border/40 bg-background/95 backdrop-blur-xl px-4 py-2 shadow-2xl lg:hidden"
-        >
-          {mobileNav?.map((item, i) => {
-            const isActive = pathname === item.href
-            const isMiddle = i === 2
+        {mobileNav && mobileNav.length > 0 && (
+          <nav 
+            className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between border-t border-border/40 bg-background/95 backdrop-blur-xl px-4 py-2 shadow-2xl lg:hidden"
+          >
+            {mobileNav.map((item, i) => {
+              const isActive = pathname === item.href
+              const isMiddle = i === 2
 
-            return (
-              <div key={item.name} className="flex-1 flex justify-center">
-                {isMiddle ? (
-                  <button
-                    onClick={() => setShowJobsPopup(!showJobsPopup)}
-                    className={cn(
-                      "relative flex h-14 w-14 items-center justify-center rounded-2xl border-4 border-background shadow-lg transition-all duration-300 hover:scale-110",
-                      showJobsPopup
-                        ? "scale-110 shadow-xl"
-                        : "hover:shadow-xl",
-                    )}
-                    style={{
-                      backgroundColor: currentTheme.colors.primary,
-                      color: currentTheme.colors.text
-                    }}
-                  >
-                    <Briefcase className="h-5 w-5" />
-                    {showJobsPopup && (
-                      <div 
-                        className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap"
-                        style={{ backgroundColor: currentTheme.colors.primaryDark }}
-                      >
-                        Quick Actions
-                      </div>
-                    )}
-                  </button>
-                ) : (
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "flex flex-col items-center justify-center text-xs transition-all duration-300 flex-1",
-                      isActive 
-                        ? "text-text font-bold" 
-                        : "text-text-muted hover:text-text",
-                    )}
-                    onClick={() => setShowJobsPopup(false)}
-                  >
-                    <div 
+              return (
+                <div key={item.name} className="flex-1 flex justify-center">
+                  {isMiddle ? (
+                    <button
+                      onClick={() => setShowJobsPopup(!showJobsPopup)}
                       className={cn(
-                        "p-2 rounded-xl mb-1 transition-all duration-300",
-                        isActive 
-                          ? "shadow-md" 
-                          : "hover:bg-primary/5"
+                        "relative flex h-14 w-14 items-center justify-center rounded-2xl border-4 border-background shadow-lg transition-all duration-300 hover:scale-110",
+                        showJobsPopup
+                          ? "scale-110 shadow-xl"
+                          : "hover:shadow-xl",
                       )}
                       style={{
-                        backgroundColor: isActive ? currentTheme.colors.primary : 'transparent'
+                        backgroundColor: currentTheme.colors.primary,
+                        color: currentTheme.colors.text
                       }}
                     >
-                      <item.icon className={cn(
-                        "h-4 w-4 transition-transform duration-300",
-                        isActive && "scale-110"
-                      )} />
-                    </div>
-                    <span className="font-medium text-[10px]">{item.name}</span>
-                  </Link>
-                )}
-              </div>
-            )
-          })}
-        </nav>
+                      <Briefcase className="h-5 w-5" />
+                      {showJobsPopup && (
+                        <div 
+                          className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap"
+                          style={{ backgroundColor: currentTheme.colors.primaryDark }}
+                        >
+                          Quick Actions
+                        </div>
+                      )}
+                    </button>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "flex flex-col items-center justify-center text-xs transition-all duration-300 flex-1",
+                        isActive 
+                          ? "text-text font-bold" 
+                          : "text-text-muted hover:text-text",
+                      )}
+                      onClick={() => setShowJobsPopup(false)}
+                    >
+                      <div 
+                        className={cn(
+                          "p-2 rounded-xl mb-1 transition-all duration-300",
+                          isActive 
+                            ? "shadow-md" 
+                            : "hover:bg-primary/5"
+                        )}
+                        style={{
+                          backgroundColor: isActive ? currentTheme.colors.primary : 'transparent'
+                        }}
+                      >
+                        <item.icon className={cn(
+                          "h-4 w-4 transition-transform duration-300",
+                          isActive && "scale-110"
+                        )} />
+                      </div>
+                      <span className="font-medium text-[10px]">{item.name}</span>
+                    </Link>
+                  )}
+                </div>
+              )
+            })}
+          </nav>
+        )}
       </div>
     </div>
   )
 }
+
+// Add missing RefreshCw icon import

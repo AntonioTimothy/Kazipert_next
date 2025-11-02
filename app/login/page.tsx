@@ -1,8 +1,9 @@
+// app/login/page.tsx - UPDATED WITH ONBOARDING REDIRECTION
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Eye,
@@ -17,7 +18,6 @@ import {
   Globe,
   ArrowLeft,
 } from "lucide-react";
-import { decorateUserTemp } from "@/lib/mock-data";
 
 const slides = [
   {
@@ -129,6 +129,7 @@ function OtpInput({ onComplete }: { onComplete: (code: string) => void }) {
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [slide, setSlide] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -137,6 +138,7 @@ export default function LoginPage() {
   const [otpStep, setOtpStep] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const [form, setForm] = useState({
     email: "",
@@ -162,20 +164,6 @@ export default function LoginPage() {
     }));
   };
 
-  // Map backend role to frontend user type
-  const mapBackendRoleToFrontend = (backendRole: string): "worker" | "employer" | "admin" => {
-    switch (backendRole) {
-      case "EMPLOYEE":
-        return "worker";
-      case "EMPLOYER":
-        return "employer";
-      case "ADMIN":
-        return "admin";
-      default:
-        return "worker"; // default fallback
-    }
-  };
-
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -185,7 +173,10 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          rememberMe
+        }),
       });
 
       const data = await res.json();
@@ -199,9 +190,6 @@ export default function LoginPage() {
         setPendingEmail(form.email);
         setOtpStep(true);
         setSuccess("Verification code sent to your email");
-      } else {
-        // Direct login successful - use the role-based redirection
-        handleSuccessfulLogin(data);
       }
 
     } catch (err: any) {
@@ -211,37 +199,60 @@ export default function LoginPage() {
     }
   };
 
-  const handleSuccessfulLogin = async (data: any) => {
-    // Map backend role to frontend user type
-    const frontendUserType = mapBackendRoleToFrontend(data.user.role);
-  
-    let decorateUserData = decorateUserTemp(frontendUserType)
-  
-    // Create user object in the format your dashboards expect
-    const user = {
-      ...decorateUserData,
-      ...data.user,
-      id: data.user.id,
-      email: data.user.email,
-      name: data.user.fullName || data.user.email,
-      role: frontendUserType,
-      type: frontendUserType,
-    };
-  
-    console.log("Decorated User Data:", user);
-  
-    // Store user in session (like your old logic)
-    sessionStorage.setItem("user", JSON.stringify(user));
-  
-    // Store tokens in localStorage for API calls
-    if (data.accessToken) {
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
+  const getOnboardingRoute = (role: string) => {
+    switch (role) {
+      case 'EMPLOYEE':
+        return '/portals/worker/onboarding';
+      case 'EMPLOYER':
+        return '/portals/employer/onboarding';
+      case 'ADMIN':
+      case 'SUPER_ADMIN':
+      case 'HOSPITAL_ADMIN':
+      case 'PHOTO_STUDIO_ADMIN':
+      case 'EMBASSY_ADMIN':
+        return '/portals/admin/onboarding';
+      default:
+        return '/portals/worker/onboarding'; // Default fallback
     }
-  
+  };
+
+  const getDashboardRoute = (role: string) => {
+    switch (role) {
+      case 'EMPLOYEE':
+        return '/portals';
+      case 'EMPLOYER':
+        return '/portals';
+      case 'ADMIN':
+      case 'SUPER_ADMIN':
+      case 'HOSPITAL_ADMIN':
+      case 'PHOTO_STUDIO_ADMIN':
+      case 'EMBASSY_ADMIN':
+        return '/portals';
+      default:
+        return '/portals';
+    }
+  };
+
+  const handleSuccessfulLogin = async (data: any) => {
     setSuccess("Login successful! Redirecting...");
   
-    console.log("Login successful, user role:", user.role);
+    console.log("Login successful, user role:", data.user.role);
+    console.log("Requires onboarding:", data.requiresOnboarding);
+  
+    // Store minimal user data in sessionStorage for client-side use
+    if (data.user) {
+      sessionStorage.setItem("user", JSON.stringify({
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.name,
+        role: data.user.role,
+        avatar: data.user.avatar,
+        permissions: data.user.permissions,
+        isSuperAdmin: data.user.isSuperAdmin,
+        onboardingCompleted: data.user.onboardingCompleted,
+        kycVerified: data.user.kycVerified,
+      }));
+    }
   
     // IMPORTANT: Add a small delay and use router.refresh() before redirect
     setTimeout(async () => {
@@ -252,28 +263,26 @@ export default function LoginPage() {
         // Wait a bit more for the refresh to complete
         await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Redirect based on mapped user type
-        if (user.role === "worker") {
-          console.log("Redirecting to worker dashboard");
-          router.push("/worker/dashboard");
-        } else if (user.role === "employer") {
-          console.log("Redirecting to employer dashboard");
-          router.push("/employer/dashboard");
-        } else if (user.role === "admin") {
-          console.log("Redirecting to admin dashboard");
-          router.push("/admin/dashboard");
+        // Redirect based on user data from API response
+        if (data.requiresOnboarding) {
+          const onboardingRoute = getOnboardingRoute(data.user.role);
+          console.log("Redirecting to onboarding:", onboardingRoute);
+          router.push(onboardingRoute);
         } else {
-          console.log("User role unrecognized, redirecting to home");
-          router.push("/");
+          const dashboardRoute = getDashboardRoute(data.user.role);
+          console.log("Redirecting to dashboard:", dashboardRoute);
+          router.push(dashboardRoute);
         }
       } catch (error) {
         console.error("Redirect error:", error);
         // Fallback: try direct navigation
-        window.location.href = user.role === "worker" ? "/worker/dashboard" : 
-                             user.role === "employer" ? "/employer/dashboard" : 
-                             user.role === "admin" ? "/admin/dashboard" : "/";
+        const redirectPath = data.requiresOnboarding 
+          ? getOnboardingRoute(data.user.role)
+          : getDashboardRoute(data.user.role);
+        console.log("Fallback redirect to:", redirectPath);
+        window.location.href = redirectPath;
       }
-    }, 300);
+    }, 1000);
   };
 
   const handleVerifyOtp = useCallback(async (code: string) => {
@@ -291,6 +300,7 @@ export default function LoginPage() {
           otp: code,
           password: form.password // Include password for final verification
         }),
+        credentials: 'include' // Important for cookies
       });
 
       const data = await res.json();
@@ -299,10 +309,8 @@ export default function LoginPage() {
         throw new Error(data.error || "Invalid verification code");
       }
 
-      setSuccess("Login successful! Redirecting...");
-
-      // Use the role-based redirection logic
-      handleSuccessfulLogin(data);
+      // Use the new role-based redirection logic
+      await handleSuccessfulLogin(data);
 
     } catch (err: any) {
       setError(err.message || "Verification failed");
@@ -586,6 +594,20 @@ export default function LoginPage() {
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
+                </div>
+
+                {/* Remember Me Checkbox */}
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="rememberMe"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="h-4 w-4 text-[#FFD700] focus:ring-[#FFD700] border-gray-300 rounded"
+                  />
+                  <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
+                    Remember me for 30 days
+                  </label>
                 </div>
 
                 {/* Login Button */}
