@@ -47,245 +47,7 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTheme } from "@/contexts/ThemeContext"
 import { cn } from "@/lib/utils"
-
-// Enhanced domestic job listings with family size and kid information
-const domesticJobs = [
-  {
-    id: "DOM001",
-    title: "Live-in House Manager",
-    employerName: "Sarah Johnson",
-    location: "Westlands, Nairobi",
-    salary: 35000,
-    salaryDisplay: "KSh 25,000-35,000/month",
-    type: "Full-time",
-    status: "open",
-    urgent: true,
-    description: "Looking for a reliable house manager to oversee daily household operations. Must be organized and trustworthy with excellent communication skills.",
-    contractTerms: ["Live-in position", "2-year contract", "30 days annual leave", "Medical cover", "Performance bonus"],
-    requirements: ["5+ years experience", "Reference letters", "First Aid training", "Management skills"],
-    category: "House Management",
-    familySize: "large",
-    hasKids: true,
-    kidsAge: "5-12 years",
-    postedDate: "2024-01-15",
-    applications: 8,
-    views: 145,
-    employerRating: 4.8,
-    employerReviews: 23,
-    saved: false,
-    applied: false,
-    matchScore: 95
-  },
-  {
-    id: "DOM002",
-    title: "Professional Nanny",
-    employerName: "James & Lisa",
-    location: "Karen, Nairobi",
-    salary: 28000,
-    salaryDisplay: "KSh 20,000-28,000/month",
-    type: "Full-time",
-    status: "open",
-    urgent: false,
-    description: "Caring nanny needed for two children aged 3 and 6. Must have childcare experience and genuine love for children. Educational background preferred.",
-    contractTerms: ["Live-in preferred", "1-year contract", "Weekends off", "School holidays", "Travel opportunities"],
-    requirements: ["Childcare experience", "CPR certified", "Early education background", "Patience"],
-    category: "Childcare",
-    familySize: "small",
-    hasKids: true,
-    kidsAge: "3-6 years",
-    postedDate: "2024-01-14",
-    applications: 12,
-    views: 267,
-    employerRating: 4.9,
-    employerReviews: 45,
-    saved: true,
-    applied: false,
-    matchScore: 88
-  },
-  {
-    id: "DOM003",
-    title: "Elderly Companion",
-    employerName: "Margaret Wambui",
-    location: "Runda, Nairobi",
-    salary: 25000,
-    salaryDisplay: "KSh 18,000-25,000/month",
-    type: "Full-time",
-    status: "open",
-    urgent: true,
-    description: "Compassionate companion needed for elderly gentleman. Light housekeeping and medication reminders. Must be patient and understanding.",
-    contractTerms: ["Live-in available", "Flexible schedule", "Health insurance", "Transport allowance", "Accommodation"],
-    requirements: ["Nursing background", "Patience & empathy", "Reference required", "First Aid knowledge"],
-    category: "Elderly Care",
-    familySize: "single",
-    hasKids: false,
-    kidsAge: "N/A",
-    postedDate: "2024-01-16",
-    applications: 5,
-    views: 89,
-    employerRating: 4.7,
-    employerReviews: 12,
-    saved: false,
-    applied: false,
-    matchScore: 92
-  },
-  {
-    id: "DOM004",
-    title: "Family Chef",
-    employerName: "David Omondi",
-    location: "Lavington, Nairobi",
-    salary: 40000,
-    salaryDisplay: "KSh 30,000-40,000/month",
-    type: "Full-time",
-    status: "open",
-    urgent: false,
-    description: "Experienced chef needed for family of 4. Must prepare healthy meals and manage kitchen inventory. International cuisine knowledge preferred.",
-    contractTerms: ["Live-out", "5-day week", "Food allowance", "Uniform provided", "Cooking budget"],
-    requirements: ["Culinary training", "5+ years experience", "Menu planning", "Hygiëne certificate", "Creative cooking"],
-    category: "Cooking",
-    familySize: "medium",
-    hasKids: true,
-    kidsAge: "8-15 years",
-    postedDate: "2024-01-13",
-    applications: 15,
-    views: 312,
-    employerRating: 4.6,
-    employerReviews: 34,
-    saved: false,
-    applied: true,
-    matchScore: 78
-  },
-  {
-    id: "DOM005",
-    title: "Gardener & Handyman",
-    employerName: "Grace Mwende",
-    location: "Kitisuru, Nairobi",
-    salary: 22000,
-    salaryDisplay: "KSh 15,000-22,000/month",
-    type: "Full-time",
-    status: "open",
-    urgent: false,
-    description: "Skilled gardener with basic handyman skills needed for large compound maintenance. Knowledge of tropical plants and irrigation systems required.",
-    contractTerms: ["Live-out", "6-day week", "Tools provided", "Performance bonus", "Training opportunities"],
-    requirements: ["Gardening experience", "Basic repairs", "Plant knowledge", "Physical fitness", "Landscaping skills"],
-    category: "Gardening",
-    familySize: "large",
-    hasKids: true,
-    kidsAge: "Teenagers",
-    postedDate: "2024-01-12",
-    applications: 7,
-    views: 134,
-    employerRating: 4.8,
-    employerReviews: 28,
-    saved: true,
-    applied: false,
-    matchScore: 85
-  },
-  {
-    id: "DOM006",
-    title: "Executive Housekeeper",
-    employerName: "Michael & Partners",
-    location: "Muthaiga, Nairobi",
-    salary: 24000,
-    salaryDisplay: "KSh 16,000-24,000/month",
-    type: "Full-time",
-    status: "open",
-    urgent: true,
-    description: "Detail-oriented housekeeper for 5-bedroom home. Must maintain high cleanliness standards and manage household supplies efficiently.",
-    contractTerms: ["Live-in optional", "45 hours/week", "Accommodation", "Weekly off", "Uniform allowance"],
-    requirements: ["3+ years experience", "Organization skills", "Reference required", "Attention to detail"],
-    category: "Cleaning",
-    familySize: "medium",
-    hasKids: false,
-    kidsAge: "N/A",
-    postedDate: "2024-01-17",
-    applications: 11,
-    views: 198,
-    employerRating: 4.5,
-    employerReviews: 19,
-    saved: false,
-    applied: false,
-    matchScore: 90
-  },
-  {
-    id: "DOM007",
-    title: "Pet Care Specialist",
-    employerName: "Linda Wangari",
-    location: "Kilimani, Nairobi",
-    salary: 18000,
-    salaryDisplay: "KSh 12,000-18,000/month",
-    type: "Part-time",
-    status: "open",
-    urgent: false,
-    description: "Animal lover needed to care for two dogs and one cat while family is at work. Must be reliable and have experience with pet care.",
-    contractTerms: ["Part-time", "Flexible hours", "Pet supplies covered", "Weekend availability", "Vet visits"],
-    requirements: ["Pet care experience", "Vet knowledge", "Reliable", "Love for animals", "Grooming skills"],
-    category: "Pet Care",
-    familySize: "small",
-    hasKids: false,
-    kidsAge: "N/A",
-    postedDate: "2024-01-14",
-    applications: 6,
-    views: 87,
-    employerRating: 4.9,
-    employerReviews: 31,
-    saved: false,
-    applied: false,
-    matchScore: 82
-  },
-  {
-    id: "DOM008",
-    title: "Personal Driver",
-    employerName: "Ahmed Hassan",
-    location: "Eastleigh, Nairobi",
-    salary: 30000,
-    salaryDisplay: "KSh 22,000-30,000/month",
-    type: "Full-time",
-    status: "open",
-    urgent: false,
-    description: "Experienced driver needed for family transportation. Must have clean driving record and knowledge of Nairobi routes.",
-    contractTerms: ["Live-out", "6-day week", "Fuel allowance", "Maintenance covered", "Insurance"],
-    requirements: ["Valid license", "5+ years experience", "Defensive driving", "GPS knowledge", "Punctual"],
-    category: "Driving",
-    familySize: "large",
-    hasKids: true,
-    kidsAge: "Multiple ages",
-    postedDate: "2024-01-15",
-    applications: 9,
-    views: 156,
-    employerRating: 4.7,
-    employerReviews: 22,
-    saved: false,
-    applied: true,
-    matchScore: 75
-  }
-]
-
-// Mock applications data
-const userApplications = [
-  {
-    id: "APP001",
-    jobId: "DOM004",
-    jobTitle: "Family Chef",
-    employerName: "David Omondi",
-    status: "under_review",
-    appliedDate: "2024-01-14",
-    employerViewed: true,
-    lastUpdate: "2024-01-15"
-  },
-  {
-    id: "APP002",
-    jobId: "DOM008",
-    jobTitle: "Personal Driver",
-    employerName: "Ahmed Hassan",
-    status: "pending_details",
-    appliedDate: "2024-01-13",
-    employerViewed: false,
-    lastUpdate: "2024-01-14"
-  }
-]
-
-// Mock saved jobs
-const savedJobs = domesticJobs.filter(job => job.saved)
+import { jobService } from "@/lib/services/jobService"
 
 // Filter options
 const FILTER_OPTIONS = {
@@ -304,19 +66,17 @@ export default function WorkerJobsPage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("browse")
-  const [jobs, setJobs] = useState(domesticJobs)
-  const [savedJobsList, setSavedJobsList] = useState(savedJobs)
-  const [applications, setApplications] = useState(userApplications)
+  const [jobs, setJobs] = useState<any[]>([])
+  const [savedJobsList, setSavedJobsList] = useState<any[]>([])
+  const [applications, setApplications] = useState<any[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [activeFilter, setActiveFilter] = useState(FILTER_OPTIONS.ALL)
   const jobsPerPage = 6
 
   useEffect(() => {
-    // Simulate API call with timeout
     const loadData = async () => {
       setLoading(true)
-      await new Promise(resolve => setTimeout(resolve, 1500))
       
       const userData = sessionStorage.getItem("user")
       if (!userData) {
@@ -331,7 +91,33 @@ export default function WorkerJobsPage() {
       }
 
       setUser(parsedUser)
-      setLoading(false)
+      
+      try {
+        // Load jobs
+        const jobsData = await jobService.getJobs({ role: 'employee' })
+        setJobs(jobsData.jobs || [])
+
+        // Load applications
+        const applicationsData = await jobService.getApplications({ role: 'employee' })
+        setApplications(applicationsData || [])
+
+        // Load saved jobs
+        const savedJobsData = await jobService.getSavedJobs()
+        setSavedJobsList(savedJobsData.map((item: any) => ({ 
+          ...item.job, 
+          saved: true,
+          applied: applicationsData?.some((app: any) => app.jobId === item.job.id) || false
+        })) || [])
+
+      } catch (error) {
+        console.error('Error loading data:', error)
+        // Initialize empty arrays if API fails
+        setJobs([])
+        setApplications([])
+        setSavedJobsList([])
+      } finally {
+        setLoading(false)
+      }
     }
 
     loadData()
@@ -341,17 +127,17 @@ export default function WorkerJobsPage() {
   const filteredJobs = jobs.filter(job => {
     switch (activeFilter) {
       case FILTER_OPTIONS.NO_KIDS:
-        return !job.hasKids
+        return job.childrenCount === 0
       case FILTER_OPTIONS.SMALL_FAMILY:
-        return job.familySize === "small"
+        return job.familyMembers <= 2
       case FILTER_OPTIONS.MEDIUM_FAMILY:
-        return job.familySize === "medium"
+        return job.familyMembers > 2 && job.familyMembers <= 4
       case FILTER_OPTIONS.LARGE_FAMILY:
-        return job.familySize === "large"
+        return job.familyMembers > 4
       case FILTER_OPTIONS.LOWEST_PAY:
-        return job.salary <= 20000
+        return job.salary <= 400
       case FILTER_OPTIONS.HIGHEST_PAY:
-        return job.salary >= 30000
+        return job.salary >= 500
       default:
         return true
     }
@@ -375,36 +161,58 @@ export default function WorkerJobsPage() {
     setIsLoadingMore(false)
   }
 
-  const handleApply = (jobId: string) => {
-    const job = jobs.find(j => j.id === jobId)
-    if (job) {
-      setApplications(prev => [...prev, {
-        id: `APP${Date.now()}`,
-        jobId: job.id,
-        jobTitle: job.title,
-        employerName: job.employerName,
-        status: "pending_details",
-        appliedDate: new Date().toISOString().split('T')[0],
-        employerViewed: false,
-        lastUpdate: new Date().toISOString().split('T')[0]
-      }])
-      setJobs(prev => prev.map(j => j.id === jobId ? { ...j, applied: true } : j))
+  const handleApply = async (jobId: string) => {
+    try {
+      await jobService.createApplication(jobId)
+      
+      // Update local state
+      setJobs(prev => prev.map(job => 
+        job.id === jobId ? { ...job, applied: true } : job
+      ))
+      
+      // Update saved jobs list
+      setSavedJobsList(prev => prev.map(job => 
+        job.id === jobId ? { ...job, applied: true } : job
+      ))
+      
+      // Refresh applications
+      const applicationsData = await jobService.getApplications({ role: 'employee' })
+      setApplications(applicationsData || [])
+      
+    } catch (error) {
+      console.error('Error applying to job:', error)
+      alert('Failed to apply to job. Please try again.')
     }
   }
 
-  const handleSaveJob = (jobId: string) => {
-    setJobs(prev => prev.map(job => 
-      job.id === jobId ? { ...job, saved: !job.saved } : job
-    ))
-    setSavedJobsList(prev => {
+  const handleSaveJob = async (jobId: string) => {
+    try {
       const job = jobs.find(j => j.id === jobId)
-      if (!job) return prev
-      if (job.saved) {
-        return prev.filter(j => j.id !== jobId)
+      const isCurrentlySaved = savedJobsList.some(j => j.id === jobId)
+      
+      if (isCurrentlySaved) {
+        await jobService.unsaveJob(jobId)
+        setSavedJobsList(prev => prev.filter(j => j.id !== jobId))
       } else {
-        return [...prev, { ...job, saved: true }]
+        await jobService.saveJob(jobId)
+        if (job) {
+          setSavedJobsList(prev => [...prev, { 
+            ...job, 
+            saved: true,
+            applied: applications.some(app => app.jobId === jobId)
+          }])
+        }
       }
-    })
+      
+      // Update jobs list
+      setJobs(prev => prev.map(job => 
+        job.id === jobId ? { ...job, saved: !isCurrentlySaved } : job
+      ))
+      
+    } catch (error) {
+      console.error('Error saving job:', error)
+      alert('Failed to save job. Please try again.')
+    }
   }
 
   const getCategoryIcon = (category: string) => {
@@ -434,12 +242,14 @@ export default function WorkerJobsPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "under_review":
+      case "UNDER_REVIEW":
         return <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-0"><Clock4 className="h-3 w-3 mr-1" />Under Review</Badge>
-      case "pending_details":
+      case "PENDING_DETAILS":
         return <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-0"><AlertCircle className="h-3 w-3 mr-1" />More Info Needed</Badge>
-      case "accepted":
+      case "ACCEPTED":
         return <Badge variant="secondary" className="bg-green-100 text-green-700 border-0"><CheckCircle className="h-3 w-3 mr-1" />Accepted</Badge>
+      case "REJECTED":
+        return <Badge variant="secondary" className="bg-red-100 text-red-700 border-0"><AlertCircle className="h-3 w-3 mr-1" />Rejected</Badge>
       default:
         return <Badge variant="secondary" className="border-0">Pending</Badge>
     }
@@ -473,6 +283,49 @@ export default function WorkerJobsPage() {
       default:
         return "text-gray-600 bg-gray-100"
     }
+  }
+
+  const getJobType = (type: string) => {
+    switch (type) {
+      case "FULL_TIME":
+        return "Full-time"
+      case "PART_TIME":
+        return "Part-time"
+      case "LIVE_OUT":
+        return "Live-out"
+      case "FLEXIBLE":
+        return "Flexible"
+      default:
+        return type
+    }
+  }
+
+  const getResidenceType = (type: string) => {
+    switch (type) {
+      case "APARTMENT":
+        return "Apartment"
+      case "VILLA":
+        return "Villa"
+      case "DUPLEX":
+        return "Duplex"
+      case "MANSION":
+        return "Mansion"
+      default:
+        return type
+    }
+  }
+
+  const calculateMatchScore = (job: any) => {
+    // Simple match score calculation based on job requirements
+    let score = 70 // Base score
+    
+    // Add points for various factors
+    if (job.salary >= 400) score += 10
+    if (job.benefits && job.benefits.length > 2) score += 10
+    if (job.vacationDays > 25) score += 5
+    if (job.accommodation === "PRIVATE") score += 5
+    
+    return Math.min(score, 95) // Cap at 95%
   }
 
   // Skeleton loading component
@@ -544,16 +397,6 @@ export default function WorkerJobsPage() {
   return (
     <div className="min-h-screen" style={{ background: currentTheme.colors.background }}>
       <div className="max-w-7xl mx-auto p-6 space-y-8">
-        {/* Header Section */}
-        {/* <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Domestic Work Opportunities
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Find the perfect household role that matches your skills and preferences
-          </p>
-        </div> */}
-
         {/* Filter Section */}
         <div className="bg-card/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl border">
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
@@ -715,13 +558,17 @@ export default function WorkerJobsPage() {
           <TabsContent value="browse" className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {displayedJobs.map((job) => {
-                const CategoryIcon = getCategoryIcon(job.category)
+                const matchScore = calculateMatchScore(job)
+                const applied = applications.some(app => app.jobId === job.id)
+                const saved = savedJobsList.some(savedJob => savedJob.id === job.id)
+                const CategoryIcon = getCategoryIcon(job.duties?.[0] || "General")
+                
                 return (
                   <Card key={job.id} className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 bg-card/80 backdrop-blur-sm">
                     {/* Match Score Badge */}
                     <div className="absolute top-4 right-4 z-10">
                       <Badge className="bg-green-500 text-white px-2 py-1 text-xs">
-                        {job.matchScore}% Match
+                        {matchScore}% Match
                       </Badge>
                     </div>
 
@@ -741,7 +588,7 @@ export default function WorkerJobsPage() {
                           <CategoryIcon className="h-7 w-7 text-primary" />
                         </div>
                         <Badge variant={job.urgent ? "destructive" : "secondary"} className="text-xs border-0">
-                          {job.type}
+                          {getJobType(job.type)}
                         </Badge>
                       </div>
 
@@ -751,11 +598,13 @@ export default function WorkerJobsPage() {
                       
                       <CardDescription className="flex items-center gap-2 mt-3">
                         <Building className="h-4 w-4" />
-                        <span className="font-medium text-card-foreground">{job.employerName}</span>
+                        <span className="font-medium text-card-foreground">
+                          {job.employer?.firstName} {job.employer?.lastName}
+                        </span>
                         <div className="flex items-center gap-1 ml-2">
                           <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm font-semibold">{job.employerRating}</span>
-                          <span className="text-xs text-muted-foreground">({job.employerReviews})</span>
+                          <span className="text-sm font-semibold">4.5</span>
+                          <span className="text-xs text-muted-foreground">(12)</span>
                         </div>
                       </CardDescription>
                     </CardHeader>
@@ -767,14 +616,23 @@ export default function WorkerJobsPage() {
 
                       {/* Family Info */}
                       <div className="flex items-center gap-4 text-sm">
-                        <Badge variant="outline" className={cn("px-2 py-1 text-xs", getFamilySizeColor(job.familySize))}>
-                          {getFamilySizeIcon(job.familySize)}
-                          <span className="ml-1 capitalize">{job.familySize} Family</span>
+                        <Badge variant="outline" className={cn("px-2 py-1 text-xs", getFamilySizeColor(
+                          job.familyMembers <= 2 ? "small" : 
+                          job.familyMembers <= 4 ? "medium" : "large"
+                        ))}>
+                          {getFamilySizeIcon(
+                            job.familyMembers <= 2 ? "small" : 
+                            job.familyMembers <= 4 ? "medium" : "large"
+                          )}
+                          <span className="ml-1 capitalize">
+                            {job.familyMembers <= 2 ? "Small" : 
+                             job.familyMembers <= 4 ? "Medium" : "Large"} Family
+                          </span>
                         </Badge>
-                        {job.hasKids && (
+                        {job.childrenCount > 0 && (
                           <Badge variant="outline" className="px-2 py-1 text-xs bg-amber-100 text-amber-700 border-0">
                             <Baby className="h-3 w-3 mr-1" />
-                            Kids: {job.kidsAge}
+                            {job.childrenCount} children
                           </Badge>
                         )}
                       </div>
@@ -782,11 +640,11 @@ export default function WorkerJobsPage() {
                       <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-semibold text-card-foreground">{job.location}</span>
+                          <span className="font-semibold text-card-foreground">{job.city}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <DollarSign className="h-4 w-4 text-green-500" />
-                          <span className="font-bold text-green-600">{job.salaryDisplay}</span>
+                          <span className="font-bold text-green-600">{job.salary} {job.salaryCurrency}</span>
                         </div>
                       </div>
 
@@ -794,16 +652,16 @@ export default function WorkerJobsPage() {
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
-                            {job.applications} applied
+                            {job._count?.applications || 0} applied
                           </div>
                           <div className="flex items-center gap-1">
                             <Eye className="h-3 w-3" />
-                            {job.views} views
+                            {job._count?.views || 0} views
                           </div>
                         </div>
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {new Date(job.postedDate).toLocaleDateString()}
+                          {new Date(job.postedAt || job.createdAt).toLocaleDateString()}
                         </div>
                       </div>
                     </CardContent>
@@ -812,9 +670,9 @@ export default function WorkerJobsPage() {
                       <Button 
                         className="flex-1 transition-all duration-300 hover:scale-105 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl"
                         onClick={() => handleApply(job.id)}
-                        disabled={job.applied}
+                        disabled={applied}
                       >
-                        {job.applied ? (
+                        {applied ? (
                           <>
                             <CheckCircle className="h-4 w-4 mr-2" />
                             Applied
@@ -827,17 +685,17 @@ export default function WorkerJobsPage() {
                         )}
                       </Button>
                       <Button 
-                        variant={job.saved ? "default" : "outline"}
+                        variant={saved ? "default" : "outline"}
                         size="icon"
                         className="transition-all duration-300 hover:scale-110 rounded-xl"
                         onClick={() => handleSaveJob(job.id)}
                         style={{
-                          backgroundColor: job.saved ? currentTheme.colors.primary : 'transparent',
-                          color: job.saved ? currentTheme.colors.text : currentTheme.colors.text,
+                          backgroundColor: saved ? currentTheme.colors.primary : 'transparent',
+                          color: saved ? currentTheme.colors.text : currentTheme.colors.text,
                           borderColor: currentTheme.colors.border
                         }}
                       >
-                        <Bookmark className={`h-4 w-4 ${job.saved ? 'fill-white' : ''}`} />
+                        <Bookmark className={`h-4 w-4 ${saved ? 'fill-white' : ''}`} />
                       </Button>
                     </CardFooter>
 
@@ -905,15 +763,15 @@ export default function WorkerJobsPage() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-card-foreground mb-2">{application.jobTitle}</h3>
+                        <h3 className="text-xl font-semibold text-card-foreground mb-2">{application.job?.title}</h3>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                           <span className="flex items-center gap-1">
                             <Building className="h-4 w-4" />
-                            {application.employerName}
+                            {application.job?.employer?.firstName} {application.job?.employer?.lastName}
                           </span>
                           <span className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
-                            Applied {application.appliedDate}
+                            Applied {new Date(application.appliedDate).toLocaleDateString()}
                           </span>
                           <span className={`flex items-center gap-1 ${application.employerViewed ? 'text-green-600' : 'text-muted-foreground'}`}>
                             <Eye className="h-4 w-4" />
@@ -951,21 +809,21 @@ export default function WorkerJobsPage() {
           {/* Pending Review Tab */}
           <TabsContent value="pending">
             <div className="space-y-4">
-              {applications.filter(app => app.status === "pending_details").map((application) => (
+              {applications.filter(app => app.status === "PENDING_DETAILS").map((application) => (
                 <Card key={application.id} className="border-2 border-amber-200 bg-amber-50/50 backdrop-blur-sm">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-3">
                           <AlertCircle className="h-5 w-5 text-amber-600" />
-                          <h3 className="text-xl font-semibold text-amber-800">{application.jobTitle}</h3>
+                          <h3 className="text-xl font-semibold text-amber-800">{application.job?.title}</h3>
                         </div>
                         <p className="text-amber-700 mb-4">
                           Additional information required to complete your application. Please provide the requested details to move forward.
                         </p>
                         <div className="flex items-center gap-4 text-sm text-amber-600">
-                          <span>Employer: {application.employerName}</span>
-                          <span>Last updated: {application.lastUpdate}</span>
+                          <span>Employer: {application.job?.employer?.firstName} {application.job?.employer?.lastName}</span>
+                          <span>Last updated: {new Date(application.lastUpdate).toLocaleDateString()}</span>
                         </div>
                       </div>
                       <Button className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl">
@@ -975,7 +833,7 @@ export default function WorkerJobsPage() {
                   </CardContent>
                 </Card>
               ))}
-              {applications.filter(app => app.status === "pending_details").length === 0 && (
+              {applications.filter(app => app.status === "PENDING_DETAILS").length === 0 && (
                 <Card className="border-0 shadow-xl text-center bg-card/80 backdrop-blur-sm">
                   <CardContent className="py-16">
                     <CheckCircle className="h-16 w-16 text-green-400 mx-auto mb-4" />
@@ -991,7 +849,9 @@ export default function WorkerJobsPage() {
           <TabsContent value="saved">
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {savedJobsList.map((job) => {
-                const CategoryIcon = getCategoryIcon(job.category)
+                const CategoryIcon = getCategoryIcon(job.duties?.[0] || "General")
+                const applied = applications.some(app => app.jobId === job.id)
+                
                 return (
                   <Card key={job.id} className="border-0 shadow-lg bg-card/80 backdrop-blur-sm group">
                     <CardHeader className="pb-4">
@@ -1011,24 +871,28 @@ export default function WorkerJobsPage() {
                       <CardTitle className="text-xl leading-tight line-clamp-2">{job.title}</CardTitle>
                       <CardDescription className="flex items-center gap-2 mt-3">
                         <Building className="h-4 w-4" />
-                        {job.employerName}
+                        {job.employer?.firstName} {job.employer?.lastName}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span>{job.location}</span>
+                          <span>{job.city}</span>
                         </div>
                         <div className="flex items-center gap-2 text-green-600 font-semibold">
                           <DollarSign className="h-4 w-4" />
-                          {job.salaryDisplay}
+                          {job.salary} {job.salaryCurrency}
                         </div>
                       </div>
                     </CardContent>
                     <CardFooter>
-                      <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl">
-                        Apply Now
+                      <Button 
+                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl"
+                        onClick={() => handleApply(job.id)}
+                        disabled={applied}
+                      >
+                        {applied ? "Applied" : "Apply Now"}
                       </Button>
                     </CardFooter>
                   </Card>

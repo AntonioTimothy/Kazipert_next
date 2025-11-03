@@ -506,7 +506,7 @@ export default function TVCallCenterDashboard() {
             <Activity className="h-8 w-8 text-green-400 animate-pulse" />
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                KAZIPERT COMMAND CENTER
+                KAZIPERT SERVICE CENTER
               </h1>
               <p className="text-sm text-gray-300">Real-time Monitoring & Analytics Dashboard</p>
             </div>

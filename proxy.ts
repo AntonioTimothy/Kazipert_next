@@ -17,7 +17,7 @@ export function proxy(request: NextRequest) {
         '/unauthorized',        // Unauthorized page
         '/_next/static',        // Next.js static files
         '/_next/image',         // Next.js image optimization
-        '/favicon.ico'          // Favicon
+        '/favicon.ico'         // Favicon
     ];
 
     // Check if current path is public
@@ -92,5 +92,6 @@ export const config = {
         '/portals/:path*',
         '/dashboard/:path*',
         '/profile/:path*',
+        '/api/:path*',
     ],
 };

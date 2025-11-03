@@ -115,7 +115,7 @@ export const navigationConfig: NavigationItem[] = [
     },
     {
         name: "Jobs",
-        href: "/portals/employer/loading",
+        href: "/portals/employer/post-job",
         icon: Briefcase,
         roles: ["employer"]
     },

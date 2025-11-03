@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTheme } from "@/contexts/ThemeContext"
 import { cn } from "@/lib/utils"
+import { jobService, type JobFormData } from "@/lib/services/jobService"
 import {
   Briefcase,
   Plus,
@@ -101,6 +102,59 @@ import {
   Plane
 } from "lucide-react"
 
+// Initial job form state
+const initialJobForm = {
+  // Step 1: Basic Information
+  title: "",
+  type: "FULL_TIME",
+  description: "",
+  
+  // Step 2: Household Details
+  residenceType: "VILLA",
+  bedrooms: 3,
+  bathrooms: 2,
+  totalFloors: 1,
+  hasGarden: false,
+  hasPool: false,
+  squareMeters: 200,
+  
+  // Step 3: Family Details
+  familyMembers: 4,
+  childrenCount: 2,
+  childrenAges: ["5", "8"],
+  elderlyCare: false,
+  specialNeeds: false,
+  pets: [] as string[],
+  
+  // Step 4: Job Requirements
+  duties: ["Cleaning", "Cooking", "Laundry", "Ironing", "Childcare"] as string[],
+  experienceRequired: "THREE_TO_FIVE_YEARS",
+  languageRequirements: ["English", "Arabic"] as string[],
+  workingHours: "8 hours",
+  overtimeRequired: false,
+  accommodation: "PRIVATE",
+  meals: "INCLUDED",
+  vacationDays: 30,
+  
+  // Step 5: Additional Benefits & Requirements
+  benefits: ["health-insurance", "annual-flight", "phone-allowance"] as string[],
+  certifications: [] as string[],
+  skills: [] as string[],
+  
+  // Step 6: Compensation & Location
+  salary: 320,
+  salaryCurrency: "OMR",
+  location: "",
+  city: "Muscat",
+  availableFrom: "",
+  interviewRequired: true,
+  
+  // Step 7: Review & Post
+  agreeToTerms: false,
+  emergencySupport: true,
+  autoSalaryCalculation: true
+}
+
 export default function EmployerJobsPage() {
   const router = useRouter()
   const { currentTheme } = useTheme()
@@ -113,58 +167,14 @@ export default function EmployerJobsPage() {
   const [isCalculatingSalary, setIsCalculatingSalary] = useState(false)
   const [calculatedSalary, setCalculatedSalary] = useState(320)
 
+  // Real data states
+  const [jobs, setJobs] = useState<any[]>([])
+  const [applications, setApplications] = useState<any[]>([])
+  const [drafts, setDrafts] = useState<any[]>([])
+  const [closedJobs, setClosedJobs] = useState<any[]>([])
+
   // Job posting form state
-  const [jobForm, setJobForm] = useState({
-    // Step 1: Basic Information
-    jobTitle: "",
-    jobType: "full-time",
-    description: "",
-    
-    // Step 2: Household Details
-    residenceType: "villa",
-    bedrooms: 3,
-    bathrooms: 2,
-    totalFloors: 1,
-    hasGarden: false,
-    hasPool: false,
-    squareMeters: 200,
-    
-    // Step 3: Family Details
-    familyMembers: 4,
-    childrenCount: 2,
-    childrenAges: ["5", "8"],
-    elderlyCare: false,
-    specialNeeds: false,
-    pets: [] as string[],
-    
-    // Step 4: Job Requirements
-    duties: ["Cleaning", "Cooking", "Laundry", "Ironing", "Childcare"] as string[],
-    experienceRequired: "3-5 years",
-    languageRequirements: ["English", "Arabic"] as string[],
-    workingHours: "8 hours",
-    overtimeRequired: false,
-    accommodation: "private",
-    meals: "included",
-    vacationDays: 30,
-    
-    // Step 5: Additional Benefits & Requirements
-    benefits: ["health-insurance", "annual-flight", "phone-allowance"] as string[],
-    certifications: [] as string[],
-    skills: [] as string[],
-    
-    // Step 6: Compensation & Location
-    salary: 320,
-    salaryCurrency: "OMR",
-    location: "",
-    city: "Muscat",
-    availableFrom: "",
-    interviewRequired: true,
-    
-    // Step 7: Review & Post
-    agreeToTerms: false,
-    emergencySupport: true,
-    autoSalaryCalculation: true
-  })
+  const [jobForm, setJobForm] = useState(initialJobForm)
 
   // Oman Labor Law 2025 Minimums
   const OMAN_LAW_MINIMUMS = {
@@ -188,26 +198,26 @@ export default function EmployerJobsPage() {
   const SALARY_FACTORS = {
     // Job Type
     jobType: {
-      "full-time": 1.0,
-      "part-time": 0.6,
-      "live-out": 0.8,
-      "flexible": 0.7
+      "FULL_TIME": 1.0,
+      "PART_TIME": 0.6,
+      "LIVE_OUT": 0.8,
+      "FLEXIBLE": 0.7
     },
     
     // Experience
     experience: {
-      "no experience": 0.9,
-      "1-2 years": 1.0,
-      "3-5 years": 1.2,
-      "5+ years": 1.4
+      "NO_EXPERIENCE": 0.9,
+      "ONE_TO_TWO_YEARS": 1.0,
+      "THREE_TO_FIVE_YEARS": 1.2,
+      "FIVE_PLUS_YEARS": 1.4
     },
     
     // Residence Type
     residence: {
-      "apartment": 1.0,
-      "villa": 1.15,
-      "duplex": 1.1,
-      "mansion": 1.3
+      "APARTMENT": 1.0,
+      "VILLA": 1.15,
+      "DUPLEX": 1.1,
+      "MANSION": 1.3
     },
     
     // Family Factors
@@ -287,7 +297,6 @@ export default function EmployerJobsPage() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
-      await new Promise(resolve => setTimeout(resolve, 1000))
       
       const userData = sessionStorage.getItem("user")
       if (!userData) {
@@ -302,11 +311,43 @@ export default function EmployerJobsPage() {
       }
 
       setUser(parsedUser)
-      setLoading(false)
+      
+      try {
+        // Load employer jobs based on active tab
+        const status = activeTab === 'posted' ? 'ACTIVE' : 
+                      activeTab === 'drafts' ? 'DRAFT' : 'CLOSED'
+        
+        const jobsData = await jobService.getJobs({ 
+          role: 'employer',
+          status: status
+        })
+        
+        if (activeTab === 'posted') {
+          setJobs(jobsData.jobs || [])
+        } else if (activeTab === 'drafts') {
+          setDrafts(jobsData.jobs || [])
+        } else {
+          setClosedJobs(jobsData.jobs || [])
+        }
+
+        // Load all applications for employer
+        const applicationsData = await jobService.getApplications({ role: 'employer' })
+        setApplications(applicationsData || [])
+
+      } catch (error) {
+        console.error('Error loading data:', error)
+        // Initialize empty arrays if API fails
+        setJobs([])
+        setApplications([])
+        setDrafts([])
+        setClosedJobs([])
+      } finally {
+        setLoading(false)
+      }
     }
 
     loadData()
-  }, [router])
+  }, [router, activeTab])
 
   // Smart salary calculation with delay animation
   useEffect(() => {
@@ -316,12 +357,12 @@ export default function EmployerJobsPage() {
         const newSalary = calculateTotalSalary()
         setCalculatedSalary(newSalary)
         setIsCalculatingSalary(false)
-      }, 800) // 800ms delay for calculation effect
+      }, 800)
       
       return () => clearTimeout(timer)
     }
   }, [
-    jobForm.jobType,
+    jobForm.type,
     jobForm.experienceRequired,
     jobForm.residenceType,
     jobForm.childrenCount,
@@ -341,16 +382,16 @@ export default function EmployerJobsPage() {
     let baseSalary = OMAN_LAW_MINIMUMS.baseSalary
     
     // Job Type Multiplier
-    baseSalary *= SALARY_FACTORS.jobType[jobForm.jobType as keyof typeof SALARY_FACTORS.jobType]
+    baseSalary *= SALARY_FACTORS.jobType[jobForm.type as keyof typeof SALARY_FACTORS.jobType] || 1.0
     
     // Experience Multiplier
-    baseSalary *= SALARY_FACTORS.experience[jobForm.experienceRequired as keyof typeof SALARY_FACTORS.experience]
+    baseSalary *= SALARY_FACTORS.experience[jobForm.experienceRequired as keyof typeof SALARY_FACTORS.experience] || 1.0
     
     // Residence Type Multiplier
-    baseSalary *= SALARY_FACTORS.residence[jobForm.residenceType as keyof typeof SALARY_FACTORS.residence]
+    baseSalary *= SALARY_FACTORS.residence[jobForm.residenceType as keyof typeof SALARY_FACTORS.residence] || 1.0
     
     // Working Hours Multiplier
-    baseSalary *= SALARY_FACTORS.hours[jobForm.workingHours as keyof typeof SALARY_FACTORS.hours]
+    baseSalary *= SALARY_FACTORS.hours[jobForm.workingHours as keyof typeof SALARY_FACTORS.hours] || 1.0
     
     // Add fixed amounts for various factors
     let additions = 0
@@ -380,13 +421,13 @@ export default function EmployerJobsPage() {
     
     // Accommodation (subtract if provided, as it's a benefit)
     const accommodationValue = OMAN_LAW_MINIMUMS.accommodation[
-      jobForm.accommodation as keyof typeof OMAN_LAW_MINIMUMS.accommodation
-    ]
+      jobForm.accommodation.toLowerCase() as keyof typeof OMAN_LAW_MINIMUMS.accommodation
+    ] || 0
     
     // Meals (subtract if included)
     const mealsValue = OMAN_LAW_MINIMUMS.meals[
-      jobForm.meals as keyof typeof OMAN_LAW_MINIMUMS.meals
-    ]
+      jobForm.meals.toLowerCase() as keyof typeof OMAN_LAW_MINIMUMS.meals
+    ] || 0
     
     // Benefits (employer cost)
     jobForm.benefits.forEach(benefit => {
@@ -397,12 +438,12 @@ export default function EmployerJobsPage() {
     let finalSalary = baseSalary + additions
     
     // Adjust for provided benefits (accommodation and meals are benefits that reduce cash salary expectation)
-    if (jobForm.accommodation !== "not-provided") {
-      finalSalary -= accommodationValue * 0.3 // Partial adjustment for provided accommodation
+    if (jobForm.accommodation !== "NOT_PROVIDED") {
+      finalSalary -= accommodationValue * 0.3
     }
     
-    if (jobForm.meals !== "not-included") {
-      finalSalary -= mealsValue * 0.3 // Partial adjustment for provided meals
+    if (jobForm.meals !== "NOT_INCLUDED") {
+      finalSalary -= mealsValue * 0.3
     }
     
     // Ensure minimum wage compliance
@@ -517,20 +558,110 @@ export default function EmployerJobsPage() {
     }
   }
 
-  const submitJob = (asDraft: boolean = false) => {
-    // In real app, would submit to backend
-    console.log("Submitting job:", jobForm, asDraft ? "as draft" : "as active")
-    setShowJobStepper(false)
-    setCurrentStep(1)
-    // Reset form or keep for next job?
+  const submitJob = async (asDraft: boolean = false) => {
+    try {
+      const jobData = {
+        ...jobForm,
+        status: asDraft ? 'DRAFT' : 'ACTIVE',
+        availableFrom: jobForm.availableFrom ? new Date(jobForm.availableFrom).toISOString() : undefined,
+        salary: jobForm.autoSalaryCalculation ? calculatedSalary : jobForm.salary
+      }
+
+      await jobService.createJob(jobData)
+      
+      // Refresh jobs list based on current tab
+      const status = asDraft ? 'DRAFT' : 'ACTIVE'
+      const jobsData = await jobService.getJobs({ role: 'employer', status })
+      
+      if (asDraft) {
+        setDrafts(jobsData.jobs || [])
+      } else {
+        setJobs(jobsData.jobs || [])
+      }
+      
+      setShowJobStepper(false)
+      setCurrentStep(1)
+      // Reset form
+      setJobForm(initialJobForm)
+    } catch (error) {
+      console.error('Error creating job:', error)
+      alert('Failed to create job. Please try again.')
+    }
+  }
+
+  const deleteJob = async (jobId: string) => {
+    if (!confirm('Are you sure you want to delete this job?')) return
+    
+    try {
+      await jobService.deleteJob(jobId)
+      // Remove from all states
+      setJobs(prev => prev.filter(job => job.id !== jobId))
+      setDrafts(prev => prev.filter(job => job.id !== jobId))
+      setClosedJobs(prev => prev.filter(job => job.id !== jobId))
+    } catch (error) {
+      console.error('Error deleting job:', error)
+      alert('Failed to delete job. Please try again.')
+    }
+  }
+
+  const updateJobStatus = async (jobId: string, status: string) => {
+    try {
+      await jobService.updateJob(jobId, { status })
+      
+      // Refresh the appropriate list
+      const jobsData = await jobService.getJobs({ 
+        role: 'employer', 
+        status: status === 'ACTIVE' ? 'ACTIVE' : 'CLOSED' 
+      })
+      
+      if (status === 'ACTIVE') {
+        setJobs(jobsData.jobs || [])
+        setClosedJobs(prev => prev.filter(job => job.id !== jobId))
+      } else {
+        setClosedJobs(jobsData.jobs || [])
+        setJobs(prev => prev.filter(job => job.id !== jobId))
+      }
+    } catch (error) {
+      console.error('Error updating job status:', error)
+      alert('Failed to update job status. Please try again.')
+    }
   }
 
   const getStatusColor = (status: string) => {
     switch(status) {
-      case 'active': return 'bg-green-500/10 text-green-600 border-green-200'
-      case 'draft': return 'bg-gray-500/10 text-gray-600 border-gray-200'
-      case 'closed': return 'bg-red-500/10 text-red-600 border-red-200'
+      case 'ACTIVE': return 'bg-green-500/10 text-green-600 border-green-200'
+      case 'DRAFT': return 'bg-gray-500/10 text-gray-600 border-gray-200'
+      case 'CLOSED': return 'bg-red-500/10 text-red-600 border-red-200'
       default: return 'bg-blue-500/10 text-blue-600 border-blue-200'
+    }
+  }
+
+  const getStatusText = (status: string) => {
+    switch(status) {
+      case 'ACTIVE': return 'Active'
+      case 'DRAFT': return 'Draft'
+      case 'CLOSED': return 'Closed'
+      default: return status
+    }
+  }
+
+  const formatJobType = (type: string) => {
+    switch(type) {
+      case 'FULL_TIME': return 'Full-time'
+      case 'PART_TIME': return 'Part-time'
+      case 'LIVE_OUT': return 'Live-out'
+      case 'FLEXIBLE': return 'Flexible'
+      default: return type
+    }
+  }
+
+  const formatExperience = (experience: string) => {
+    switch(experience) {
+      case 'NO_EXPERIENCE': return 'No experience'
+      case 'ONE_TO_TWO_YEARS': return '1-2 years'
+      case 'THREE_TO_FIVE_YEARS': return '3-5 years'
+      case 'FIVE_PLUS_YEARS': return '5+ years'
+      default: return experience
     }
   }
 
@@ -544,35 +675,7 @@ export default function EmployerJobsPage() {
     { number: 7, title: "Review & Post", description: "Finalize and publish your job" }
   ]
 
-  // Mock data (same as before)
-  const jobsData = {
-    posted: [
-      {
-        id: "1",
-        title: "Live-in Nanny for 2 Children",
-        type: "full-time",
-        status: "active",
-        applications: 12,
-        salary: "350 OMR",
-        location: "Muscat, Oman",
-        postedDate: "2024-01-15",
-        views: 45,
-        description: "Looking for experienced nanny for two children aged 3 and 6. Must have childcare certification.",
-        requirements: ["Childcare experience", "First aid certified", "English speaking"],
-        duties: ["Childcare", "Educational activities", "Light housework"],
-        household: {
-          type: "Villa",
-          bedrooms: 4,
-          children: 2,
-          floors: 2
-        }
-      }
-    ],
-    drafts: [],
-    applicants: {}
-  }
-
-  // Skeleton loading components (same as before)
+  // Skeleton loading components
   const JobCardSkeleton = () => (
     <div className="rounded-2xl p-4 border border-border animate-pulse">
       <div className="flex items-start justify-between mb-3">
@@ -633,6 +736,10 @@ export default function EmployerJobsPage() {
   if (!user) {
     return <LoadingSpinner />
   }
+
+  const currentJobs = activeTab === 'posted' ? jobs : 
+                    activeTab === 'drafts' ? drafts : 
+                    closedJobs
 
   return (
     <div className="min-h-screen" style={{ background: currentTheme.colors.background }}>
@@ -719,22 +826,22 @@ export default function EmployerJobsPage() {
                         <label className="text-sm font-medium">Job Title *</label>
                         <Input 
                           placeholder="e.g., Live-in Nanny, House Manager, Cook"
-                          value={jobForm.jobTitle}
-                          onChange={(e) => handleInputChange('jobTitle', e.target.value)}
+                          value={jobForm.title}
+                          onChange={(e) => handleInputChange('title', e.target.value)}
                         />
                       </div>
                       
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Job Type *</label>
-                        <Select value={jobForm.jobType} onValueChange={(value) => handleInputChange('jobType', value)}>
+                        <Select value={jobForm.type} onValueChange={(value) => handleInputChange('type', value)}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select job type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="full-time">Full-time Live-in</SelectItem>
-                            <SelectItem value="part-time">Part-time</SelectItem>
-                            <SelectItem value="live-out">Live-out</SelectItem>
-                            <SelectItem value="flexible">Flexible Hours</SelectItem>
+                            <SelectItem value="FULL_TIME">Full-time Live-in</SelectItem>
+                            <SelectItem value="PART_TIME">Part-time</SelectItem>
+                            <SelectItem value="LIVE_OUT">Live-out</SelectItem>
+                            <SelectItem value="FLEXIBLE">Flexible Hours</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -764,10 +871,10 @@ export default function EmployerJobsPage() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="apartment">Apartment</SelectItem>
-                            <SelectItem value="villa">Villa</SelectItem>
-                            <SelectItem value="duplex">Duplex</SelectItem>
-                            <SelectItem value="mansion">Mansion</SelectItem>
+                            <SelectItem value="APARTMENT">Apartment</SelectItem>
+                            <SelectItem value="VILLA">Villa</SelectItem>
+                            <SelectItem value="DUPLEX">Duplex</SelectItem>
+                            <SelectItem value="MANSION">Mansion</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -957,10 +1064,10 @@ export default function EmployerJobsPage() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="no experience">No Experience</SelectItem>
-                            <SelectItem value="1-2 years">1-2 Years</SelectItem>
-                            <SelectItem value="3-5 years">3-5 Years</SelectItem>
-                            <SelectItem value="5+ years">5+ Years</SelectItem>
+                            <SelectItem value="NO_EXPERIENCE">No Experience</SelectItem>
+                            <SelectItem value="ONE_TO_TWO_YEARS">1-2 Years</SelectItem>
+                            <SelectItem value="THREE_TO_FIVE_YEARS">3-5 Years</SelectItem>
+                            <SelectItem value="FIVE_PLUS_YEARS">5+ Years</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -988,10 +1095,10 @@ export default function EmployerJobsPage() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="provided">Provided</SelectItem>
-                              <SelectItem value="not-provided">Not Provided</SelectItem>
-                              <SelectItem value="shared">Shared Room</SelectItem>
-                              <SelectItem value="private">Private Room</SelectItem>
+                              <SelectItem value="PROVIDED">Provided</SelectItem>
+                              <SelectItem value="NOT_PROVIDED">Not Provided</SelectItem>
+                              <SelectItem value="SHARED">Shared Room</SelectItem>
+                              <SelectItem value="PRIVATE">Private Room</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -1003,9 +1110,9 @@ export default function EmployerJobsPage() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="included">Included</SelectItem>
-                              <SelectItem value="not-included">Not Included</SelectItem>
-                              <SelectItem value="partial">Partial</SelectItem>
+                              <SelectItem value="INCLUDED">Included</SelectItem>
+                              <SelectItem value="NOT_INCLUDED">Not Included</SelectItem>
+                              <SelectItem value="PARTIAL">Partial</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -1199,11 +1306,11 @@ export default function EmployerJobsPage() {
                       <div className="grid gap-4 md:grid-cols-2">
                         <div>
                           <div className="text-sm text-muted-foreground">Position</div>
-                          <div className="font-medium">{jobForm.jobTitle}</div>
+                          <div className="font-medium">{jobForm.title}</div>
                         </div>
                         <div>
                           <div className="text-sm text-muted-foreground">Job Type</div>
-                          <div className="font-medium">{jobForm.jobType}</div>
+                          <div className="font-medium">{formatJobType(jobForm.type)}</div>
                         </div>
                         <div>
                           <div className="text-sm text-muted-foreground">Location</div>
@@ -1219,7 +1326,7 @@ export default function EmployerJobsPage() {
                         </div>
                         <div>
                           <div className="text-sm text-muted-foreground">Experience Required</div>
-                          <div className="font-medium">{jobForm.experienceRequired}</div>
+                          <div className="font-medium">{formatExperience(jobForm.experienceRequired)}</div>
                         </div>
                       </div>
                     </div>
@@ -1346,7 +1453,9 @@ export default function EmployerJobsPage() {
             >
               <div className="p-6 border-b" style={{ borderColor: currentTheme.colors.border }}>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold">Applicants for {jobsData.posted.find(j => j.id === applicantsView)?.title}</h2>
+                  <h2 className="text-2xl font-bold">
+                    Applicants for {jobs.find(j => j.id === applicantsView)?.title}
+                  </h2>
                   <Button variant="ghost" size="sm" onClick={() => setApplicantsView(null)}>✕</Button>
                 </div>
                 <p className="text-muted-foreground">
@@ -1355,7 +1464,9 @@ export default function EmployerJobsPage() {
               </div>
               
               <div className="p-6 space-y-4">
-                {jobsData.applicants[applicantsView as keyof typeof jobsData.applicants]?.map((applicant) => (
+                {applications
+                  .filter(app => app.jobId === applicantsView)
+                  .map((applicant) => (
                   <div 
                     key={applicant.id}
                     className="rounded-xl p-4 border transition-all duration-300 hover:scale-105"
@@ -1370,14 +1481,19 @@ export default function EmployerJobsPage() {
                           className="w-16 h-16 rounded-xl flex items-center justify-center text-white text-lg font-bold"
                           style={{ backgroundColor: currentTheme.colors.primary }}
                         >
-                          {applicant.name.charAt(0)}
+                          {applicant.employee.firstName?.charAt(0)}
+                          {applicant.employee.lastName?.charAt(0)}
                         </div>
                         <div>
-                          <h3 className="font-semibold text-lg">{applicant.name}</h3>
-                          <p className="text-muted-foreground">{applicant.experience} experience</p>
+                          <h3 className="font-semibold text-lg">
+                            {applicant.employee.firstName} {applicant.employee.lastName}
+                          </h3>
+                          <p className="text-muted-foreground">
+                            {applicant.employee.kycDetails?.workExperience || 'Experience not specified'}
+                          </p>
                           <div className="flex items-center gap-2 mt-1">
                             <Star className="h-4 w-4 text-amber-500 fill-current" />
-                            <span className="font-medium">{applicant.rating}</span>
+                            <span className="font-medium">4.5</span>
                             <Badge 
                               className="ml-2"
                               style={{
@@ -1385,13 +1501,13 @@ export default function EmployerJobsPage() {
                                 color: currentTheme.colors.primary
                               }}
                             >
-                              {applicant.match} match
+                              85% match
                             </Badge>
                           </div>
                         </div>
                       </div>
                       <Badge className={getStatusColor(applicant.status)}>
-                        {applicant.status === 'new' ? 'New' : 'Reviewed'}
+                        {applicant.status.replace('_', ' ')}
                       </Badge>
                     </div>
                     
@@ -1400,17 +1516,19 @@ export default function EmployerJobsPage() {
                         <div className="flex items-center gap-2">
                           <DollarSign className="h-4 w-4 text-muted-foreground" />
                           <span className="font-semibold" style={{ color: currentTheme.colors.primary }}>
-                            {applicant.salary}
+                            {applicant.expectedSalary || 'Not specified'} OMR
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">Available {applicant.available}</span>
+                          <span className="text-sm">
+                            Applied {new Date(applicant.createdAt).toLocaleDateString()}
+                          </span>
                         </div>
                       </div>
                       <div className="space-y-2">
                         <div className="flex flex-wrap gap-1">
-                          {applicant.skills.slice(0, 3).map((skill, index) => (
+                          {applicant.employee.kycDetails?.skills?.slice(0, 3).map((skill: string, index: number) => (
                             <Badge key={index} variant="outline" className="text-xs">
                               {skill}
                             </Badge>
@@ -1418,6 +1536,14 @@ export default function EmployerJobsPage() {
                         </div>
                       </div>
                     </div>
+                    
+                    {applicant.coverLetter && (
+                      <div className="mb-4">
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {applicant.coverLetter}
+                        </p>
+                      </div>
+                    )}
                     
                     <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" className="flex-1">
@@ -1440,6 +1566,14 @@ export default function EmployerJobsPage() {
                     </div>
                   </div>
                 ))}
+                
+                {applications.filter(app => app.jobId === applicantsView).length === 0 && (
+                  <div className="text-center py-12">
+                    <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                    <h3 className="text-lg font-semibold mb-2">No Applicants Yet</h3>
+                    <p className="text-muted-foreground">No one has applied to this job yet.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1489,9 +1623,9 @@ export default function EmployerJobsPage() {
 
               {/* Posted Jobs Tab */}
               <TabsContent value="posted" className="space-y-4 p-6">
-                {jobsData.posted.length > 0 ? (
+                {jobs.length > 0 ? (
                   <div className="grid gap-4">
-                    {jobsData.posted.map((job) => (
+                    {jobs.map((job) => (
                       <div 
                         key={job.id}
                         className="rounded-2xl p-4 border transition-all duration-300 hover:scale-105"
@@ -1506,39 +1640,44 @@ export default function EmployerJobsPage() {
                             <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                               <div className="flex items-center gap-1">
                                 <MapPin className="h-4 w-4" />
-                                {job.location}
+                                {job.city}
                               </div>
                               <div className="flex items-center gap-1">
                                 <DollarSign className="h-4 w-4" />
-                                {job.salary}
+                                {job.salary} {job.salaryCurrency}
                               </div>
                               <div className="flex items-center gap-1">
                                 <Users className="h-4 w-4" />
-                                {job.applications} applicants
+                                {job._count?.applications || 0} applicants
                               </div>
                               <div className="flex items-center gap-1">
                                 <Eye className="h-4 w-4" />
-                                {job.views} views
+                                {job._count?.views || 0} views
                               </div>
                             </div>
-                            <p className="text-sm text-muted-foreground mb-3">{job.description}</p>
+                            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{job.description}</p>
                             
                             <div className="flex flex-wrap gap-2 mb-3">
-                              {job.requirements.slice(0, 3).map((req, index) => (
+                              {job.duties.slice(0, 3).map((duty: string, index: number) => (
                                 <Badge key={index} variant="outline" className="text-xs">
-                                  {req}
+                                  {duty}
                                 </Badge>
                               ))}
+                              {job.duties.length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{job.duties.length - 3} more
+                                </Badge>
+                              )}
                             </div>
                           </div>
                           <Badge className={getStatusColor(job.status)}>
-                            {job.status}
+                            {getStatusText(job.status)}
                           </Badge>
                         </div>
                         
                         <div className="flex items-center justify-between">
                           <div className="text-sm text-muted-foreground">
-                            Posted on {new Date(job.postedDate).toLocaleDateString()}
+                            Posted on {new Date(job.postedAt || job.createdAt).toLocaleDateString()}
                           </div>
                           <div className="flex items-center gap-2">
                             <Button 
@@ -1547,14 +1686,22 @@ export default function EmployerJobsPage() {
                               onClick={() => setApplicantsView(job.id)}
                             >
                               <Users className="h-4 w-4 mr-2" />
-                              View Applicants ({job.applications})
+                              View Applicants ({job._count?.applications || 0})
                             </Button>
-                            <Button variant="outline" size="sm">
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => updateJobStatus(job.id, 'CLOSED')}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Close Job
                             </Button>
-                            <Button variant="outline" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => deleteJob(job.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </div>
@@ -1582,9 +1729,9 @@ export default function EmployerJobsPage() {
 
               {/* Drafts Tab */}
               <TabsContent value="drafts" className="space-y-4 p-6">
-                {jobsData.drafts.length > 0 ? (
+                {drafts.length > 0 ? (
                   <div className="grid gap-4">
-                    {jobsData.drafts.map((draft) => (
+                    {drafts.map((draft) => (
                       <div 
                         key={draft.id}
                         className="rounded-2xl p-4 border transition-all duration-300 hover:scale-105"
@@ -1599,33 +1746,40 @@ export default function EmployerJobsPage() {
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <MapPin className="h-4 w-4" />
-                                {draft.location}
+                                {draft.city}
                               </div>
                               <div className="flex items-center gap-1">
                                 <DollarSign className="h-4 w-4" />
-                                {draft.salary}
+                                {draft.salary} {draft.salaryCurrency}
                               </div>
                             </div>
                           </div>
                           <Badge className={getStatusColor(draft.status)}>
-                            {draft.status}
+                            {getStatusText(draft.status)}
                           </Badge>
                         </div>
                         
                         <div className="flex items-center justify-between">
                           <div className="text-sm text-muted-foreground">
-                            Last edited {new Date(draft.lastEdited).toLocaleDateString()}
+                            Last edited {new Date(draft.updatedAt).toLocaleDateString()}
                           </div>
                           <div className="flex items-center gap-2">
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => setShowJobStepper(true)}
+                              onClick={() => {
+                                setJobForm(draft)
+                                setShowJobStepper(true)
+                              }}
                             >
                               <Edit className="h-4 w-4 mr-2" />
                               Continue Editing
                             </Button>
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => deleteJob(draft.id)}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -1644,11 +1798,73 @@ export default function EmployerJobsPage() {
 
               {/* Closed Tab */}
               <TabsContent value="closed" className="space-y-4 p-6">
-                <div className="text-center py-12">
-                  <CheckCircle className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
-                  <h3 className="text-lg font-semibold mb-2">No Closed Jobs</h3>
-                  <p className="text-muted-foreground">Closed jobs will appear here</p>
-                </div>
+                {closedJobs.length > 0 ? (
+                  <div className="grid gap-4">
+                    {closedJobs.map((job) => (
+                      <div 
+                        key={job.id}
+                        className="rounded-2xl p-4 border transition-all duration-300 hover:scale-105"
+                        style={{
+                          backgroundColor: currentTheme.colors.backgroundLight,
+                          borderColor: currentTheme.colors.border
+                        }}
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg mb-2">{job.title}</h3>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-4 w-4" />
+                                {job.city}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <DollarSign className="h-4 w-4" />
+                                {job.salary} {job.salaryCurrency}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Users className="h-4 w-4" />
+                                {job._count?.applications || 0} applicants
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{job.description}</p>
+                          </div>
+                          <Badge className={getStatusColor(job.status)}>
+                            {getStatusText(job.status)}
+                          </Badge>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm text-muted-foreground">
+                            Closed on {new Date(job.closedAt || job.updatedAt).toLocaleDateString()}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => updateJobStatus(job.id, 'ACTIVE')}
+                            >
+                              <Briefcase className="h-4 w-4 mr-2" />
+                              Reopen
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => deleteJob(job.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <CheckCircle className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                    <h3 className="text-lg font-semibold mb-2">No Closed Jobs</h3>
+                    <p className="text-muted-foreground">Closed jobs will appear here</p>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>
