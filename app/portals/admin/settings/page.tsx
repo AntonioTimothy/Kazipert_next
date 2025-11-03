@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { PortalLayout } from "@/components/portal-layout"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -71,18 +70,6 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-// Mock data for navigation
-const navigation = [
-  { name: "Home", href: "/admin/dashboard", icon: Home },
-  { name: "Workers", href: "/admin/workers", icon: Users },
-  { name: "Employers", href: "/admin/employers", icon: Briefcase },
-  { name: "Contracts", href: "/admin/contracts", icon: FileText },
-  { name: "Distress Reports", href: "/admin/distress", icon: AlertTriangle },
-  { name: "Services", href: "/admin/services", icon: Shield },
-  { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
-]
-
 // Mock user data
 const user = {
   name: "Admin User",
@@ -98,42 +85,42 @@ const userRoles = [
     label: "Super Admin",
     description: "Full system access and management",
     icon: Shield,
-    color: "bg-red-100 text-red-700"
+    color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
   },
   {
     value: "super_contractor",
     label: "Super Contractor",
     description: "Full system access and management",
     icon: Shield,
-    color: "bg-red-100 text-red-700"
+    color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
   },
   {
     value: "hospital_admin",
     label: "Hospital Admin",
     description: "Manage medical records and certifications",
     icon: Building,
-    color: "bg-blue-100 text-blue-700"
+    color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
   },
   {
     value: "photo_studio_admin",
     label: "Photo Studio Admin",
     description: "Upload and manage professional photos",
     icon: Camera,
-    color: "bg-purple-100 text-purple-700"
+    color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
   },
   {
     value: "embassy_admin",
     label: "Embassy Admin",
     description: "View analytics and system reports",
     icon: Flag,
-    color: "bg-green-100 text-green-700"
+    color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
   },
   {
     value: "custom",
     label: "Custom Role",
     description: "Create custom permissions",
     icon: Settings,
-    color: "bg-amber-100 text-amber-700"
+    color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
   }
 ]
 
@@ -340,7 +327,7 @@ export default function SettingsPage() {
 
   const getStatusBadge = (status: string) => {
     if (status === "active") {
-      return <Badge className="bg-green-100 text-green-700 flex items-center gap-1"><CheckCircle className="h-3 w-3" />Active</Badge>
+      return <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 flex items-center gap-1"><CheckCircle className="h-3 w-3" />Active</Badge>
     }
     return <Badge variant="outline" className="flex items-center gap-1"><Clock className="h-3 w-3" />Pending</Badge>
   }
@@ -376,19 +363,19 @@ export default function SettingsPage() {
                   <div className={cn(
                     "w-14 h-14 rounded-2xl flex items-center justify-center border-2 font-semibold transition-all duration-500 relative z-10",
                     isCompleted && "bg-green-500 border-green-500 text-white scale-110 shadow-lg",
-                    isCurrent && "bg-[#f5c849] border-[#f5c849] text-amber-900 scale-110 shadow-lg",
-                    !isCompleted && !isCurrent && "border-amber-200 bg-amber-50 text-amber-400"
+                    isCurrent && "bg-blue-500 border-blue-500 text-white scale-110 shadow-lg",
+                    !isCompleted && !isCurrent && "border-gray-300 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 text-gray-400"
                   )}>
                     {isCompleted ? (
                       <CheckCircle className="h-6 w-6" />
                     ) : (
-                      <StepIcon className={cn("h-5 w-5", isCurrent ? "text-amber-900" : "text-amber-400")} />
+                      <StepIcon className={cn("h-5 w-5", isCurrent ? "text-white" : "text-gray-400")} />
                     )}
                     <div className={cn(
                       "absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300",
                       isCompleted && "bg-green-600 text-white",
-                      isCurrent && "bg-amber-600 text-white",
-                      !isCompleted && !isCurrent && "bg-amber-200 text-amber-600"
+                      isCurrent && "bg-blue-600 text-white",
+                      !isCompleted && !isCurrent && "bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
                     )}>
                       {step.number}
                     </div>
@@ -396,17 +383,17 @@ export default function SettingsPage() {
                   <div className="mt-3">
                     <div className={cn(
                       "text-sm font-semibold transition-colors",
-                      isCompleted && "text-green-700",
-                      isCurrent && "text-amber-900",
-                      !isCompleted && !isCurrent && "text-amber-500"
+                      isCompleted && "text-green-700 dark:text-green-300",
+                      isCurrent && "text-blue-700 dark:text-blue-300",
+                      !isCompleted && !isCurrent && "text-gray-500 dark:text-gray-400"
                     )}>
                       {step.title}
                     </div>
                     <div className={cn(
                       "text-xs transition-colors hidden sm:block",
-                      isCompleted && "text-green-600",
-                      isCurrent && "text-amber-600",
-                      !isCompleted && !isCurrent && "text-amber-400"
+                      isCompleted && "text-green-600 dark:text-green-400",
+                      isCurrent && "text-blue-600 dark:text-blue-400",
+                      !isCompleted && !isCurrent && "text-gray-400 dark:text-gray-500"
                     )}>
                       {step.description}
                     </div>
@@ -415,7 +402,7 @@ export default function SettingsPage() {
                 {index < steps.length - 1 && (
                   <div className={cn(
                     "hidden sm:block flex-1 h-1 mx-4 transition-all duration-500",
-                    isCompleted ? "bg-green-400" : "bg-amber-200"
+                    isCompleted ? "bg-green-400" : "bg-gray-200 dark:bg-gray-700"
                   )} />
                 )}
               </div>
@@ -440,31 +427,52 @@ export default function SettingsPage() {
   }
 
   return (
-    <PortalLayout navigation={navigation} user={user}>
-      <div className="space-y-6 p-4 sm:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-900 dark:to-gray-900 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-amber-900">Settings</h1>
-            <p className="text-amber-600 mt-1">Manage your account and system preferences</p>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-500/10 rounded-lg">
+                <Settings className="h-8 w-8 text-blue-500" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  System Settings
+                </h1>
+                <p className="text-muted-foreground">Manage your account and system preferences</p>
+              </div>
+            </div>
           </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 p-1 bg-amber-50/50 rounded-2xl">
-            <TabsTrigger value="access" className="flex items-center gap-2 data-[state=active]:bg-[#f5c849] rounded-xl py-3">
+          <TabsList className="grid w-full grid-cols-4 p-1 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border">
+            <TabsTrigger 
+              value="access" 
+              className="flex items-center gap-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg py-3 transition-all"
+            >
               <Shield className="h-4 w-4" />
               <span className="hidden sm:inline">Access</span>
             </TabsTrigger>
-            <TabsTrigger value="profile" className="flex items-center gap-2 data-[state=active]:bg-[#f5c849] rounded-xl py-3">
+            <TabsTrigger 
+              value="profile" 
+              className="flex items-center gap-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg py-3 transition-all"
+            >
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Profile</span>
             </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center gap-2 data-[state=active]:bg-[#f5c849] rounded-xl py-3">
+            <TabsTrigger 
+              value="security" 
+              className="flex items-center gap-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg py-3 transition-all"
+            >
               <Lock className="h-4 w-4" />
               <span className="hidden sm:inline">Security</span>
             </TabsTrigger>
-            <TabsTrigger value="system" className="flex items-center gap-2 data-[state=active]:bg-[#f5c849] rounded-xl py-3">
+            <TabsTrigger 
+              value="system" 
+              className="flex items-center gap-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg py-3 transition-all"
+            >
               <Settings className="h-4 w-4" />
               <span className="hidden sm:inline">System</span>
             </TabsTrigger>
@@ -472,15 +480,15 @@ export default function SettingsPage() {
 
           {/* Access Control Tab */}
           <TabsContent value="access" className="space-y-6">
-            <Card className="border-amber-200/50 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-amber-50 to-amber-100/30 border-b border-amber-200/40 rounded-t-lg">
+            <Card className="bg-white dark:bg-gray-800 shadow-lg border-0">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/30 dark:from-blue-950/20 dark:to-blue-900/10 border-b rounded-t-xl">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <CardTitle className="text-amber-900 flex items-center gap-2">
+                    <CardTitle className="text-blue-900 dark:text-blue-100 flex items-center gap-2">
                       <Shield className="h-6 w-6" />
                       Admin Management
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-blue-700 dark:text-blue-300">
                       Manage system administrators and their permissions
                     </CardDescription>
                   </div>
@@ -489,18 +497,18 @@ export default function SettingsPage() {
                     if (!open) resetForm()
                   }}>
                     <DialogTrigger asChild>
-                      <Button className="bg-[#f5c849] hover:bg-amber-500 text-amber-900 font-semibold shadow-md w-full sm:w-auto">
+                      <Button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold shadow-lg w-full sm:w-auto transition-all hover:scale-105">
                         <Plus className="h-4 w-4 mr-2" />
                         Add Admin
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+                    <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 border-0 shadow-2xl">
                       <DialogHeader>
-                        <DialogTitle className="text-amber-900 flex items-center gap-2 text-xl">
+                        <DialogTitle className="text-blue-900 dark:text-blue-100 flex items-center gap-2 text-xl">
                           <User className="h-6 w-6" />
                           Add New Administrator
                         </DialogTitle>
-                        <DialogDescription className="text-base">
+                        <DialogDescription className="text-base text-gray-600 dark:text-gray-300">
                           Create a new administrator account with specific permissions and access levels.
                         </DialogDescription>
                       </DialogHeader>
@@ -511,45 +519,45 @@ export default function SettingsPage() {
                         <div className="space-y-6 p-2">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div className="space-y-3">
-                              <Label htmlFor="firstName" className="text-amber-900 font-medium">First Name *</Label>
+                              <Label htmlFor="firstName" className="text-gray-700 dark:text-gray-300 font-medium">First Name *</Label>
                               <Input
                                 id="firstName"
                                 placeholder="Enter first name"
                                 value={newAdmin.firstName}
                                 onChange={(e) => setNewAdmin(prev => ({ ...prev, firstName: e.target.value }))}
-                                className="bg-amber-50/50 border-amber-200 h-12 text-lg"
+                                className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 h-12 text-lg focus:border-blue-500"
                               />
                             </div>
                             <div className="space-y-3">
-                              <Label htmlFor="lastName" className="text-amber-900 font-medium">Last Name *</Label>
+                              <Label htmlFor="lastName" className="text-gray-700 dark:text-gray-300 font-medium">Last Name *</Label>
                               <Input
                                 id="lastName"
                                 placeholder="Enter last name"
                                 value={newAdmin.lastName}
                                 onChange={(e) => setNewAdmin(prev => ({ ...prev, lastName: e.target.value }))}
-                                className="bg-amber-50/50 border-amber-200 h-12 text-lg"
+                                className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 h-12 text-lg focus:border-blue-500"
                               />
                             </div>
                           </div>
                           <div className="space-y-3">
-                            <Label htmlFor="email" className="text-amber-900 font-medium">Email Address *</Label>
+                            <Label htmlFor="email" className="text-gray-700 dark:text-gray-300 font-medium">Email Address *</Label>
                             <Input
                               id="email"
                               type="email"
                               placeholder="Enter email address"
                               value={newAdmin.email}
                               onChange={(e) => setNewAdmin(prev => ({ ...prev, email: e.target.value }))}
-                              className="bg-amber-50/50 border-amber-200 h-12 text-lg"
+                              className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 h-12 text-lg focus:border-blue-500"
                             />
                           </div>
                           <div className="space-y-3">
-                            <Label htmlFor="phone" className="text-amber-900 font-medium">Phone Number</Label>
+                            <Label htmlFor="phone" className="text-gray-700 dark:text-gray-300 font-medium">Phone Number</Label>
                             <Input
                               id="phone"
                               placeholder="Enter phone number"
                               value={newAdmin.phone}
                               onChange={(e) => setNewAdmin(prev => ({ ...prev, phone: e.target.value }))}
-                              className="bg-amber-50/50 border-amber-200 h-12 text-lg"
+                              className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 h-12 text-lg focus:border-blue-500"
                             />
                           </div>
                         </div>
@@ -558,15 +566,15 @@ export default function SettingsPage() {
                       {newAdmin.step === 2 && (
                         <div className="space-y-6 p-2">
                           <div className="space-y-3">
-                            <Label htmlFor="company" className="text-amber-900 font-medium">Company/Organization *</Label>
+                            <Label htmlFor="company" className="text-gray-700 dark:text-gray-300 font-medium">Company/Organization *</Label>
                             <Input
                               id="company"
                               placeholder="Enter company or organization name"
                               value={newAdmin.company}
                               onChange={(e) => setNewAdmin(prev => ({ ...prev, company: e.target.value }))}
-                              className="bg-amber-50/50 border-amber-200 h-12 text-lg"
+                              className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 h-12 text-lg focus:border-blue-500"
                             />
-                            <p className="text-sm text-amber-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
                               Partner organization this admin will represent (e.g., Hospital, Photo Studio, Embassy)
                             </p>
                           </div>
@@ -576,7 +584,7 @@ export default function SettingsPage() {
                       {newAdmin.step === 3 && (
                         <div className="space-y-6 p-2">
                           <div className="space-y-4">
-                            <Label className="text-amber-900 font-medium text-lg">Select Role Type *</Label>
+                            <Label className="text-gray-700 dark:text-gray-300 font-medium text-lg">Select Role Type *</Label>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                               {userRoles.map((role) => (
                                 <div
@@ -584,8 +592,8 @@ export default function SettingsPage() {
                                   className={cn(
                                     "border-2 rounded-xl p-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105",
                                     newAdmin.role === role.value
-                                      ? "border-[#f5c849] bg-amber-50/70 shadow-md scale-105"
-                                      : "border-amber-200 hover:border-amber-300 bg-white"
+                                      ? "border-blue-500 bg-blue-50/70 dark:bg-blue-900/20 shadow-md scale-105"
+                                      : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700"
                                   )}
                                   onClick={() => setNewAdmin(prev => ({ ...prev, role: role.value }))}
                                 >
@@ -594,8 +602,8 @@ export default function SettingsPage() {
                                       <role.icon className="h-5 w-5" />
                                     </div>
                                     <div>
-                                      <div className="font-semibold text-amber-900">{role.label}</div>
-                                      <div className="text-xs text-amber-600 mt-1">{role.description}</div>
+                                      <div className="font-semibold text-gray-900 dark:text-gray-100">{role.label}</div>
+                                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">{role.description}</div>
                                     </div>
                                   </div>
                                 </div>
@@ -605,19 +613,19 @@ export default function SettingsPage() {
 
                           {newAdmin.role === "custom" && (
                             <div className="space-y-4">
-                              <Label className="text-amber-900 font-medium text-lg">Custom Permissions *</Label>
+                              <Label className="text-gray-700 dark:text-gray-300 font-medium text-lg">Custom Permissions *</Label>
                               <div className="space-y-4 max-h-60 overflow-y-auto">
                                 {permissionGroups.map((group) => (
-                                  <Card key={group.category} className="border-amber-200">
-                                    <CardHeader className="py-4 bg-amber-50/50">
-                                      <CardTitle className="text-sm text-amber-900">{group.category}</CardTitle>
+                                  <Card key={group.category} className="border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700">
+                                    <CardHeader className="py-4 bg-gray-50 dark:bg-gray-600/50">
+                                      <CardTitle className="text-sm text-gray-900 dark:text-gray-100">{group.category}</CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-3 py-4">
                                       {group.permissions.map((permission) => (
-                                        <div key={permission.id} className="flex items-center justify-between py-3 border-b border-amber-100 last:border-b-0">
+                                        <div key={permission.id} className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-600 last:border-b-0">
                                           <div className="flex-1">
-                                            <div className="font-medium text-amber-900">{permission.label}</div>
-                                            <div className="text-xs text-amber-600">{permission.description}</div>
+                                            <div className="font-medium text-gray-900 dark:text-gray-100">{permission.label}</div>
+                                            <div className="text-xs text-gray-600 dark:text-gray-400">{permission.description}</div>
                                           </div>
                                           <Switch
                                             checked={newAdmin.customPermissions.includes(permission.id)}
@@ -636,33 +644,33 @@ export default function SettingsPage() {
 
                       {newAdmin.step === 4 && (
                         <div className="space-y-6 p-2">
-                          <Card className="bg-green-50 border-green-200">
-                            <CardHeader className="bg-green-100/50">
-                              <CardTitle className="text-green-900 flex items-center gap-2 text-lg">
+                          <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
+                            <CardHeader className="bg-green-100/50 dark:bg-green-900/30">
+                              <CardTitle className="text-green-900 dark:text-green-100 flex items-center gap-2 text-lg">
                                 <CheckCircle className="h-5 w-5" />
                                 Ready to Create Account
                               </CardTitle>
-                              <CardDescription className="text-green-700">
+                              <CardDescription className="text-green-700 dark:text-green-300">
                                 The administrator will receive login instructions via email.
                               </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4 py-6">
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="flex justify-between">
-                                  <span className="text-amber-600 font-medium">Name:</span>
-                                  <span className="font-semibold text-amber-900">{newAdmin.firstName} {newAdmin.lastName}</span>
+                                  <span className="text-gray-600 dark:text-gray-400 font-medium">Name:</span>
+                                  <span className="font-semibold text-gray-900 dark:text-gray-100">{newAdmin.firstName} {newAdmin.lastName}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-amber-600 font-medium">Email:</span>
-                                  <span className="font-semibold text-amber-900">{newAdmin.email}</span>
+                                  <span className="text-gray-600 dark:text-gray-400 font-medium">Email:</span>
+                                  <span className="font-semibold text-gray-900 dark:text-gray-100">{newAdmin.email}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-amber-600 font-medium">Company:</span>
-                                  <span className="font-semibold text-amber-900">{newAdmin.company}</span>
+                                  <span className="text-gray-600 dark:text-gray-400 font-medium">Company:</span>
+                                  <span className="font-semibold text-gray-900 dark:text-gray-100">{newAdmin.company}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-amber-600 font-medium">Role:</span>
-                                  <span className="font-semibold text-amber-900">
+                                  <span className="text-gray-600 dark:text-gray-400 font-medium">Role:</span>
+                                  <span className="font-semibold text-gray-900 dark:text-gray-100">
                                     {userRoles.find(r => r.value === newAdmin.role)?.label}
                                   </span>
                                 </div>
@@ -670,12 +678,12 @@ export default function SettingsPage() {
                             </CardContent>
                           </Card>
                           
-                          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
                             <div className="flex items-start gap-3">
-                              <Mail className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                              <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                               <div>
-                                <p className="text-sm font-semibold text-blue-900">Login Instructions</p>
-                                <p className="text-sm text-blue-700 mt-1">
+                                <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">Login Instructions</p>
+                                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
                                   The new administrator will receive an email with login credentials and setup instructions at <strong>{newAdmin.email}</strong>.
                                   They will be required to change their password on first login.
                                 </p>
@@ -690,12 +698,12 @@ export default function SettingsPage() {
                           variant="outline"
                           disabled={newAdmin.step === 1}
                           onClick={() => setNewAdmin(prev => ({ ...prev, step: prev.step - 1 }))}
-                          className="w-full sm:w-auto border-amber-200 text-amber-700"
+                          className="w-full sm:w-auto border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                         >
                           Previous
                         </Button>
                         <Button
-                          className="bg-[#f5c849] hover:bg-amber-500 text-amber-900 font-semibold w-full sm:w-auto"
+                          className="bg-blue-500 hover:bg-blue-600 text-white font-semibold w-full sm:w-auto transition-all hover:scale-105"
                           onClick={async () => {
                             if (newAdmin.step < 4) {
                               setNewAdmin(prev => ({ ...prev, step: prev.step + 1 }))
@@ -713,7 +721,7 @@ export default function SettingsPage() {
                         >
                           {createLoading ? (
                             <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-900 mr-2"></div>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                               Creating...
                             </>
                           ) : newAdmin.step === 4 ? (
@@ -734,16 +742,16 @@ export default function SettingsPage() {
                 {/* Filters and Search */}
                 <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
                   <div className="flex-1 w-full relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                     <Input
                       placeholder="Search admins..."
-                      className="pl-10 bg-amber-50/50 border-amber-200 h-11"
+                      className="pl-10 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 h-11 focus:border-blue-500"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
                   <Select value={selectedRole} onValueChange={setSelectedRole}>
-                    <SelectTrigger className="w-full sm:w-40 bg-amber-50/50 border-amber-200 h-11">
+                    <SelectTrigger className="w-full sm:w-40 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 h-11">
                       <SelectValue placeholder="Filter by role" />
                     </SelectTrigger>
                     <SelectContent>
@@ -759,44 +767,44 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   {loading ? (
                     <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#f5c849] mx-auto"></div>
-                      <p className="text-amber-600 mt-2">Loading admins...</p>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                      <p className="text-gray-600 dark:text-gray-400 mt-2">Loading admins...</p>
                     </div>
                   ) : admins.length === 0 ? (
                     <div className="text-center py-8">
-                      <p className="text-amber-600">No admins found.</p>
+                      <p className="text-gray-600 dark:text-gray-400">No admins found.</p>
                     </div>
                   ) : (
                     admins.map((admin) => (
-                      <div key={admin.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-amber-200/50 rounded-xl hover:bg-amber-50/30 transition-all duration-200 gap-4">
+                      <div key={admin.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 gap-4">
                         <div className="flex items-center gap-4">
-                          <Avatar className="h-12 w-12 ring-2 ring-amber-200">
+                          <Avatar className="h-12 w-12 ring-2 ring-blue-200 dark:ring-blue-800">
                             <AvatarImage src={admin.avatar} alt={admin.name} />
-                            <AvatarFallback className="bg-[#f5c849] text-amber-900 font-semibold">
+                            <AvatarFallback className="bg-blue-500 text-white font-semibold">
                               {admin.name.split(' ').map(n => n[0]).join('')}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                              <h3 className="font-semibold text-amber-900 text-lg">{admin.name}</h3>
+                              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-lg">{admin.name}</h3>
                               {getStatusBadge(admin.status)}
                             </div>
-                            <p className="text-amber-600 text-sm mb-2">{admin.email}</p>
+                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">{admin.email}</p>
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                               {getRoleBadge(admin.role)}
-                              <span className="text-xs text-amber-500">Company: {admin.department}</span>
-                              <span className="text-xs text-amber-500 hidden sm:inline">• Last active: {admin.lastActive}</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">Company: {admin.department}</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">• Last active: {admin.lastActive}</span>
                             </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 self-end sm:self-auto">
-                          <Button variant="outline" size="sm" className="border-amber-200">
+                          <Button variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="border-red-200 text-red-600 hover:bg-red-50"
+                            className="border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                             onClick={() => deleteAdmin(admin.id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -810,20 +818,50 @@ export default function SettingsPage() {
             </Card>
           </TabsContent>
 
-          {/* Other tabs remain unchanged */}
+          {/* Other tabs would go here with similar styling */}
           <TabsContent value="profile">
-            {/* Profile content remains the same */}
+            <Card className="bg-white dark:bg-gray-800 shadow-lg border-0">
+              <CardHeader>
+                <CardTitle className="text-blue-900 dark:text-blue-100">Profile Settings</CardTitle>
+                <CardDescription>Manage your personal information and preferences</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  Profile settings content would go here
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="security">
-            {/* Security content remains the same */}
+            <Card className="bg-white dark:bg-gray-800 shadow-lg border-0">
+              <CardHeader>
+                <CardTitle className="text-blue-900 dark:text-blue-100">Security Settings</CardTitle>
+                <CardDescription>Manage your security preferences and authentication</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  Security settings content would go here
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="system">
-            {/* System content remains the same */}
+            <Card className="bg-white dark:bg-gray-800 shadow-lg border-0">
+              <CardHeader>
+                <CardTitle className="text-blue-900 dark:text-blue-100">System Settings</CardTitle>
+                <CardDescription>Configure system-wide preferences and behavior</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  System settings content would go here
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
-    </PortalLayout>
+    </div>
   )
 }

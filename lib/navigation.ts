@@ -115,27 +115,27 @@ export const navigationConfig: NavigationItem[] = [
     },
     {
         name: "Jobs",
-        href: "/portals/employer/post-job",
+        href: "/portals/employer/loading",
         icon: Briefcase,
         roles: ["employer"]
     },
 
     {
         name: "Contracts",
-        href: "/portals/employer/contracts",
+        href: "/portals/employer/loading",
         icon: Briefcase,
         roles: ["employer"]
     },
 
     {
         name: "Payments",
-        href: "/portals/employer/payments",
+        href: "/portals/employer/loading",
         icon: CreditCard,
         roles: ["employer"]
     },
     {
         name: "Support",
-        href: "/portals/employer/support",
+        href: "/portals/employer/loading",
         icon: MessageSquare,
         roles: ["employer"]
     },
@@ -152,7 +152,8 @@ export const navigationConfig: NavigationItem[] = [
         href: "/portals/admin/dashboard",
         icon: Home,
         roles: ["admin"],
-        permissions: ["view_dashboard"]
+        permissions: ["manage_cases"],
+
     },
 
     // Cases Management
@@ -166,14 +167,14 @@ export const navigationConfig: NavigationItem[] = [
         children: [
             {
                 name: "All Cases",
-                href: "/portals/admin/cases",
+                href: "/portals/admin/distress",
                 icon: ClipboardList,
                 roles: ["admin"],
                 permissions: ["view_cases"]
             },
             {
                 name: "Worker Reports",
-                href: "/portals/admin/cases/worker-reports",
+                href: "/portals/admin/cases/loading",
                 icon: Users,
                 roles: ["admin"],
                 permissions: ["view_worker_cases"],
@@ -181,7 +182,7 @@ export const navigationConfig: NavigationItem[] = [
             },
             {
                 name: "Employer Reports",
-                href: "/portals/admin/cases/employer-reports",
+                href: "/portals/admin/cases/loading",
                 icon: Building,
                 roles: ["admin"],
                 permissions: ["view_employer_cases"],
@@ -189,7 +190,7 @@ export const navigationConfig: NavigationItem[] = [
             },
             {
                 name: "Dispute Resolution",
-                href: "/portals/admin/cases/disputes",
+                href: "/portals/admin/cases/",
                 icon: Scale,
                 roles: ["admin"],
                 permissions: ["manage_disputes"],
@@ -197,7 +198,7 @@ export const navigationConfig: NavigationItem[] = [
             },
             {
                 name: "Case Analytics",
-                href: "/portals/admin/cases/analytics",
+                href: "/portals/admin/cases/loading",
                 icon: TrendingUp,
                 roles: ["admin"],
                 permissions: ["view_case_analytics"]
@@ -208,28 +209,28 @@ export const navigationConfig: NavigationItem[] = [
     // User Management
     {
         name: "User Management",
-        href: "/portals/admin/users",
+        href: "/portals/admin/loading",
         icon: Users,
         roles: ["admin"],
         permissions: ["manage_users"],
         children: [
             {
                 name: "All Workers",
-                href: "/portals/admin/workers",
+                href: "/portals/admin/loading",
                 icon: Users,
                 roles: ["admin"],
                 permissions: ["view_workers"]
             },
             {
                 name: "All Employers",
-                href: "/portals/admin/employers",
+                href: "/portals/admin/loading",
                 icon: Building,
                 roles: ["admin"],
                 permissions: ["view_employers"]
             },
             {
                 name: "Pending Verification",
-                href: "/portals/admin/users/pending",
+                href: "/portals/admin/loading",
                 icon: UserCheck,
                 roles: ["admin"],
                 permissions: ["verify_users"],
@@ -237,7 +238,7 @@ export const navigationConfig: NavigationItem[] = [
             },
             {
                 name: "Suspended Accounts",
-                href: "/portals/admin/users/suspended",
+                href: "/portals/admin/loading",
                 icon: ShieldCheck,
                 roles: ["admin"],
                 permissions: ["manage_users"],
@@ -245,7 +246,7 @@ export const navigationConfig: NavigationItem[] = [
             },
             {
                 name: "User Activity",
-                href: "/portals/admin/users/activity",
+                href: "/portals/admin/users/loading",
                 icon: Activity,
                 roles: ["admin"],
                 permissions: ["view_user_activity"]
@@ -256,21 +257,21 @@ export const navigationConfig: NavigationItem[] = [
     // Finance & Accounting
     {
         name: "Finance",
-        href: "/portals/admin/finance",
+        href: "/portals/admin/loading",
         icon: DollarSign,
         roles: ["admin"],
         permissions: ["manage_finance"],
         children: [
             {
                 name: "Financial Dashboard",
-                href: "/portals/admin/finance/dashboard",
+                href: "/portals/admin/loading",
                 icon: PieChart,
                 roles: ["admin"],
                 permissions: ["view_finance"]
             },
             {
                 name: "Revenue & Profit",
-                href: "/portals/admin/finance/revenue",
+                href: "/portals/admin/loading",
                 icon: TrendingUp,
                 roles: ["admin"],
                 permissions: ["view_revenue"],
@@ -278,21 +279,21 @@ export const navigationConfig: NavigationItem[] = [
             },
             {
                 name: "Expenses",
-                href: "/portals/admin/finance/expenses",
+                href: "/portals/admin/loading",
                 icon: Receipt,
                 roles: ["admin"],
                 permissions: ["manage_expenses"]
             },
             {
                 name: "Transactions",
-                href: "/portals/admin/finance/transactions",
+                href: "/portals/admin/loading",
                 icon: CreditCard,
                 roles: ["admin"],
                 permissions: ["view_transactions"]
             },
             {
                 name: "Invoicing",
-                href: "/portals/admin/finance/invoices",
+                href: "/portals/admin/loading",
                 icon: FileText,
                 roles: ["admin"],
                 permissions: ["manage_invoices"],
@@ -300,21 +301,21 @@ export const navigationConfig: NavigationItem[] = [
             },
             {
                 name: "Tax Management",
-                href: "/portals/admin/finance/taxes",
+                href: "/portals/admin/loading",
                 icon: Calculator,
                 roles: ["admin"],
                 permissions: ["manage_taxes"]
             },
             {
                 name: "Financial Reports",
-                href: "/portals/admin/finance/reports",
+                href: "/portals/admin/loading",
                 icon: BarChart3,
                 roles: ["admin"],
                 permissions: ["view_financial_reports"]
             },
             {
                 name: "Payment Gateway",
-                href: "/portals/admin/finance/payments",
+                href: "/portals/admin/loading",
                 icon: Banknote,
                 roles: ["admin"],
                 permissions: ["manage_payments"]
@@ -325,21 +326,21 @@ export const navigationConfig: NavigationItem[] = [
     // HR & Payroll Management
     {
         name: "Human Resources",
-        href: "/portals/admin/hr",
+        href: "/portals/admin/loading",
         icon: UserCog,
         roles: ["admin"],
         permissions: ["manage_hr"],
         children: [
             {
                 name: "Employee Directory",
-                href: "/portals/admin/hr/employees",
+                href: "/portals/admin/loading",
                 icon: Users,
                 roles: ["admin"],
                 permissions: ["view_employees"]
             },
             {
                 name: "Payroll Processing",
-                href: "/portals/admin/hr/payroll",
+                href: "/portals/admin/loading",
                 icon: Calculator,
                 roles: ["admin"],
                 permissions: ["process_payroll"],
@@ -347,35 +348,35 @@ export const navigationConfig: NavigationItem[] = [
             },
             {
                 name: "Salary Structure",
-                href: "/portals/admin/hr/salaries",
+                href: "/portals/admin/loading",
                 icon: DollarSign,
                 roles: ["admin"],
                 permissions: ["manage_salaries"]
             },
             {
                 name: "Tax & Deductions",
-                href: "/portals/admin/hr/tax-deductions",
+                href: "/portals/admin/loading",
                 icon: Scale,
                 roles: ["admin"],
                 permissions: ["manage_tax_deductions"]
             },
             {
                 name: "Attendance",
-                href: "/portals/admin/hr/attendance",
+                href: "/portals/admin/loading",
                 icon: Clock,
                 roles: ["admin"],
                 permissions: ["view_attendance"]
             },
             {
                 name: "Performance Reviews",
-                href: "/portals/admin/hr/performance",
+                href: "/portals/admin/loading",
                 icon: Award,
                 roles: ["admin"],
                 permissions: ["manage_performance"]
             },
             {
                 name: "HR Analytics",
-                href: "/portals/admin/hr/analytics",
+                href: "/portals/admin/loading",
                 icon: BarChart3,
                 roles: ["admin"],
                 permissions: ["view_hr_analytics"]
@@ -386,42 +387,42 @@ export const navigationConfig: NavigationItem[] = [
     // Analytics & Business Intelligence
     {
         name: "Analytics",
-        href: "/portals/admin/analytics",
+        href: "/portals/admin/loading",
         icon: BarChart3,
         roles: ["admin"],
         permissions: ["view_analytics"],
         children: [
             {
                 name: "Business Overview",
-                href: "/portals/admin/analytics/overview",
+                href: "/portals/admin/loading",
                 icon: PieChart,
                 roles: ["admin"],
                 permissions: ["view_business_analytics"]
             },
             {
                 name: "Financial Performance",
-                href: "/portals/admin/analytics/financial",
+                href: "/portals/admin/loading",
                 icon: DollarSign,
                 roles: ["admin"],
                 permissions: ["view_financial_analytics"]
             },
             {
                 name: "User Analytics",
-                href: "/portals/admin/analytics/users",
+                href: "/portals/admin/loading",
                 icon: Users,
                 roles: ["admin"],
                 permissions: ["view_user_analytics"]
             },
             {
                 name: "Call Center Dashboard",
-                href: "/portals/admin/analytics/call-center",
+                href: "/portals/admin/loading",
                 icon: Headphones,
                 roles: ["admin"],
                 permissions: ["view_call_analytics"]
             },
             {
                 name: "Distress Analytics",
-                href: "/portals/admin/analytics/distress",
+                href: "/portals/admin/loading",
                 icon: AlertTriangle,
                 roles: ["admin"],
                 permissions: ["view_distress_analytics"],
@@ -429,21 +430,21 @@ export const navigationConfig: NavigationItem[] = [
             },
             {
                 name: "Platform Performance",
-                href: "/portals/admin/analytics/performance",
+                href: "/portals/admin/loading",
                 icon: Zap,
                 roles: ["admin"],
                 permissions: ["view_performance_metrics"]
             },
             {
                 name: "Geographic Analytics",
-                href: "/portals/admin/analytics/geographic",
+                href: "/portals/admin/loading",
                 icon: Globe,
                 roles: ["admin"],
                 permissions: ["view_geo_analytics"]
             },
             {
                 name: "Custom Reports",
-                href: "/portals/admin/analytics/custom",
+                href: "/portals/admin/loading",
                 icon: LineChart,
                 roles: ["admin"],
                 permissions: ["create_custom_reports"]
@@ -454,21 +455,21 @@ export const navigationConfig: NavigationItem[] = [
     // Job & Contract Management
     {
         name: "Jobs & Contracts",
-        href: "/portals/admin/jobs",
+        href: "/portals/admin/loading",
         icon: Briefcase,
         roles: ["admin"],
         permissions: ["manage_jobs"],
         children: [
             {
                 name: "All Jobs",
-                href: "/portals/admin/jobs",
+                href: "/portals/admin/loading",
                 icon: FolderOpen,
                 roles: ["admin"],
                 permissions: ["view_jobs"]
             },
             {
                 name: "Active Contracts",
-                href: "/portals/admin/contracts/active",
+                href: "/portals/admin/loading",
                 icon: FileText,
                 roles: ["admin"],
                 permissions: ["view_contracts"],
@@ -476,21 +477,21 @@ export const navigationConfig: NavigationItem[] = [
             },
             {
                 name: "Contract History",
-                href: "/portals/admin/contracts/history",
+                href: "/portals/admin/loading",
                 icon: ClipboardList,
                 roles: ["admin"],
                 permissions: ["view_contract_history"]
             },
             {
                 name: "Job Categories",
-                href: "/portals/admin/jobs/categories",
+                href: "/portals/admin/loading",
                 icon: Target,
                 roles: ["admin"],
                 permissions: ["manage_categories"]
             },
             {
                 name: "Skills Management",
-                href: "/portals/admin/jobs/skills",
+                href: "/portals/admin/loading",
                 icon: Award,
                 roles: ["admin"],
                 permissions: ["manage_skills"]
@@ -501,35 +502,35 @@ export const navigationConfig: NavigationItem[] = [
     // Services & Training
     {
         name: "Services",
-        href: "/portals/admin/services",
+        href: "/portals/admin/loading",
         icon: Shield,
         roles: ["admin"],
         permissions: ["manage_services"],
         children: [
             {
                 name: "Service Catalog",
-                href: "/portals/admin/services",
+                href: "/portals/admin/loading",
                 icon: Shield,
                 roles: ["admin"],
                 permissions: ["view_services"]
             },
             {
                 name: "Training Programs",
-                href: "/portals/admin/services/training",
+                href: "/portals/admin/loading",
                 icon: Video,
                 roles: ["admin"],
                 permissions: ["manage_training"]
             },
             {
                 name: "Certifications",
-                href: "/portals/admin/services/certifications",
+                href: "/portals/admin/loading",
                 icon: Award,
                 roles: ["admin"],
                 permissions: ["manage_certifications"]
             },
             {
                 name: "Service Analytics",
-                href: "/portals/admin/services/analytics",
+                href: "/portals/admin/loading",
                 icon: BarChart3,
                 roles: ["admin"],
                 permissions: ["view_service_analytics"]
@@ -540,7 +541,7 @@ export const navigationConfig: NavigationItem[] = [
     // Support & Communication
     {
         name: "Support Center",
-        href: "/portals/admin/support",
+        href: "/portals/admin/loading",
         icon: Headphones,
         roles: ["admin"],
         permissions: ["manage_support"],
@@ -548,7 +549,7 @@ export const navigationConfig: NavigationItem[] = [
         children: [
             {
                 name: "Support Tickets",
-                href: "/portals/admin/support/tickets",
+                href: "/portals/admin/loading",
                 icon: MessageSquare,
                 roles: ["admin"],
                 permissions: ["view_support_tickets"],
@@ -556,7 +557,7 @@ export const navigationConfig: NavigationItem[] = [
             },
             {
                 name: "Live Chat",
-                href: "/portals/admin/support/chat",
+                href: "/portals/admin/loading",
                 icon: MessageSquare,
                 roles: ["admin"],
                 permissions: ["manage_live_chat"],
@@ -564,21 +565,21 @@ export const navigationConfig: NavigationItem[] = [
             },
             {
                 name: "Email Support",
-                href: "/portals/admin/support/email",
+                href: "/portals/admin/loading",
                 icon: Mail,
                 roles: ["admin"],
                 permissions: ["manage_email_support"]
             },
             {
                 name: "Call Center",
-                href: "/portals/admin/support/calls",
+                href: "/portals/admin/loading",
                 icon: Phone,
                 roles: ["admin"],
                 permissions: ["view_call_center"]
             },
             {
                 name: "Knowledge Base",
-                href: "/portals/admin/support/knowledge",
+                href: "/portals/admin/loading",
                 icon: BookOpen,
                 roles: ["admin"],
                 permissions: ["manage_knowledge_base"]
@@ -588,54 +589,41 @@ export const navigationConfig: NavigationItem[] = [
 
     // System & Settings
     {
-        name: "System",
-        href: "/portals/admin/system",
+        name: "Settings",
+        href: "/portals/admin/settings",
         icon: Settings,
         roles: ["admin"],
         permissions: ["manage_system"],
         children: [
             {
                 name: "General Settings",
-                href: "/portals/admin/settings/general",
+                href: "/portals/admin/settings",
                 icon: Cog,
                 roles: ["admin"],
                 permissions: ["manage_settings"]
             },
             {
-                name: "Security",
-                href: "/portals/admin/settings/security",
+                name: "Profile",
+                href: "/portals/admin/kyc",
                 icon: Lock,
                 roles: ["admin"],
                 permissions: ["manage_security"]
             },
             {
                 name: "Notifications",
-                href: "/portals/admin/settings/notifications",
+                href: "/portals/admin/loading",
                 icon: Bell,
                 roles: ["admin"],
                 permissions: ["manage_notifications"]
             },
             {
                 name: "Database Management",
-                href: "/portals/admin/settings/database",
+                href: "/portals/admin/loading",
                 icon: Database,
                 roles: ["admin"],
                 permissions: ["manage_database"]
-            },
-            {
-                name: "API Management",
-                href: "/portals/admin/settings/api",
-                icon: Zap,
-                roles: ["admin"],
-                permissions: ["manage_api"]
-            },
-            {
-                name: "Backup & Recovery",
-                href: "/portals/admin/settings/backup",
-                icon: ShieldCheck,
-                roles: ["admin"],
-                permissions: ["manage_backup"]
             }
+
         ]
     }
 ]
@@ -665,14 +653,27 @@ const ALL_ADMIN_PERMISSIONS = getAllAdminPermissions()
 // Helper function to get navigation for a specific role
 export function getNavigationForRole(role: "employee" | "employer" | "admin", userPermissions: string[] = []) {
     // If user has no permissions and is admin, use dummy permissions with all access
-    const effectivePermissions = role === "admin" && userPermissions.length === 0
-        ? ALL_ADMIN_PERMISSIONS
-        : userPermissions
+    const effectivePermissions = ALL_ADMIN_PERMISSIONS
 
-    const filteredNavigation = navigationConfig.filter(item =>
-        item.roles.includes(role) &&
-        (!item.permissions || item.permissions.some(permission => effectivePermissions.includes(permission)))
-    )
+    const filteredNavigation = navigationConfig.filter(item => {
+        // First check if the item is for the current role
+        if (!item.roles.includes(role)) {
+            return false
+        }
+
+        // For admin with no specific permissions, show all admin items
+        if (role === "admin" && userPermissions.length === 0) {
+            return true
+        }
+
+        // If item has permissions, check if user has at least one of them
+        if (item.permissions && item.permissions.length > 0) {
+            return item.permissions.some(permission => effectivePermissions.includes(permission))
+        }
+
+        // If item has no permissions, show it
+        return true
+    })
 
     console.log(`🔧 getNavigationForRole: role=${role}, permissions=`, effectivePermissions)
     console.log(`📋 Filtered navigation for ${role}:`, filteredNavigation.map(item => item.name))
@@ -709,7 +710,14 @@ export function hasAccessToRoute(pathname: string, role: string, userPermissions
         console.log(`❌ Role mismatch: route requires ${route.roles}, user has ${role}`)
         return false
     }
-    if (route.permissions && !route.permissions.some(p => effectivePermissions.includes(p))) {
+
+    // For admin with no specific permissions, allow access to all admin routes
+    if (role === "admin" && userPermissions.length === 0) {
+        console.log(`✅ Admin access granted to ${pathname} (full admin privileges)`)
+        return true
+    }
+
+    if (route.permissions && route.permissions.length > 0 && !route.permissions.some(p => effectivePermissions.includes(p))) {
         console.log(`❌ Permission mismatch: route requires ${route.permissions}, user has`, effectivePermissions)
         return false
     }
@@ -719,11 +727,15 @@ export function hasAccessToRoute(pathname: string, role: string, userPermissions
 }
 
 // Helper function to get flat navigation (for mobile)
-export function getFlatNavigation(role: "worker" | "employer" | "admin", userPermissions: string[] = []) {
+export function getFlatNavigation(role: "employee" | "employer" | "admin", userPermissions: string[] = []) {
     // If user has no permissions and is admin, use dummy permissions with all access
-    const effectivePermissions = role === "admin" && userPermissions.length === 0
-        ? ALL_ADMIN_PERMISSIONS
-        : userPermissions
+    // const effectivePermissions = role === "admin" && userPermissions.length === 0
+    //     ? ALL_ADMIN_PERMISSIONS
+    //     : userPermissions
+
+    // temporarily added to give admin all rights from the db
+
+    const effectivePermissions = role === "admin" ? ALL_ADMIN_PERMISSIONS : userPermissions
 
     const navigation = getNavigationForRole(role, effectivePermissions)
     const flatNav: NavigationItem[] = []
@@ -772,6 +784,7 @@ export function getBreadcrumbForPath(pathname: string): { name: string; href: st
             }
         }
     }
+
 
     return breadcrumbs
 }

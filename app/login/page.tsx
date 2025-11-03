@@ -207,6 +207,7 @@ function LoginForm() {
       case 'EMPLOYER':
         return '/portals';
       case 'ADMIN':
+        return '/portals';
       case 'SUPER_ADMIN':
       case 'HOSPITAL_ADMIN':
       case 'PHOTO_STUDIO_ADMIN':
@@ -224,6 +225,8 @@ function LoginForm() {
       case 'EMPLOYER':
         return '/portals';
       case 'ADMIN':
+        return '/portals';
+
       case 'SUPER_ADMIN':
       case 'HOSPITAL_ADMIN':
       case 'PHOTO_STUDIO_ADMIN':
