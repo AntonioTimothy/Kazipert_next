@@ -39,7 +39,7 @@ export default function AdminDashboard() {
     }
 
     const parsedUser = JSON.parse(userData)
-    if (parsedUser.role !== "admin") {
+    if (parsedUser.role !== "ADMIN") {
       router.push("/login")
       return
     }

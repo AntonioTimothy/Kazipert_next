@@ -70,7 +70,7 @@ export const navigationConfig: NavigationItem[] = [
         icon: Briefcase,
         roles: ["employee"]
     },
-   
+
     {
         name: "Wallet",
         href: "/portals/worker/wallet",
@@ -103,8 +103,8 @@ export const navigationConfig: NavigationItem[] = [
         icon: Settings,
         roles: ["employee"]
     },
-    
-    
+
+
 
     // Employer Navigation - Updated to portals structure
     {
@@ -114,40 +114,22 @@ export const navigationConfig: NavigationItem[] = [
         roles: ["employer"]
     },
     {
-        name: "Post Job",
-        href: "/portals/employer/jobs/create",
+        name: "Jobs",
+        href: "/portals/employer/post-job",
         icon: Briefcase,
         roles: ["employer"]
     },
+
     {
-        name: "My Jobs",
-        href: "/portals/employer/jobs",
-        icon: FolderOpen,
-        roles: ["employer"],
-        badge: "5"
-    },
-    {
-        name: "Candidates",
-        href: "/portals/employer/candidates",
-        icon: Users,
+        name: "Contracts",
+        href: "/portals/employer/contracts",
+        icon: Briefcase,
         roles: ["employer"]
     },
+
     {
-        name: "Interviews",
-        href: "/portals/employer/interviews",
-        icon: Calendar,
-        roles: ["employer"],
-        badge: "2"
-    },
-    {
-        name: "Company Profile",
-        href: "/portals/employer/profile",
-        icon: Building,
-        roles: ["employer"]
-    },
-    {
-        name: "Billing",
-        href: "/portals/employer/billing",
+        name: "Payments",
+        href: "/portals/employer/payments",
         icon: CreditCard,
         roles: ["employer"]
     },
@@ -158,8 +140,8 @@ export const navigationConfig: NavigationItem[] = [
         roles: ["employer"]
     },
     {
-        name: "Reports",
-        href: "/portals/employer/reports",
+        name: "Settings",
+        href: "/portals/employer/settings",
         icon: BarChart3,
         roles: ["employer"]
     },
