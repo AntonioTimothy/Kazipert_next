@@ -595,7 +595,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                 <span className="text-xs font-bold text-text">Complete Profile</span>
               </div>
               <p className="text-xs text-text-muted mb-3">Verify your account to access all features</p>
-              <Link href={`/portals/${user.role.toLowerCase()}/onboarding`} className="block">
+              <Link href={`/portals/${user.role.toLowerCase() === 'employee' ? 'worker' : user.role.toLowerCase()}/onboarding`} className="block">
                 <Button 
                   className="w-full h-8 text-text font-semibold shadow-md hover:shadow-lg transition-all duration-300 rounded-lg text-xs"
                   style={{

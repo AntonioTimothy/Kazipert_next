@@ -35,7 +35,7 @@ export default function WorkerOnboardingPage() {
       }
 
       const parsedUser = JSON.parse(userData)
-      if (parsedUser.role !== "worker") {
+      if (parsedUser.role !== "EMPLOYEE") {
         router.push("/login")
         return
       }
