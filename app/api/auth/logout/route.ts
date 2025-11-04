@@ -1,19 +1,66 @@
 // app/api/auth/logout/route.ts
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { prisma } from '@/lib/prisma';
 
 export async function POST() {
     try {
         const cookieStore = await cookies();
 
-        // Clear all auth cookies
+        // Get the refresh token from cookies to delete from database
+        const refreshToken = cookieStore.get('refresh_token')?.value;
+
+        // If refresh token exists, delete it from database
+        if (refreshToken) {
+            try {
+                await prisma.refreshToken.deleteMany({
+                    where: {
+                        token: refreshToken
+                    }
+                });
+                console.log('Refresh token deleted from database');
+            } catch (dbError) {
+                console.error('Error deleting refresh token from database:', dbError);
+                // Continue with logout even if DB deletion fails
+            }
+        }
+
+        // Create response
         const response = NextResponse.json({
             message: 'Logout successful'
         }, { status: 200 });
 
-        response.cookies.delete('access_token');
-        response.cookies.delete('refresh_token');
-        response.cookies.delete('temp_session');
+        // Clear all auth cookies from the response
+        response.cookies.set({
+            name: 'access_token',
+            value: '',
+            expires: new Date(0),
+            path: '/',
+        });
+
+        response.cookies.set({
+            name: 'refresh_token',
+            value: '',
+            expires: new Date(0),
+            path: '/',
+        });
+
+        response.cookies.set({
+            name: 'temp_session',
+            value: '',
+            expires: new Date(0),
+            path: '/',
+        });
+
+        // Also clear any session-related cookies that might exist
+        response.cookies.set({
+            name: 'session',
+            value: '',
+            expires: new Date(0),
+            path: '/',
+        });
+
+        console.log('All auth cookies cleared successfully');
 
         return response;
 
@@ -24,4 +71,9 @@ export async function POST() {
             { status: 500 }
         );
     }
+}
+
+export async function GET() {
+    // Handle GET requests for logout as well
+    return await POST();
 }

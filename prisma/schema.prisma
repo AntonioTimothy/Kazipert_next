@@ -430,6 +430,7 @@ enum OtpType {
   EMAIL
   PHONE
   LOGIN
+  FORGOT_PASSWORD
   ADMIN_INVITE
 }
 

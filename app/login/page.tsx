@@ -1,4 +1,4 @@
-// app/login/page.tsx - UPDATED WITH ONBOARDING REDIRECTION
+// app/login/page.tsx - UPDATED WITH FORGOT PASSWORD
 "use client";
 
 import React, { useEffect, useState, useCallback, Suspense } from "react";
@@ -17,6 +17,7 @@ import {
   UserCheck,
   Globe,
   ArrowLeft,
+  Key,
 } from "lucide-react";
 
 const slides = [
@@ -84,18 +85,16 @@ function OtpInput({ onComplete }: { onComplete: (code: string) => void }) {
     }
   };
 
-  // ✅ Handle Paste event
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pasted = e.clipboardData.getData("text").trim();
 
-    if (!/^\d+$/.test(pasted)) return; // only digits allowed
+    if (!/^\d+$/.test(pasted)) return;
 
-    const digits = pasted.slice(0, length).split(""); // only first 4 digits
+    const digits = pasted.slice(0, length).split("");
     const next = [...Array(length)].map((_, idx) => digits[idx] || "");
     setValues(next);
 
-    // Move focus to the last box or trigger completion
     const combined = next.join("");
     if (combined.length === length && !next.includes("")) {
       onComplete(combined);
@@ -119,7 +118,7 @@ function OtpInput({ onComplete }: { onComplete: (code: string) => void }) {
           inputMode="numeric"
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)}
-          onPaste={handlePaste} // ✅ Added paste handler
+          onPaste={handlePaste}
           className="w-12 h-12 text-center rounded-lg border-2 border-gray-300 text-lg font-bold focus:ring-2 focus:ring-[#FFD700] focus:border-[#FFD700] outline-none bg-white transition-all duration-200"
         />
       ))}
@@ -127,7 +126,352 @@ function OtpInput({ onComplete }: { onComplete: (code: string) => void }) {
   );
 }
 
-// Create a separate component that uses useSearchParams
+function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
+  const [step, setStep] = useState<"email" | "otp" | "newPassword">("email");
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to send verification code");
+      }
+
+      setStep("otp");
+      setSuccess("Verification code sent to your email");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (code: string) => {
+    setOtp(code);
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/verify-forgot-password-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp: code }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Invalid verification code");
+      }
+
+      setStep("newPassword");
+      setSuccess("Code verified. Please set your new password");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError("Password must be at least 6 characters long");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp, newPassword }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to reset password");
+      }
+
+      setSuccess("Password reset successfully! Redirecting to login...");
+      setTimeout(() => {
+        onBackToLogin();
+      }, 2000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resendOtp = async () => {
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to resend code");
+      }
+
+      setSuccess("Verification code resent successfully");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="bg-white rounded-xl p-6 shadow-lg border border-gray-100"
+    >
+      <div className="text-center mb-6">
+        <div className="w-12 h-12 bg-[#FFD700]/20 rounded-full flex items-center justify-center mx-auto mb-3">
+          <Key className="w-6 h-6 text-[#FFD700]" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-900">
+          {step === "email" && "Reset Your Password"}
+          {step === "otp" && "Verify Your Identity"}
+          {step === "newPassword" && "Set New Password"}
+        </h2>
+        <p className="text-gray-600 text-sm mt-2">
+          {step === "email" && "Enter your email to receive a verification code"}
+          {step === "otp" && `Enter the code sent to ${email}`}
+          {step === "newPassword" && "Create your new password"}
+        </p>
+      </div>
+
+      {error && (
+        <motion.div
+          initial={{ y: -8, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="mb-4 bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg flex items-center gap-2 text-sm"
+        >
+          <XCircle size={16} className="flex-shrink-0" />
+          <span>{error}</span>
+        </motion.div>
+      )}
+
+      {success && (
+        <motion.div
+          initial={{ y: -8, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="mb-4 bg-green-50 border border-green-200 text-green-700 p-3 rounded-lg flex items-center gap-2 text-sm"
+        >
+          <CheckCircle size={16} className="flex-shrink-0" />
+          <span>{success}</span>
+        </motion.div>
+      )}
+
+      {/* Email Step */}
+      {step === "email" && (
+        <form onSubmit={handleSendOtp} className="space-y-5">
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
+              Email Address
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="you@example.com"
+                className="w-full pl-10 pr-3 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFD700] focus:border-[#FFD700] outline-none transition-all duration-200 bg-white"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onBackToLogin}
+              className="flex-1 py-3 rounded-lg border border-gray-300 hover:border-gray-400 text-sm text-gray-700 flex items-center justify-center gap-2"
+            >
+              <ArrowLeft size={14} />
+              Back to Login
+            </button>
+            <motion.button
+              type="submit"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              disabled={loading}
+              className="flex-1 bg-[#FFD700] hover:bg-[#FFA500] text-gray-900 font-semibold py-3 rounded-lg shadow hover:shadow-md transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                "Send Code"
+              )}
+            </motion.button>
+          </div>
+        </form>
+      )}
+
+      {/* OTP Step */}
+      {step === "otp" && (
+        <div className="space-y-5">
+          <OtpInput onComplete={handleVerifyOtp} />
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setStep("email")}
+              disabled={loading}
+              className="flex-1 py-3 rounded-lg border border-gray-300 hover:border-gray-400 text-sm text-gray-700 flex items-center justify-center gap-2"
+            >
+              <ArrowLeft size={14} />
+              Back
+            </button>
+            <button
+              onClick={() => {
+                const firstEmpty = document.querySelector('input[value=""]') as HTMLInputElement;
+                if (firstEmpty) firstEmpty.focus();
+              }}
+              disabled={loading}
+              className="flex-1 bg-[#FFD700] hover:bg-[#FFA500] text-gray-900 font-medium rounded-lg text-sm py-3"
+            >
+              {loading ? "Verifying..." : "Verify Code"}
+            </button>
+          </div>
+
+          <button
+            onClick={resendOtp}
+            disabled={loading}
+            className="w-full text-[#FFD700] hover:text-[#FFA500] font-medium text-sm"
+          >
+            Resend Code
+          </button>
+        </div>
+      )}
+
+      {/* New Password Step */}
+      {step === "newPassword" && (
+        <form onSubmit={handleResetPassword} className="space-y-5">
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
+              New Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
+              <input
+                type={showPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                minLength={6}
+                placeholder="••••••••"
+                className="w-full pl-10 pr-10 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFD700] focus:border-[#FFD700] outline-none transition-all duration-200 bg-white"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
+              Confirm New Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+                placeholder="••••••••"
+                className="w-full pl-10 pr-10 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFD700] focus:border-[#FFD700] outline-none transition-all duration-200 bg-white"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-3 text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setStep("otp")}
+              disabled={loading}
+              className="flex-1 py-3 rounded-lg border border-gray-300 hover:border-gray-400 text-sm text-gray-700 flex items-center justify-center gap-2"
+            >
+              <ArrowLeft size={14} />
+              Back
+            </button>
+            <motion.button
+              type="submit"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              disabled={loading}
+              className="flex-1 bg-[#FFD700] hover:bg-[#FFA500] text-gray-900 font-semibold py-3 rounded-lg shadow hover:shadow-md transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
+                  Resetting...
+                </>
+              ) : (
+                "Reset Password"
+              )}
+            </motion.button>
+          </div>
+        </form>
+      )}
+    </motion.div>
+  );
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -140,6 +484,7 @@ function LoginForm() {
   const [pendingEmail, setPendingEmail] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const [form, setForm] = useState({
     email: "",
@@ -186,7 +531,6 @@ function LoginForm() {
         throw new Error(data.error || "Login failed");
       }
 
-      // If login requires OTP
       if (data.requiresOtp) {
         setPendingEmail(form.email);
         setOtpStep(true);
@@ -214,7 +558,7 @@ function LoginForm() {
       case 'EMBASSY_ADMIN':
         return '/portals';
       default:
-        return '/portals'; // Default fallback
+        return '/portals';
     }
   };
 
@@ -226,7 +570,6 @@ function LoginForm() {
         return '/portals';
       case 'ADMIN':
         return '/portals';
-
       case 'SUPER_ADMIN':
       case 'HOSPITAL_ADMIN':
       case 'PHOTO_STUDIO_ADMIN':
@@ -240,10 +583,6 @@ function LoginForm() {
   const handleSuccessfulLogin = async (data: any) => {
     setSuccess("Login successful! Redirecting...");
 
-    console.log("Login successful, user role:", data.user.role);
-    console.log("Requires onboarding:", data.requiresOnboarding);
-
-    // Store minimal user data in sessionStorage for client-side use
     if (data.user) {
       sessionStorage.setItem("user", JSON.stringify({
         id: data.user.id,
@@ -258,32 +597,23 @@ function LoginForm() {
       }));
     }
 
-    // IMPORTANT: Add a small delay and use router.refresh() before redirect
     setTimeout(async () => {
       try {
-        // Refresh the router to ensure server components re-render with new auth state
         router.refresh();
-
-        // Wait a bit more for the refresh to complete
         await new Promise(resolve => setTimeout(resolve, 100));
 
-        // Redirect based on user data from API response
         if (data.requiresOnboarding) {
           const onboardingRoute = getOnboardingRoute(data.user.role);
-          console.log("Redirecting to onboarding:>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", onboardingRoute);
           router.push(onboardingRoute);
         } else {
           const dashboardRoute = getDashboardRoute(data.user.role);
-          console.log("Redirecting to dashboard:<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", dashboardRoute);
           router.push(dashboardRoute);
         }
       } catch (error) {
-        console.error("Redirect error: **********************************************", error);
-        // Fallback: try direct navigation
+        console.error("Redirect error:", error);
         const redirectPath = data.requiresOnboarding
           ? getOnboardingRoute(data.user.role)
           : getDashboardRoute(data.user.role);
-        console.log("Fallback redirect to:*********************************************", redirectPath);
         window.location.href = redirectPath;
       }
     }, 1000);
@@ -302,9 +632,9 @@ function LoginForm() {
         body: JSON.stringify({
           email: pendingEmail,
           otp: code,
-          password: form.password // Include password for final verification
+          password: form.password
         }),
-        credentials: 'include' // Important for cookies
+        credentials: 'include'
       });
 
       const data = await res.json();
@@ -313,7 +643,6 @@ function LoginForm() {
         throw new Error(data.error || "Invalid verification code");
       }
 
-      // Use the new role-based redirection logic
       await handleSuccessfulLogin(data);
 
     } catch (err: any) {
@@ -450,10 +779,10 @@ function LoginForm() {
               </div>
               <div className="space-y-1">
                 <h1 className="text-2xl font-bold text-gray-900">
-                  {otpStep ? "Verify Identity" : "Welcome Back"}
+                  {showForgotPassword ? "Reset Password" : otpStep ? "Verify Identity" : "Welcome Back"}
                 </h1>
                 <p className="text-sm text-gray-600">
-                  {otpStep ? "Enter verification code" : "Sign in to your secure account"}
+                  {showForgotPassword ? "Recover your account" : otpStep ? "Enter verification code" : "Sign in to your secure account"}
                 </p>
               </div>
             </div>
@@ -482,8 +811,13 @@ function LoginForm() {
             </motion.div>
           )}
 
+          {/* Forgot Password Flow */}
+          {showForgotPassword && (
+            <ForgotPasswordForm onBackToLogin={() => setShowForgotPassword(false)} />
+          )}
+
           {/* OTP Verification Step */}
-          {otpStep && (
+          {!showForgotPassword && otpStep && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -539,7 +873,7 @@ function LoginForm() {
           )}
 
           {/* Password Login Form */}
-          {!otpStep && (
+          {!showForgotPassword && !otpStep && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -573,7 +907,7 @@ function LoginForm() {
                     </label>
                     <button
                       type="button"
-                      onClick={() => router.push("/forgot-password")}
+                      onClick={() => setShowForgotPassword(true)}
                       className="text-xs text-[#FFD700] hover:text-[#FFA500] font-medium"
                     >
                       Forgot password?
@@ -657,15 +991,17 @@ function LoginForm() {
           )}
 
           {/* Security Notice */}
-          <div className="text-center mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-600 mb-2">
-              <Shield size={14} className="text-[#FFD700]" />
-              <span className="font-medium">Secure Login</span>
+          {!showForgotPassword && (
+            <div className="text-center mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-center gap-2 text-sm text-gray-600 mb-2">
+                <Shield size={14} className="text-[#FFD700]" />
+                <span className="font-medium">Secure Login</span>
+              </div>
+              <p className="text-xs text-gray-500">
+                Your data is protected with bank-level encryption
+              </p>
             </div>
-            <p className="text-xs text-gray-500">
-              Your data is protected with bank-level encryption
-            </p>
-          </div>
+          )}
         </div>
       </div>
     </div>
