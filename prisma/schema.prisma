@@ -247,7 +247,11 @@ model Job {
   type              JobType
   description       String
   status            JobStatus @default(DRAFT)
-  
+  category          JobCategory? // NEW FIELD - Make it optional
+  agreeToTruth      Boolean  @default(false)  // User attestation
+  agreeToTerms      Boolean  @default(false)  // Terms acceptance
+  availableFromType AvailableFromType?        // UI selection type
+
   // Household Details
   residenceType     ResidenceType
   bedrooms          Int
@@ -285,7 +289,7 @@ model Job {
   salaryCurrency    String @default("OMR")
   location          String?
   city              String
-  availableFrom     DateTime?
+  availableFrom     String?
   interviewRequired Boolean @default(true)
   
   // Additional Settings
@@ -426,6 +430,14 @@ enum Role {
   EMBASSY_ADMIN
 }
 
+enum JobCategory {
+  GENERAL_HOUSE_HELP
+  ELDERLY_CARE
+  CHILD_CARE
+  COOKING_SPECIALIST
+  HOUSE_MANAGER
+}
+
 enum OtpType {
   EMAIL
   PHONE
@@ -439,4 +451,12 @@ enum AdminStatus {
   ACTIVE
   SUSPENDED
   INACTIVE
+}
+
+
+enum AvailableFromType {
+  IMMEDIATELY
+  ONE_MONTH
+  TWO_MONTHS
+  SPECIFIC_DATE
 }

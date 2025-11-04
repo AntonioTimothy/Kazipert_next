@@ -49,14 +49,39 @@ import {
   Phone,
   Mail,
   MapPin as MapPinIcon,
-  Clock as ClockIcon
+  Clock as ClockIcon,
+  CreditCard,
+  MessageCircle,
+  Ticket,
+  Settings,
+  Bell,
+  FileSearch,
+  HeartHandshake,
+  Plane,
+  GraduationCap,
+  Shield as ShieldIcon,
+  LucideIcon
 } from "lucide-react"
+
+// Define color scheme
+const KAZIPERT_COLORS = {
+  primary: '#117c82',    // Teal - Main brand color
+  secondary: '#117c82',  // Same teal but used sparingly
+  accent: '#6c71b5',     // Purple accent for highlights
+  brown: '#8B7355',      // Professional brown for backgrounds
+  background: '#f8fafc',
+  backgroundLight: '#ffffff',
+  text: '#1a202c',
+  textLight: '#718096',
+  border: '#e2e8f0'
+}
 
 export default function WorkerDashboard() {
   const router = useRouter()
   const { currentTheme } = useTheme()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [hasActiveContract, setHasActiveContract] = useState(false)
 
   useEffect(() => {
     const loadData = async () => {
@@ -76,14 +101,19 @@ export default function WorkerDashboard() {
       }
 
       setUser(parsedUser)
+      
+      // Check if user has active contract (mock logic - replace with actual API call)
+      const userHasActiveContract = parsedUser.kycVerified && Math.random() > 0.5
+      setHasActiveContract(userHasActiveContract)
+      
       setLoading(false)
     }
 
     loadData()
   }, [router])
 
-  // Mock data
-  const dashboardData = {
+  // Mock data for user WITHOUT active contract
+  const jobSeekerData = {
     profileCompletion: 85,
     activeApplications: 3,
     availableJobs: 24,
@@ -98,8 +128,8 @@ export default function WorkerDashboard() {
         value: "85%",
         description: "Complete your profile",
         icon: User,
-        color: "text-blue-500",
-        bgColor: "bg-blue-500/10",
+        color: KAZIPERT_COLORS.primary,
+        bgColor: `${KAZIPERT_COLORS.primary}15`,
         action: "complete-profile"
       },
       {
@@ -107,8 +137,8 @@ export default function WorkerDashboard() {
         value: "3",
         description: "Under review",
         icon: FileCheck,
-        color: "text-green-500",
-        bgColor: "bg-green-500/10",
+        color: KAZIPERT_COLORS.accent,
+        bgColor: `${KAZIPERT_COLORS.accent}15`,
         action: "view-applications"
       },
       {
@@ -116,8 +146,8 @@ export default function WorkerDashboard() {
         value: "24",
         description: "Matching your skills",
         icon: Target,
-        color: "text-purple-500",
-        bgColor: "bg-purple-500/10",
+        color: KAZIPERT_COLORS.primary,
+        bgColor: `${KAZIPERT_COLORS.primary}15`,
         action: "browse-jobs"
       },
       {
@@ -125,8 +155,8 @@ export default function WorkerDashboard() {
         value: "$1,200",
         description: "Due in 5 days",
         icon: DollarSign,
-        color: "text-amber-500",
-        bgColor: "bg-amber-500/10",
+        color: KAZIPERT_COLORS.accent,
+        bgColor: `${KAZIPERT_COLORS.accent}15`,
         action: "view-payments"
       }
     ],
@@ -137,8 +167,8 @@ export default function WorkerDashboard() {
         description: "Increase visibility",
         icon: User,
         action: "complete-profile",
-        color: "text-blue-500",
-        bgColor: "bg-blue-500/10",
+        color: KAZIPERT_COLORS.primary,
+        bgColor: `${KAZIPERT_COLORS.primary}15`,
         progress: 85,
         route: "/worker/profile"
       },
@@ -147,8 +177,8 @@ export default function WorkerDashboard() {
         description: "Find opportunities",
         icon: Search,
         action: "browse-jobs",
-        color: "text-green-500",
-        bgColor: "bg-green-500/10",
+        color: KAZIPERT_COLORS.primary,
+        bgColor: `${KAZIPERT_COLORS.primary}15`,
         route: "/worker/jobs"
       },
       {
@@ -156,8 +186,8 @@ export default function WorkerDashboard() {
         description: "Skill development",
         icon: BookOpen,
         action: "training",
-        color: "text-purple-500",
-        bgColor: "bg-purple-500/10",
+        color: KAZIPERT_COLORS.accent,
+        bgColor: `${KAZIPERT_COLORS.accent}15`,
         route: "/worker/training"
       },
       {
@@ -165,23 +195,11 @@ export default function WorkerDashboard() {
         description: "24/7 assistance",
         icon: Phone,
         action: "support",
-        color: "text-orange-500",
-        bgColor: "bg-orange-500/10",
+        color: KAZIPERT_COLORS.primary,
+        bgColor: `${KAZIPERT_COLORS.primary}15`,
         route: "/worker/support"
       }
     ],
-
-    activeContract: {
-      jobTitle: "Senior Caregiver",
-      employerName: "Johnson Family",
-      salary: "$1,200/month",
-      duration: "6 months",
-      location: "Nairobi, Kenya",
-      status: "active",
-      hoursPerWeek: "40 hours",
-      accommodation: "Provided",
-      meals: "Included"
-    },
 
     recommendedJobs: [
       {
@@ -214,21 +232,162 @@ export default function WorkerDashboard() {
         description: "Medical coverage",
         active: true,
         icon: Shield,
-        color: "text-blue-500"
+        color: KAZIPERT_COLORS.primary
       },
       {
         name: "Legal Protection",
         description: "Contract support",
         active: true,
         icon: FileText,
-        color: "text-green-500"
+        color: KAZIPERT_COLORS.accent
       },
       {
         name: "Emergency Support",
         description: "24/7 assistance",
         active: true,
         icon: Heart,
-        color: "text-red-500"
+        color: KAZIPERT_COLORS.primary
+      }
+    ]
+  }
+
+  // Mock data for user WITH active contract
+  const activeWorkerData = {
+    activeContract: {
+      jobTitle: "Senior Caregiver",
+      employerName: "Johnson Family",
+      salary: "$1,200/month",
+      duration: "6 months",
+      location: "Nairobi, Kenya",
+      status: "active",
+      hoursPerWeek: "40 hours",
+      accommodation: "Provided",
+      meals: "Included",
+      startDate: "2024-01-15",
+      endDate: "2024-07-15",
+      employerRating: 4.9
+    },
+
+    contractStats: [
+      {
+        title: "Days Worked",
+        value: "45",
+        description: "This contract",
+        icon: Calendar,
+        color: KAZIPERT_COLORS.primary,
+        bgColor: `${KAZIPERT_COLORS.primary}15`
+      },
+      {
+        title: "Next Payment",
+        value: "$1,200",
+        description: "Due in 5 days",
+        icon: DollarSign,
+        color: KAZIPERT_COLORS.accent,
+        bgColor: `${KAZIPERT_COLORS.accent}15`
+      },
+      {
+        title: "Contract Days Left",
+        value: "120",
+        description: "Until completion",
+        icon: Clock,
+        color: KAZIPERT_COLORS.primary,
+        bgColor: `${KAZIPERT_COLORS.primary}15`
+      },
+      {
+        title: "Employer Rating",
+        value: "4.9",
+        description: "Out of 5",
+        icon: Star,
+        color: KAZIPERT_COLORS.accent,
+        bgColor: `${KAZIPERT_COLORS.accent}15`
+      }
+    ],
+
+    quickActions: [
+      {
+        name: "Contract Details",
+        description: "View full agreement",
+        icon: FileText,
+        action: "contract-details",
+        color: KAZIPERT_COLORS.primary,
+        bgColor: `${KAZIPERT_COLORS.primary}15`,
+        route: "/worker/contracts"
+      },
+      {
+        name: "My Wallet",
+        description: "Payment history",
+        icon: Wallet,
+        action: "wallet",
+        color: KAZIPERT_COLORS.accent,
+        bgColor: `${KAZIPERT_COLORS.accent}15`,
+        route: "/worker/wallet"
+      },
+      {
+        name: "Messages",
+        description: "Contact employer",
+        icon: MessageCircle,
+        action: "messages",
+        color: KAZIPERT_COLORS.primary,
+        bgColor: `${KAZIPERT_COLORS.primary}15`,
+        route: "/worker/messages"
+      },
+      {
+        name: "Support Tickets",
+        description: "Get help",
+        icon: Ticket,
+        action: "tickets",
+        color: KAZIPERT_COLORS.accent,
+        bgColor: `${KAZIPERT_COLORS.accent}15`,
+        route: "/worker/support"
+      }
+    ],
+
+    recentActivities: [
+      {
+        id: 1,
+        title: "Payment Received",
+        description: "Monthly salary",
+        amount: "$1,200",
+        date: "2 hours ago",
+        type: "payment",
+        icon: DollarSign
+      },
+      {
+        id: 2,
+        title: "Contract Updated",
+        description: "Hours adjustment",
+        amount: null,
+        date: "1 day ago",
+        type: "contract",
+        icon: FileText
+      },
+      {
+        id: 3,
+        title: "New Message",
+        description: "From employer",
+        amount: null,
+        date: "2 days ago",
+        type: "message",
+        icon: MessageCircle
+      }
+    ],
+
+    upcomingTasks: [
+      {
+        id: 1,
+        title: "Weekly Check-in",
+        description: "With employer",
+        date: "Tomorrow, 10:00 AM",
+        type: "meeting",
+        icon: Video
+      },
+      {
+        id: 2,
+        title: "Document Submission",
+        description: "Monthly report",
+        date: "In 3 days",
+        type: "document",
+        icon: FileSearch
       }
     ]
   }
@@ -252,6 +411,18 @@ export default function WorkerDashboard() {
       case 'view-payments':
         router.push('/worker/payments')
         break
+      case 'contract-details':
+        router.push('/worker/contracts')
+        break
+      case 'wallet':
+        router.push('/worker/wallet')
+        break
+      case 'messages':
+        router.push('/worker/messages')
+        break
+      case 'tickets':
+        router.push('/worker/support')
+        break
     }
   }
 
@@ -259,13 +430,13 @@ export default function WorkerDashboard() {
     switch(urgency) {
       case 'high': return 'bg-red-500/10 text-red-600 border-red-200'
       case 'medium': return 'bg-orange-500/10 text-orange-600 border-orange-200'
-      default: return 'bg-blue-500/10 text-blue-600 border-blue-200'
+      default: return `${KAZIPERT_COLORS.primary}10 text-${KAZIPERT_COLORS.primary} border-${KAZIPERT_COLORS.primary}20`
     }
   }
 
   // Skeleton loading components
   const StatSkeleton = () => (
-    <div className="bg-background rounded-2xl p-4 border border-border animate-pulse">
+    <div className="bg-white rounded-2xl p-4 border border-gray-200 animate-pulse">
       <div className="flex items-start justify-between mb-2">
         <div className="h-8 w-8 bg-gray-200 rounded-lg"></div>
         <div className="h-4 bg-gray-200 rounded w-12"></div>
@@ -279,7 +450,7 @@ export default function WorkerDashboard() {
   )
 
   const ActionSkeleton = () => (
-    <div className="bg-background rounded-2xl p-4 border border-border animate-pulse">
+    <div className="bg-white rounded-2xl p-4 border border-gray-200 animate-pulse">
       <div className="h-10 w-10 bg-gray-200 rounded-xl mb-3"></div>
       <div className="space-y-2">
         <div className="h-4 bg-gray-200 rounded w-20"></div>
@@ -289,36 +460,9 @@ export default function WorkerDashboard() {
     </div>
   )
 
-  const JobSkeleton = () => (
-    <div className="bg-background rounded-2xl p-4 border border-border animate-pulse">
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-start gap-3">
-          <div className="h-12 w-12 bg-gray-200 rounded-xl"></div>
-          <div className="space-y-2">
-            <div className="h-4 bg-gray-200 rounded w-32"></div>
-            <div className="h-3 bg-gray-200 rounded w-24"></div>
-          </div>
-        </div>
-        <div className="h-5 bg-gray-200 rounded w-12"></div>
-      </div>
-      <div className="grid grid-cols-2 gap-4 mb-3">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <div className="h-3 w-3 bg-gray-200 rounded"></div>
-            <div className="h-3 bg-gray-200 rounded w-16"></div>
-          </div>
-        ))}
-      </div>
-      <div className="flex justify-between items-center">
-        <div className="h-3 bg-gray-200 rounded w-20"></div>
-        <div className="h-8 bg-gray-200 rounded w-20"></div>
-      </div>
-    </div>
-  )
-
   if (loading) {
     return (
-      <div className="min-h-screen" style={{ background: currentTheme.colors.background }}>
+      <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto p-4 space-y-6">
           {/* Header Skeleton */}
           <div className="flex items-center justify-between animate-pulse">
@@ -348,32 +492,6 @@ export default function WorkerDashboard() {
               ))}
             </div>
           </div>
-
-          {/* Contract Skeleton */}
-          <div className="bg-gray-200 rounded-2xl p-5 animate-pulse">
-            <div className="space-y-4">
-              <div className="h-5 bg-gray-300 rounded w-32"></div>
-              <div className="h-6 bg-gray-300 rounded w-48"></div>
-              <div className="grid grid-cols-2 gap-4">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <div className="h-4 w-4 bg-gray-300 rounded"></div>
-                    <div className="h-3 bg-gray-300 rounded w-20"></div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Jobs Skeleton */}
-          <div className="space-y-3">
-            <div className="h-5 bg-gray-200 rounded w-40"></div>
-            <div className="space-y-3">
-              {[...Array(2)].map((_, i) => (
-                <JobSkeleton key={i} />
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     )
@@ -383,92 +501,142 @@ export default function WorkerDashboard() {
     return <LoadingSpinner />
   }
 
+  const currentData = hasActiveContract ? activeWorkerData : jobSeekerData
+
   return (
-    <div className="min-h-screen" style={{ background: currentTheme.colors.background }}>
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-4 space-y-6">
         {/* Header Section */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 border-2" style={{ borderColor: currentTheme.colors.primary }}>
+            <Avatar className="h-12 w-12 border-2" style={{ borderColor: KAZIPERT_COLORS.primary }}>
               <AvatarFallback 
                 className="text-white font-semibold"
-                style={{ backgroundColor: currentTheme.colors.primary }}
+                style={{ backgroundColor: KAZIPERT_COLORS.primary }}
               >
                 {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="font-bold text-lg" style={{ color: currentTheme.colors.text }}>
+              <h1 className="font-bold text-xl text-gray-900">
                 Welcome back, {user?.name?.split(' ')[0]}! 👋
               </h1>
-              <p className="text-sm flex items-center gap-1" style={{ color: currentTheme.colors.textLight }}>
-                <BadgeCheck className="h-3 w-3 text-green-500" />
-                Ready for new opportunities
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-gray-600 flex items-center gap-1">
+                  {hasActiveContract ? (
+                    <>
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      Active Contract • {currentData.activeContract.jobTitle}
+                    </>
+                  ) : (
+                    <>
+                      <BadgeCheck className="h-4 w-4 text-green-500" />
+                      Ready for new opportunities
+                    </>
+                  )}
+                </p>
+                {user.kycVerified && (
+                  <Badge className="bg-green-500/10 text-green-600 border-green-200 text-xs">
+                    Verified
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
-          <Button 
-            size="sm" 
-            onClick={() => router.push('/worker/jobs')}
-            style={{
-              backgroundColor: currentTheme.colors.primary,
-              color: currentTheme.colors.text
-            }}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Find Jobs
-          </Button>
+          {!hasActiveContract && (
+            <Button 
+              size="sm" 
+              onClick={() => router.push('/worker/jobs')}
+              style={{
+                backgroundColor: KAZIPERT_COLORS.primary,
+                color: 'white'
+              }}
+              className="hover:opacity-90 transition-opacity"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Find Jobs
+            </Button>
+          )}
         </div>
 
+        {/* Status Banner */}
+        {hasActiveContract && (
+          <div 
+            className="rounded-2xl p-4 border"
+            style={{
+              background: `linear-gradient(135deg, ${KAZIPERT_COLORS.primary}15 0%, ${KAZIPERT_COLORS.accent}10 100%)`,
+              borderColor: KAZIPERT_COLORS.primary + '30'
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div 
+                  className="p-2 rounded-lg"
+                  style={{ backgroundColor: KAZIPERT_COLORS.primary + '20' }}
+                >
+                  <Briefcase className="h-5 w-5" style={{ color: KAZIPERT_COLORS.primary }} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Active Contract</h3>
+                  <p className="text-sm text-gray-600">
+                    You're currently employed with {currentData.activeContract.employerName}
+                  </p>
+                </div>
+              </div>
+              <Badge 
+                style={{
+                  backgroundColor: KAZIPERT_COLORS.primary + '20',
+                  color: KAZIPERT_COLORS.primary
+                }}
+              >
+                Active
+              </Badge>
+            </div>
+          </div>
+        )}
+
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 gap-3">
-          {dashboardData.quickStats.map((stat, index) => (
+        <div className="grid grid-cols-2 gap-4">
+          {(hasActiveContract ? currentData.contractStats : currentData.quickStats).map((stat, index) => (
             <div 
               key={stat.title}
-              className="rounded-2xl p-4 border transition-all duration-300 cursor-pointer hover:scale-105"
-              style={{
-                backgroundColor: currentTheme.colors.backgroundLight,
-                borderColor: currentTheme.colors.border
-              }}
+              className="bg-white rounded-2xl p-4 border border-gray-200 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg"
               onClick={() => handleQuickAction(stat.action)}
             >
-              <div className="flex items-start justify-between mb-2">
+              <div className="flex items-start justify-between mb-3">
                 <div 
                   className="p-2 rounded-xl"
-                  style={{ backgroundColor: currentTheme.colors.primary + '15' }}
+                  style={{ backgroundColor: stat.bgColor }}
                 >
                   <stat.icon 
-                    className="h-4 w-4" 
-                    style={{ color: currentTheme.colors.primary }} 
+                    className="h-5 w-5" 
+                    style={{ color: stat.color }} 
                   />
                 </div>
                 <Badge 
                   variant="secondary" 
                   className="text-xs border-0"
                   style={{
-                    backgroundColor: currentTheme.colors.primary + '15',
-                    color: currentTheme.colors.primary
+                    backgroundColor: stat.bgColor,
+                    color: stat.color
                   }}
                 >
-                  +5%
+                  +2%
                 </Badge>
               </div>
               <div className="space-y-1">
                 <div 
-                  className="text-2xl font-bold"
-                  style={{ color: currentTheme.colors.text }}
+                  className="text-2xl font-bold text-gray-900"
                 >
                   {stat.value}
                 </div>
                 <div 
-                  className="text-xs font-medium"
-                  style={{ color: currentTheme.colors.textLight }}
+                  className="text-sm font-medium text-gray-700"
                 >
                   {stat.title}
                 </div>
                 <div 
-                  className="text-xs"
-                  style={{ color: currentTheme.colors.textLight }}
+                  className="text-xs text-gray-500"
                 >
                   {stat.description}
                 </div>
@@ -480,67 +648,53 @@ export default function WorkerDashboard() {
         {/* Quick Actions */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 
-              className="font-bold text-lg"
-              style={{ color: currentTheme.colors.text }}
-            >
-              Quick Actions
+            <h2 className="font-bold text-lg text-gray-900">
+              {hasActiveContract ? "Quick Access" : "Quick Actions"}
             </h2>
             <Button 
               variant="ghost" 
               size="sm"
-              style={{ color: currentTheme.colors.primary }}
+              style={{ color: KAZIPERT_COLORS.primary }}
             >
               View all
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            {dashboardData.quickActions.map((action) => (
+          <div className="grid grid-cols-2 gap-4">
+            {currentData.quickActions.map((action) => (
               <button
                 key={action.name}
                 onClick={() => handleQuickAction(action.action, action.route)}
-                className="rounded-2xl p-4 border transition-all duration-300 hover:scale-105 group text-left"
-                style={{
-                  backgroundColor: currentTheme.colors.backgroundLight,
-                  borderColor: currentTheme.colors.border
-                }}
+                className="bg-white rounded-2xl p-4 border border-gray-200 transition-all duration-300 hover:scale-105 hover:shadow-lg group text-left"
               >
                 <div 
                   className="p-3 rounded-xl w-fit mb-3"
-                  style={{ backgroundColor: currentTheme.colors.primary + '15' }}
+                  style={{ backgroundColor: action.bgColor }}
                 >
                   <action.icon 
-                    className="h-5 w-5" 
-                    style={{ color: currentTheme.colors.primary }} 
+                    className="h-6 w-6" 
+                    style={{ color: action.color }} 
                   />
                 </div>
                 <div className="space-y-1">
                   <div 
-                    className="font-semibold group-hover:underline transition-colors"
-                    style={{ color: currentTheme.colors.text }}
+                    className="font-semibold text-gray-900 group-hover:underline transition-colors"
                   >
                     {action.name}
                   </div>
-                  <div 
-                    className="text-xs"
-                    style={{ color: currentTheme.colors.textLight }}
-                  >
+                  <div className="text-sm text-gray-600">
                     {action.description}
                   </div>
                 </div>
                 {action.progress && (
                   <div className="mt-3 space-y-1">
                     <div className="flex justify-between text-xs">
-                      <span style={{ color: currentTheme.colors.textLight }}>Progress</span>
-                      <span style={{ color: currentTheme.colors.primary }}>{action.progress}%</span>
+                      <span className="text-gray-500">Progress</span>
+                      <span style={{ color: KAZIPERT_COLORS.primary }}>{action.progress}%</span>
                     </div>
                     <Progress 
                       value={action.progress} 
-                      className="h-1"
-                      style={{
-                        backgroundColor: currentTheme.colors.backgroundLight
-                      }}
+                      className="h-2 bg-gray-100"
                     />
                   </div>
                 )}
@@ -549,357 +703,367 @@ export default function WorkerDashboard() {
           </div>
         </div>
 
-        {/* Current Contract */}
-        <Card 
-          className="border-0 overflow-hidden"
-          style={{
-            background: `linear-gradient(135deg, ${currentTheme.colors.primary}20 0%, ${currentTheme.colors.accent}15 100%)`
-          }}
-        >
-          <CardContent className="p-0">
-            <div className="p-5">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <Badge 
-                    variant="secondary" 
-                    className="mb-2 border-0"
-                    style={{
-                      backgroundColor: currentTheme.colors.primary + '20',
-                      color: currentTheme.colors.primary
-                    }}
-                  >
-                    Active Contract
-                  </Badge>
-                  <h3 
-                    className="font-bold text-lg"
-                    style={{ color: currentTheme.colors.text }}
-                  >
-                    {dashboardData.activeContract.jobTitle}
-                  </h3>
-                  <p 
-                    className="text-sm"
-                    style={{ color: currentTheme.colors.textLight }}
-                  >
-                    {dashboardData.activeContract.employerName}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div 
-                    className="text-2xl font-bold"
-                    style={{ color: currentTheme.colors.text }}
-                  >
-                    {dashboardData.activeContract.salary}
-                  </div>
-                  <div 
-                    className="text-sm"
-                    style={{ color: currentTheme.colors.textLight }}
-                  >
-                    {dashboardData.activeContract.duration}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" style={{ color: currentTheme.colors.primary }} />
-                  <span style={{ color: currentTheme.colors.text }}>{dashboardData.activeContract.location}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" style={{ color: currentTheme.colors.primary }} />
-                  <span style={{ color: currentTheme.colors.text }}>{dashboardData.activeContract.hoursPerWeek}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Home className="h-4 w-4" style={{ color: currentTheme.colors.primary }} />
-                  <span style={{ color: currentTheme.colors.text }}>{dashboardData.activeContract.accommodation}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Utensils className="h-4 w-4" style={{ color: currentTheme.colors.primary }} />
-                  <span style={{ color: currentTheme.colors.text }}>{dashboardData.activeContract.meals}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div 
-              className="px-5 py-3"
-              style={{ backgroundColor: currentTheme.colors.primary + '10' }}
-            >
-              <Button 
-                variant="ghost" 
-                className="w-full justify-between"
-                style={{ color: currentTheme.colors.primary }}
-                onClick={() => router.push('/worker/contracts')}
-              >
-                <span>View Contract Details</span>
-                <ArrowUpRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recommended Jobs */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 
-              className="font-bold text-lg"
-              style={{ color: currentTheme.colors.text }}
-            >
-              Recommended Jobs
-            </h2>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              style={{ color: currentTheme.colors.primary }}
-            >
-              View all
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-          
-          <div className="space-y-3">
-            {dashboardData.recommendedJobs.map((job) => (
-              <div 
-                key={job.id}
-                className="rounded-2xl p-4 border transition-all duration-300 hover:scale-105"
+        {/* Active Contract Details - Only for workers with contracts */}
+        {hasActiveContract && (
+          <>
+            {/* Contract Overview */}
+            <Card className="border-0 shadow-lg rounded-2xl overflow-hidden">
+              <CardHeader 
+                className="pb-4"
                 style={{
-                  backgroundColor: currentTheme.colors.backgroundLight,
-                  borderColor: currentTheme.colors.border
+                  background: `linear-gradient(135deg, ${KAZIPERT_COLORS.primary} 0%, ${KAZIPERT_COLORS.accent} 100%)`
                 }}
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-start gap-3">
-                    <div 
-                      className="w-12 h-12 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: currentTheme.colors.primary + '15' }}
-                    >
-                      <Building2 className="h-6 w-6" style={{ color: currentTheme.colors.primary }} />
+                <CardTitle className="text-white flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Current Contract
+                </CardTitle>
+                <CardDescription className="text-white/80">
+                  {currentData.activeContract.jobTitle} • {currentData.activeContract.employerName}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <MapPin className="h-5 w-5" style={{ color: KAZIPERT_COLORS.primary }} />
+                      <div>
+                        <div className="text-sm text-gray-500">Location</div>
+                        <div className="font-medium text-gray-900">{currentData.activeContract.location}</div>
+                      </div>
                     </div>
-                    <div>
-                      <h3 
-                        className="font-semibold"
-                        style={{ color: currentTheme.colors.text }}
-                      >
-                        {job.title}
-                      </h3>
-                      <p 
-                        className="text-sm"
-                        style={{ color: currentTheme.colors.textLight }}
-                      >
-                        {job.employerName}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <DollarSign className="h-5 w-5" style={{ color: KAZIPERT_COLORS.primary }} />
+                      <div>
+                        <div className="text-sm text-gray-500">Salary</div>
+                        <div className="font-medium text-gray-900">{currentData.activeContract.salary}</div>
+                      </div>
                     </div>
                   </div>
-                  <Badge 
-                    className={cn("text-xs", getUrgencyColor(job.urgency))}
-                  >
-                    {job.urgency === 'high' ? 'Urgent' : 'New'}
-                  </Badge>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 text-sm mb-3">
-                  <div className="flex items-center gap-2">
-                    <MapPinIcon className="h-3 w-3" style={{ color: currentTheme.colors.textLight }} />
-                    <span style={{ color: currentTheme.colors.textLight }}>{job.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-3 w-3" style={{ color: currentTheme.colors.textLight }} />
-                    <span className="font-semibold" style={{ color: currentTheme.colors.primary }}>{job.salary}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <ClockIcon className="h-3 w-3" style={{ color: currentTheme.colors.textLight }} />
-                    <span style={{ color: currentTheme.colors.textLight }}>{job.type}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Star className="h-3 w-3 text-amber-500" />
-                    <span style={{ color: currentTheme.colors.textLight }}>{job.matches}</span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div 
-                    className="text-xs"
-                    style={{ color: currentTheme.colors.textLight }}
-                  >
-                    Posted {job.posted}
-                  </div>
-                  <Button 
-                    size="sm" 
-                    onClick={() => router.push(`/worker/jobs/${job.id}`)}
-                    style={{
-                      backgroundColor: currentTheme.colors.primary,
-                      color: currentTheme.colors.text
-                    }}
-                  >
-                    Apply Now
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Services & Benefits */}
-        <Card 
-          className="border-0"
-          style={{
-            background: `linear-gradient(135deg, ${currentTheme.colors.backgroundLight} 0%, ${currentTheme.colors.background} 100%)`
-          }}
-        >
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5" style={{ color: currentTheme.colors.primary }} />
-              Your Benefits
-            </CardTitle>
-            <CardDescription>
-              Active services and protections
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {dashboardData.services.map((service, index) => (
-              <div 
-                key={service.name}
-                className="flex items-center justify-between p-3 rounded-xl transition-colors hover:scale-105"
-                style={{
-                  backgroundColor: currentTheme.colors.primary + '05',
-                  border: `1px solid ${currentTheme.colors.primary}20`
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <div 
-                    className="p-2 rounded-lg"
-                    style={{ backgroundColor: currentTheme.colors.primary + '15' }}
-                  >
-                    <service.icon 
-                      className="h-4 w-4" 
-                      style={{ color: currentTheme.colors.primary }} 
-                    />
-                  </div>
-                  <div>
-                    <div 
-                      className="font-medium"
-                      style={{ color: currentTheme.colors.text }}
-                    >
-                      {service.name}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="h-5 w-5" style={{ color: KAZIPERT_COLORS.primary }} />
+                      <div>
+                        <div className="text-sm text-gray-500">Duration</div>
+                        <div className="font-medium text-gray-900">{currentData.activeContract.duration}</div>
+                      </div>
                     </div>
-                    <div 
-                      className="text-xs"
-                      style={{ color: currentTheme.colors.textLight }}
-                    >
-                      {service.description}
+                    <div className="flex items-center gap-3">
+                      <Clock className="h-5 w-5" style={{ color: KAZIPERT_COLORS.primary }} />
+                      <div>
+                        <div className="text-sm text-gray-500">Weekly Hours</div>
+                        <div className="font-medium text-gray-900">{currentData.activeContract.hoursPerWeek}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <Badge 
-                  variant="secondary" 
-                  className="border-0"
+              </CardContent>
+              <CardFooter className="bg-gray-50 px-6 py-4">
+                <Button 
+                  className="w-full"
+                  onClick={() => router.push('/worker/contracts')}
                   style={{
-                    backgroundColor: currentTheme.colors.primary + '20',
-                    color: currentTheme.colors.primary
+                    backgroundColor: KAZIPERT_COLORS.primary,
+                    color: 'white'
                   }}
                 >
-                  Active
-                </Badge>
-              </div>
-            ))}
+                  <Eye className="h-4 w-4 mr-2" />
+                  View Full Contract Details
+                </Button>
+              </CardFooter>
+            </Card>
+
+            {/* Recent Activities & Upcoming Tasks */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Recent Activities */}
+              <Card className="border-0 shadow-lg rounded-2xl">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-gray-900">
+                    <TrendingUp className="h-5 w-5" style={{ color: KAZIPERT_COLORS.primary }} />
+                    Recent Activities
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {currentData.recentActivities.map((activity) => (
+                    <div key={activity.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="p-2 rounded-lg"
+                          style={{ backgroundColor: KAZIPERT_COLORS.primary + '15' }}
+                        >
+                          <activity.icon className="h-4 w-4" style={{ color: KAZIPERT_COLORS.primary }} />
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-900">{activity.title}</div>
+                          <div className="text-sm text-gray-600">{activity.description}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        {activity.amount && (
+                          <div className="font-semibold text-gray-900">{activity.amount}</div>
+                        )}
+                        <div className="text-xs text-gray-500">{activity.date}</div>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* Upcoming Tasks */}
+              <Card className="border-0 shadow-lg rounded-2xl">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-gray-900">
+                    <Calendar className="h-5 w-5" style={{ color: KAZIPERT_COLORS.accent }} />
+                    Upcoming Tasks
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {currentData.upcomingTasks.map((task) => (
+                    <div key={task.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="p-2 rounded-lg"
+                          style={{ backgroundColor: KAZIPERT_COLORS.accent + '15' }}
+                        >
+                          <task.icon className="h-4 w-4" style={{ color: KAZIPERT_COLORS.accent }} />
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-900">{task.title}</div>
+                          <div className="text-sm text-gray-600">{task.description}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-900">{task.date}</div>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </>
+        )}
+
+        {/* Recommended Jobs - Only for job seekers */}
+        {!hasActiveContract && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold text-lg text-gray-900">
+                Recommended Jobs
+              </h2>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                style={{ color: KAZIPERT_COLORS.primary }}
+              >
+                View all
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              {currentData.recommendedJobs.map((job) => (
+                <div 
+                  key={job.id}
+                  className="bg-white rounded-2xl p-4 border border-gray-200 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-start gap-3">
+                      <div 
+                        className="w-12 h-12 rounded-xl flex items-center justify-center"
+                        style={{ backgroundColor: KAZIPERT_COLORS.primary + '15' }}
+                      >
+                        <Building2 className="h-6 w-6" style={{ color: KAZIPERT_COLORS.primary }} />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">
+                          {job.title}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {job.employerName}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge 
+                      className={cn("text-xs", getUrgencyColor(job.urgency))}
+                    >
+                      {job.urgency === 'high' ? 'Urgent' : 'New'}
+                    </Badge>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                    <div className="flex items-center gap-2">
+                      <MapPinIcon className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-600">{job.location}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-gray-400" />
+                      <span className="font-semibold" style={{ color: KAZIPERT_COLORS.primary }}>{job.salary}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <ClockIcon className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-600">{job.type}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Star className="h-4 w-4 text-amber-500" />
+                      <span className="text-gray-600">{job.matches}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-500">
+                      Posted {job.posted}
+                    </div>
+                    <Button 
+                      size="sm" 
+                      onClick={() => router.push(`/worker/jobs/${job.id}`)}
+                      style={{
+                        backgroundColor: KAZIPERT_COLORS.primary,
+                        color: 'white'
+                      }}
+                    >
+                      Apply Now
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Services & Benefits - For both user types */}
+        <Card className="border-0 shadow-lg rounded-2xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-gray-900">
+              <ShieldCheck className="h-5 w-5" style={{ color: KAZIPERT_COLORS.primary }} />
+              Your Benefits & Services
+            </CardTitle>
+            <CardDescription>
+              Active services and protections for your employment journey
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                {
+                  name: "Health Insurance",
+                  description: "Medical coverage",
+                  icon: ShieldIcon,
+                  active: true
+                },
+                {
+                  name: "Legal Protection",
+                  description: "Contract support",
+                  icon: FileText,
+                  active: true
+                },
+                {
+                  name: "Emergency Support",
+                  description: "24/7 assistance",
+                  icon: HeartHandshake,
+                  active: true
+                },
+                {
+                  name: "Travel Assistance",
+                  description: "Relocation support",
+                  icon: Plane,
+                  active: user.kycVerified
+                }
+              ].map((service, index) => (
+                <div 
+                  key={service.name}
+                  className="bg-white p-4 rounded-xl border border-gray-200 text-center transition-all duration-300 hover:scale-105"
+                >
+                  <div 
+                    className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3"
+                    style={{ backgroundColor: KAZIPERT_COLORS.primary + '15' }}
+                  >
+                    <service.icon className="h-6 w-6" style={{ color: KAZIPERT_COLORS.primary }} />
+                  </div>
+                  <div className="font-medium text-gray-900 mb-1">{service.name}</div>
+                  <div className="text-sm text-gray-600 mb-2">{service.description}</div>
+                  <Badge 
+                    variant="secondary"
+                    className={cn(
+                      "text-xs",
+                      service.active 
+                        ? "bg-green-500/10 text-green-600 border-green-200" 
+                        : "bg-gray-500/10 text-gray-600 border-gray-200"
+                    )}
+                  >
+                    {service.active ? "Active" : "Available"}
+                  </Badge>
+                </div>
+              ))}
+            </div>
           </CardContent>
-          <CardFooter>
-            <Button 
-              variant="ghost" 
-              className="w-full justify-between"
-              style={{ color: currentTheme.colors.primary }}
-              onClick={() => router.push('/worker/services')}
-            >
-              <span>Manage All Services</span>
-              <ArrowUpRight className="h-4 w-4" />
-            </Button>
-          </CardFooter>
         </Card>
 
-        {/* Earnings Summary */}
+        {/* Additional Resources */}
         <Card 
-          className="border-0"
+          className="border-0 rounded-2xl overflow-hidden"
           style={{
-            backgroundColor: currentTheme.colors.backgroundLight
+            background: `linear-gradient(135deg, ${KAZIPERT_COLORS.brown}10 0%, ${KAZIPERT_COLORS.primary}05 100%)`
           }}
         >
           <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2">
-              <Coins className="h-5 w-5 text-amber-500" />
-              Earnings Summary
-            </CardTitle>
+            <CardTitle className="text-gray-900">Resources & Support</CardTitle>
+            <CardDescription>
+              Tools and support to help you succeed
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-6">
-              <div 
-                className="text-3xl font-bold mb-2"
-                style={{ color: currentTheme.colors.text }}
-              >
-                {dashboardData.totalEarnings}
-              </div>
-              <div 
-                className="text-sm"
-                style={{ color: currentTheme.colors.textLight }}
-              >
-                Total earnings to date
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div 
-                  className="text-lg font-bold"
-                  style={{ color: currentTheme.colors.text }}
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                {
+                  name: "Training Center",
+                  description: "Skill development courses",
+                  icon: GraduationCap,
+                  route: "/worker/training"
+                },
+                {
+                  name: "Support Center",
+                  description: "24/7 help available",
+                  icon: Phone,
+                  route: "/worker/support"
+                },
+                {
+                  name: "Document Library",
+                  description: "Important resources",
+                  icon: FileSearch,
+                  route: "/worker/documents"
+                },
+                {
+                  name: "Community",
+                  description: "Connect with others",
+                  icon: Users,
+                  route: "/worker/community"
+                }
+              ].map((resource, index) => (
+                <button
+                  key={resource.name}
+                  onClick={() => router.push(resource.route)}
+                  className="bg-white p-4 rounded-xl border border-gray-200 text-left transition-all duration-300 hover:scale-105 hover:shadow-lg group"
                 >
-                  {dashboardData.completedJobs}
-                </div>
-                <div 
-                  className="text-xs"
-                  style={{ color: currentTheme.colors.textLight }}
-                >
-                  Jobs Done
-                </div>
-              </div>
-              <div>
-                <div 
-                  className="text-lg font-bold"
-                  style={{ color: currentTheme.colors.text }}
-                >
-                  {dashboardData.rating}
-                </div>
-                <div 
-                  className="text-xs"
-                  style={{ color: currentTheme.colors.textLight }}
-                >
-                  Rating
-                </div>
-              </div>
-              <div>
-                <div 
-                  className="text-lg font-bold"
-                  style={{ color: currentTheme.colors.text }}
-                >
-                  12
-                </div>
-                <div 
-                  className="text-xs"
-                  style={{ color: currentTheme.colors.textLight }}
-                >
-                  5★ Reviews
-                </div>
-              </div>
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="p-2 rounded-lg"
+                      style={{ backgroundColor: KAZIPERT_COLORS.primary + '15' }}
+                    >
+                      <resource.icon className="h-5 w-5" style={{ color: KAZIPERT_COLORS.primary }} />
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900 group-hover:underline">
+                        {resource.name}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {resource.description}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
             </div>
           </CardContent>
-          <CardFooter>
-            <Button 
-              className="w-full"
-              onClick={() => router.push('/worker/payments')}
-              style={{
-                backgroundColor: currentTheme.colors.primary,
-                color: currentTheme.colors.text
-              }}
-            >
-              <Wallet className="h-4 w-4 mr-2" />
-              View Payment History
-            </Button>
-          </CardFooter>
         </Card>
       </div>
     </div>

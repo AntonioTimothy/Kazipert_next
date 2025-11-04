@@ -38,3 +38,9 @@ npm run pm2:logs       # Show all logs
 # Database operations
 npm run db:push:test   # Push schema to test DB
 npm run db:push:live   # Push schema to live DB
+
+
+
+I want to add the theme colors for kazipert to be as follows 
+
+Primary color to be this #117c82, secondary also slightly over used color to be this #117c82, but not over used than primary and another key color to be this but #6c71b5 but not over used, and a professional brown fade for some backgrounds, review my dashboard page below, tell me where it gets the colors, i did set some global colors but i dont remember where , update the dashboard to have solid cards, colorful icons and look fread based on these colors 

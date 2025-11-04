@@ -76,29 +76,28 @@ const KAZIPERT_COLORS = {
 
 // Job categories for Oman domestic workers
 const JOB_CATEGORIES = [
-  { value: "GENERAL_HOUSE_HELP", label: "General House Help", description: "Cleaning, laundry, basic cooking" },
-  { value: "ELDERLY_CARE", label: "Elderly Person Care", description: "Companionship, medication, mobility assistance" },
-  { value: "CHILD_CARE", label: "Child Care / Nanny", description: "Childcare, homework help, activities" },
-  { value: "COOKING_SPECIALIST", label: "Cooking Specialist", description: "Meal preparation, dietary planning" },
-  { value: "HOUSE_MANAGER", label: "House Manager", description: "Supervision, coordination, management" }
+  { value: "general-house-help", label: "General House Help", description: "Cleaning, laundry, basic cooking" },
+  { value: "elderly-care", label: "Elderly Person Care", description: "Companionship, medication, mobility assistance" },
+  { value: "child-care", label: "Child Care / Nanny", description: "Childcare, homework help, activities" },
+  { value: "cooking-specialist", label: "Cooking Specialist", description: "Meal preparation, dietary planning" },
+  { value: "house-manager", label: "House Manager", description: "Supervision, coordination, management" }
 ]
 
 // Available from options
 const AVAILABLE_FROM_OPTIONS = [
-  { value: "IMMEDIATELY", label: "Immediately" },
-  { value: "ONE_MONTH", label: "1 month from now" },
-  { value: "TWO_MONTHS", label: "2 months from now" },
-  { value: "SPECIFIC_DATE", label: "Specific date" }
+  { value: "immediately", label: "Immediately" },
+  { value: "1_month", label: "1 month from now" },
+  { value: "2_months", label: "2 months from now" },
+  { value: "specific_date", label: "Specific date" }
 ]
 
 // Initial job form state
 const initialJobForm = {
   // Step 1: Job Category & Attestation
   title: "",
-  category: "GENERAL_HOUSE_HELP", // Default value that matches enum
+  category: "",
   description: "",
   agreeToTruth: false,
-  agreeToTerms: false,
   
   // Step 2: Household Details
   residenceType: "VILLA",
@@ -133,7 +132,8 @@ const initialJobForm = {
   location: "",
   city: "Muscat",
   availableFrom: "",
-  availableFromType: "IMMEDIATELY",
+  availableFromType: "immediately",
+  agreeToTerms: false,
   
   // Auto-calculated fields
   autoSalaryCalculation: true
@@ -400,9 +400,7 @@ export default function EmployerJobsPage() {
         ...jobForm,
         status: 'ACTIVE',
         salary: calculatedSalary,
-        availableFrom: jobForm.availableFromType === "SPECIFIC_DATE" 
-        ? jobForm.availableFrom 
-        : jobForm.availableFromType,
+        availableFrom: availableFromDate,
         type: "FULL_TIME", // All jobs are live-in in Oman
         accommodation: "PROVIDED", // Compulsory in Oman
         meals: "INCLUDED", // Compulsory in Oman

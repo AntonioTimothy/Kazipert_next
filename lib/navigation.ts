@@ -43,7 +43,8 @@ import {
     Zap,
     Globe,
     Mail,
-    Activity
+    Activity,
+    HelpCircle
 } from "lucide-react"
 
 export type NavigationItem = {
@@ -72,23 +73,33 @@ export const navigationConfig: NavigationItem[] = [
     },
 
     {
+        name: "My Contract",
+        href: "/portals/worker/contract",
+        icon: Calendar,
+        roles: ["employee"]
+    },
+
+    {
         name: "Wallet",
         href: "/portals/worker/wallet",
         icon: CreditCard,
         roles: ["employee"]
     },
+
     {
-        name: "Tickets",
+        name: "Notifications",
+        href: "/portals/worker/notifications",
+        icon: Bell,
+        roles: ["employee"],
+        badge: "4"
+
+    },
+    {
+        name: "Support Messages",
         href: "/portals/worker/support",
         icon: MessageSquare,
         roles: ["employee"],
         badge: "3"
-    },
-    {
-        name: "Classes",
-        href: "/portals/worker/training",
-        icon: Video,
-        roles: ["employee"]
     },
     {
         name: "Services",
@@ -97,6 +108,13 @@ export const navigationConfig: NavigationItem[] = [
         roles: ["employee"]
     },
 
+    {
+        name: "Classes",
+        href: "/portals/worker/training",
+        icon: Video,
+        roles: ["employee"]
+    },
+    
     {
         name: "Settings",
         href: "/portals/worker/settings",
@@ -123,7 +141,7 @@ export const navigationConfig: NavigationItem[] = [
     {
         name: "Contracts",
         href: "/portals/employer/loading",
-        icon: Briefcase,
+        icon: Calendar,
         roles: ["employer"]
     },
 
@@ -134,9 +152,23 @@ export const navigationConfig: NavigationItem[] = [
         roles: ["employer"]
     },
     {
-        name: "Support",
+        name: "Notifications",
+        href: "/portals/employer/notifications",
+        icon: Bell,
+        roles: ["employer"],
+        badge: "4"
+
+    },
+    {
+        name: "Support Messages",
         href: "/portals/employer/loading",
         icon: MessageSquare,
+        roles: ["employer"]
+    },
+    {
+        name: "Help Center",
+        href: "/portals/employer/loading",
+        icon: HelpCircle,
         roles: ["employer"]
     },
     {
