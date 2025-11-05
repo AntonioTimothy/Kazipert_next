@@ -11,7 +11,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useTheme } from "@/contexts/ThemeContext"
 import { cn } from "@/lib/utils"
 import { jobService } from "@/lib/services/jobService"
-import { applicationService } from "@/lib/services/applicationService"
 import {
   Briefcase,
   Calendar,
@@ -59,7 +58,7 @@ export default function EmployeeDashboard() {
   
   // Real data states
   const [applications, setApplications] = useState<any[]>([])
-  const [profileData, setProfileData] = useState<any>({})
+  const [jobs, setJobs] = useState<any[]>([])
   const [stats, setStats] = useState({
     totalApplications: 0,
     pendingApplications: 0,
@@ -90,37 +89,41 @@ export default function EmployeeDashboard() {
       setUser(parsedUser)
       
       try {
-        // Load all applications for the employee
-        const [allApplications, employeeProfile] = await Promise.all([
-          applicationService.getApplications({ role: 'employee' }),
-          jobService.getEmployeeProfile({ employeeId: parsedUser.id })
+        // Load applications and jobs using the jobService
+        const [applicationsData, jobsData] = await Promise.all([
+          jobService.getApplications({ role: 'employee' }),
+          jobService.getJobs({ role: 'employee' })
         ])
 
-        setApplications(allApplications || [])
-        setProfileData(employeeProfile || {})
+        setApplications(applicationsData?.applications || [])
+        setJobs(jobsData?.jobs || [])
 
         // Calculate stats from actual data
-        const totalApplications = allApplications?.length || 0
-        const pendingApplications = allApplications?.filter((app: any) => 
+        const totalApplications = applicationsData?.applications?.length || 0
+        const pendingApplications = applicationsData?.applications?.filter((app: any) => 
           app.status === 'PENDING' || app.status === 'UNDER_REVIEW'
         ).length || 0
-        const interviewApplications = allApplications?.filter((app: any) => 
+        const interviewApplications = applicationsData?.applications?.filter((app: any) => 
           app.status === 'INTERVIEW_SCHEDULED' || app.status === 'INTERVIEW_COMPLETED'
         ).length || 0
-        const acceptedApplications = allApplications?.filter((app: any) => 
+        const acceptedApplications = applicationsData?.applications?.filter((app: any) => 
           app.status === 'ACCEPTED' || app.status === 'HIRED'
         ).length || 0
-        const rejectedApplications = allApplications?.filter((app: any) => 
+        const rejectedApplications = applicationsData?.applications?.filter((app: any) => 
           app.status === 'REJECTED'
         ).length || 0
 
         // Calculate total earnings from accepted applications
-        const totalEarnings = allApplications?.reduce((sum: number, app: any) => {
-          if ((app.status === 'ACCEPTED' || app.status === 'HIRED') && app.job?.salary) {
-            return sum + (parseFloat(app.job.salary) || 0)
+        const totalEarnings = applicationsData?.applications?.reduce((sum: number, app: any) => {
+          if ((app.status === 'ACCEPTED' || app.status === 'HIRED') && app.expectedSalary) {
+            return sum + (parseFloat(app.expectedSalary) || 0)
           }
           return sum
         }, 0) || 0
+
+        // Get profile data from user session
+        const profileStrength = parsedUser.profileCompletion || 65
+        const profileViews = parsedUser.profileViews || 0
 
         setStats({
           totalApplications,
@@ -128,20 +131,20 @@ export default function EmployeeDashboard() {
           interviewApplications,
           acceptedApplications,
           rejectedApplications,
-          profileViews: employeeProfile?.views || 0,
-          profileStrength: employeeProfile?.completionPercentage || 65,
+          profileViews,
+          profileStrength,
           totalEarnings
         })
 
         // Check if profile is complete
-        const isProfileComplete = (employeeProfile?.completionPercentage || 0) >= 80
+        const isProfileComplete = profileStrength >= 80
         setProfileComplete(isProfileComplete)
 
       } catch (error) {
         console.error('Error loading dashboard data:', error)
         // Set default empty data
         setApplications([])
-        setProfileData({})
+        setJobs([])
       } finally {
         setLoading(false)
       }
@@ -622,11 +625,16 @@ export default function EmployeeDashboard() {
                         </div>
                         <div className="text-left">
                           <div className="font-medium text-sm" style={{ color: KAZIPERT_COLORS.text }}>
-                            {application.job?.title}
+                            {application.job?.title || 'Household Position'}
                           </div>
                           <div className="text-xs" style={{ color: KAZIPERT_COLORS.textLight }}>
-                            {application.job?.employer?.companyName}
+                            {application.job?.employer?.companyName || 'Private Family'}
                           </div>
+                          {application.expectedSalary && (
+                            <div className="text-xs text-green-600 font-medium mt-1">
+                              {application.expectedSalary} OMR
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="text-right">
@@ -730,10 +738,10 @@ export default function EmployeeDashboard() {
                         </div>
                         <div>
                           <div className="font-medium text-sm" style={{ color: KAZIPERT_COLORS.text }}>
-                            {interview.job?.title}
+                            {interview.job?.title || 'Household Position'}
                           </div>
                           <div className="text-xs" style={{ color: KAZIPERT_COLORS.textLight }}>
-                            {interview.job?.employer?.companyName}
+                            {interview.job?.employer?.companyName || 'Private Family'}
                           </div>
                           {interview.interviewDate && (
                             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
