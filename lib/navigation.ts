@@ -140,14 +140,14 @@ export const navigationConfig: NavigationItem[] = [
 
     {
         name: "Contracts",
-        href: "/portals/employer/loading",
+        href: "/portals/employer/contracts",
         icon: Calendar,
         roles: ["employer"]
     },
 
     {
         name: "Payments",
-        href: "/portals/employer/loading",
+        href: "/portals/employer/payments",
         icon: CreditCard,
         roles: ["employer"]
     },
@@ -161,13 +161,13 @@ export const navigationConfig: NavigationItem[] = [
     },
     {
         name: "Support Messages",
-        href: "/portals/employer/loading",
+        href: "/portals/employer/support",
         icon: MessageSquare,
         roles: ["employer"]
     },
     {
         name: "Help Center",
-        href: "/portals/employer/loading",
+        href: "/portals/employer/help-center",
         icon: HelpCircle,
         roles: ["employer"]
     },
