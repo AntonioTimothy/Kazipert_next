@@ -258,5 +258,147 @@ export const jobService = {
             console.error('Error getting current user:', error)
             return null
         }
+    },
+
+    // Application Management
+    async updateApplication(applicationId: string, data: { status?: string }) {
+        const response = await fetch(`${API_BASE}/applications/${applicationId}`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+
+        return handleResponse(response)
+    },
+
+    async getApplication(applicationId: string) {
+        const response = await fetch(`${API_BASE}/applications/${applicationId}`,
+            getAuthConfig('GET')
+        )
+
+        return handleResponse(response)
+    },
+
+    // Send message in application
+    async sendApplicationMessage(applicationId: string, message: string) {
+        const response = await fetch(`${API_BASE}/applications/${applicationId}/messages`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message })
+        })
+
+        return handleResponse(response)
+    },
+
+    // Contract and document management
+    async uploadDocument(applicationId: string, documentType: string, file: File) {
+        const formData = new FormData()
+        formData.append('document', file)
+        formData.append('documentType', documentType)
+
+        const response = await fetch(`${API_BASE}/applications/${applicationId}/documents`, {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        })
+
+        return handleResponse(response)
+    },
+
+    async generateContract(applicationId: string) {
+        const response = await fetch(`${API_BASE}/applications/${applicationId}/contract`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+
+        return handleResponse(response)
+    },
+    // Application Progress Management
+    async updateApplicationStep(applicationId: string, step: string, data?: any) {
+        const response = await fetch(`${API_BASE}/applications/${applicationId}/step`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ step, ...data })
+        })
+
+        return handleResponse(response)
+    },
+
+    async uploadMedicalDocument(applicationId: string, file: File) {
+        const formData = new FormData()
+        formData.append('medicalDocument', file)
+        formData.append('type', 'medical')
+
+        const response = await fetch(`${API_BASE}/applications/${applicationId}/medical`, {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        })
+
+        return handleResponse(response)
+    },
+
+    async uploadFlightTicket(applicationId: string, file: File, flightDetails: any) {
+        const formData = new FormData()
+        formData.append('flightTicket', file)
+        formData.append('flightDetails', JSON.stringify(flightDetails))
+
+        const response = await fetch(`${API_BASE}/applications/${applicationId}/flight-ticket`, {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        })
+
+        return handleResponse(response)
+    },
+
+    async getApplicationProgress(applicationId: string) {
+        const response = await fetch(`${API_BASE}/applications/${applicationId}/progress`,
+            getAuthConfig('GET')
+        )
+
+        return handleResponse(response)
+    },
+
+    // Employer specific methods
+    async getJobApplications(jobId: string) {
+        const response = await fetch(`${API_BASE}/jobs/${jobId}/applications`,
+            getAuthConfig('GET')
+        )
+
+        return handleResponse(response)
+    },
+
+    async shortlistApplication(applicationId: string) {
+        return this.updateApplicationStep(applicationId, 'SHORTLISTED')
+    },
+
+    async scheduleInterview(applicationId: string, interviewDate: string, notes?: string) {
+        return this.updateApplicationStep(applicationId, 'INTERVIEW_SCHEDULED', {
+            interviewDate,
+            interviewNotes: notes
+        })
+    },
+
+    async requestMedical(applicationId: string) {
+        return this.updateApplicationStep(applicationId, 'MEDICAL_REQUESTED')
+    },
+
+    async sendContract(applicationId: string, contractUrl: string) {
+        return this.updateApplicationStep(applicationId, 'CONTRACT_SENT', {
+            contractUrl
+        })
     }
 }

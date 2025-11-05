@@ -141,7 +141,7 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
-// Onboarding models - SINGLE DEFINITION
+// Onboarding models
 model OnboardingProgress {
   id          String   @id @default(cuid())
   userId      String   @unique
@@ -247,10 +247,10 @@ model Job {
   type              JobType
   description       String
   status            JobStatus @default(DRAFT)
-  category          JobCategory? // NEW FIELD - Make it optional
-  agreeToTruth      Boolean  @default(false)  // User attestation
-  agreeToTerms      Boolean  @default(false)  // Terms acceptance
-  availableFromType AvailableFromType?        // UI selection type
+  category          JobCategory?
+  agreeToTruth      Boolean  @default(false)
+  agreeToTerms      Boolean  @default(false)
+  availableFromType AvailableFromType?
 
   // Household Details
   residenceType     ResidenceType
@@ -264,15 +264,15 @@ model Job {
   // Family Details
   familyMembers     Int
   childrenCount     Int @default(0)
-  childrenAges      String[] // Store as JSON array
+  childrenAges      String[]
   elderlyCare       Boolean @default(false)
   specialNeeds      Boolean @default(false)
-  pets              String[] // Store as JSON array
+  pets              String[]
   
   // Job Requirements
-  duties            String[] // Store as JSON array
+  duties            String[]
   experienceRequired ExperienceLevel
-  languageRequirements String[] // Store as JSON array
+  languageRequirements String[]
   workingHours      String
   overtimeRequired  Boolean @default(false)
   accommodation     AccommodationType
@@ -280,9 +280,9 @@ model Job {
   vacationDays      Int @default(30)
   
   // Benefits & Certifications
-  benefits          String[] // Store as JSON array
-  certifications    String[] // Store as JSON array
-  skills            String[] // Store as JSON array
+  benefits          String[]
+  certifications    String[]
+  skills            String[]
   
   // Compensation & Location
   salary            Float
@@ -322,6 +322,50 @@ model JobApplication {
   coverLetter String?
   expectedSalary Float?
   
+  // Enhanced workflow fields with progress tracking
+  currentStep ApplicationStep @default(APPLICATION_SUBMITTED)
+  
+  // Timestamps for each step
+  applicationSubmittedAt DateTime @default(now())
+  underReviewAt         DateTime?
+  shortlistedAt         DateTime?
+  interviewScheduledAt  DateTime?
+  medicalRequestedAt    DateTime?
+  medicalSubmittedAt    DateTime?
+  medicalApprovedAt     DateTime?
+  contractSentAt        DateTime?
+  contractSignedAt      DateTime?
+  visaAppliedAt         DateTime?
+  visaApprovedAt        DateTime?
+  flightTicketSentAt    DateTime?
+  flightTicketReceivedAt DateTime?
+  deploymentReadyAt     DateTime?
+  
+  // Document tracking
+  passportVerified    Boolean @default(false)
+  goodConductVerified Boolean @default(false)
+  medicalVerified     Boolean @default(false)
+  contractSigned      Boolean @default(false)
+  visaApproved        Boolean @default(false)
+  flightTicketSent    Boolean @default(false)
+  
+  // Medical document tracking
+  medicalDocumentUrl  String?
+  medicalSubmitted    Boolean @default(false)
+  medicalApproved     Boolean @default(false)
+  
+  // Flight ticket tracking
+  flightTicketUrl     String?
+  flightTicketDetails Json?    // Store flight details
+  
+  // Interview details
+  interviewDate       DateTime?
+  interviewNotes      String?
+  
+  // Contract details
+  contractUrl         String?
+  contractDetails     Json?    // Store contract terms
+  
   // Timestamps
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -329,6 +373,7 @@ model JobApplication {
   
   // Relations
   messages    ApplicationMessage[]
+  documents   ApplicationDocument[]
   
   @@unique([jobId, employeeId])
   @@map("job_applications")
@@ -341,10 +386,22 @@ model ApplicationMessage {
   senderId        String
   sender          User     @relation(fields: [senderId], references: [id], onDelete: Cascade, name: "MessageSenders")
   message         String
-  isEmployer      Boolean  // True if sent by employer, false if by employee
+  isEmployer      Boolean
   createdAt       DateTime @default(now())
   
   @@map("application_messages")
+}
+
+model ApplicationDocument {
+  id              String   @id @default(cuid())
+  applicationId   String
+  application     JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  documentType    String   // passport, medical, contract, etc.
+  documentUrl     String
+  verified        Boolean  @default(false)
+  uploadedAt      DateTime @default(now())
+  
+  @@map("application_documents")
 }
 
 model JobView {
@@ -412,13 +469,6 @@ enum MealsType {
   PARTIAL
 }
 
-enum ApplicationStatus {
-  PENDING
-  UNDER_REVIEW
-  ACCEPTED
-  REJECTED
-  WITHDRAWN
-}
 
 enum Role {
   EMPLOYER
@@ -453,10 +503,42 @@ enum AdminStatus {
   INACTIVE
 }
 
-
 enum AvailableFromType {
   IMMEDIATELY
   ONE_MONTH
   TWO_MONTHS
   SPECIFIC_DATE
+}
+// Add new enum for application steps
+enum ApplicationStep {
+  APPLICATION_SUBMITTED
+  UNDER_REVIEW
+  SHORTLISTED
+  INTERVIEW_SCHEDULED
+  MEDICAL_REQUESTED
+  MEDICAL_SUBMITTED
+  MEDICAL_APPROVED
+  CONTRACT_SENT
+  CONTRACT_SIGNED
+  VISA_APPLIED
+  VISA_APPROVED
+  FLIGHT_TICKET_SENT
+  FLIGHT_TICKET_RECEIVED
+  DEPLOYMENT_READY
+}
+
+// Update ApplicationStatus enum
+enum ApplicationStatus {
+  PENDING
+  UNDER_REVIEW
+  SHORTLISTED
+  INTERVIEW_SCHEDULED
+  MEDICAL_PENDING
+  CONTRACT_PENDING
+  VISA_PROCESSING
+  FLIGHT_PENDING
+  READY_FOR_DEPLOYMENT
+  COMPLETED
+  REJECTED
+  WITHDRAWN
 }

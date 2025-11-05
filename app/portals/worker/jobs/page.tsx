@@ -39,6 +39,11 @@ import {
   GraduationCap,
   Users as UsersIcon,
   Crown,
+  Plane,
+  Download,
+  Upload,
+  MessageCircle,
+  Stethoscope,
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -48,6 +53,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTheme } from "@/contexts/ThemeContext"
 import { cn } from "@/lib/utils"
 import { jobService } from "@/lib/services/jobService"
+import { ApplicationStepper } from "@/components/application-stepper"
 
 // Filter options
 const FILTER_OPTIONS = {
@@ -72,6 +78,7 @@ export default function WorkerJobsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [activeFilter, setActiveFilter] = useState(FILTER_OPTIONS.ALL)
+  const [uploadingDocument, setUploadingDocument] = useState<string | null>(null)
   const jobsPerPage = 6
 
   useEffect(() => {
@@ -97,7 +104,7 @@ export default function WorkerJobsPage() {
         const jobsData = await jobService.getJobs({ role: 'employee' })
         setJobs(jobsData.jobs || [])
 
-        // Load applications
+        // Load applications with detailed progress
         const applicationsData = await jobService.getApplications({ role: 'employee' })
         setApplications(applicationsData || [])
 
@@ -122,6 +129,16 @@ export default function WorkerJobsPage() {
 
     loadData()
   }, [router])
+
+  // Refresh applications data
+  const refreshApplications = async () => {
+    try {
+      const applicationsData = await jobService.getApplications({ role: 'employee' })
+      setApplications(applicationsData || [])
+    } catch (error) {
+      console.error('Error refreshing applications:', error)
+    }
+  }
 
   // Filter jobs based on active filter
   const filteredJobs = jobs.filter(job => {
@@ -176,8 +193,7 @@ export default function WorkerJobsPage() {
       ))
       
       // Refresh applications
-      const applicationsData = await jobService.getApplications({ role: 'employee' })
-      setApplications(applicationsData || [])
+      await refreshApplications()
       
     } catch (error) {
       console.error('Error applying to job:', error)
@@ -212,6 +228,54 @@ export default function WorkerJobsPage() {
     } catch (error) {
       console.error('Error saving job:', error)
       alert('Failed to save job. Please try again.')
+    }
+  }
+
+  // Handle medical document upload
+  const handleMedicalUpload = async (applicationId: string) => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.pdf,.jpg,.jpeg,.png,.doc,.docx'
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (file) {
+        setUploadingDocument(applicationId)
+        try {
+          await jobService.uploadMedicalDocument(applicationId, file)
+          await refreshApplications()
+          alert('Medical document uploaded successfully!')
+        } catch (error) {
+          console.error('Error uploading medical document:', error)
+          alert('Failed to upload medical document. Please try again.')
+        } finally {
+          setUploadingDocument(null)
+        }
+      }
+    }
+    input.click()
+  }
+
+  // Handle contract signing
+  const handleContractSign = async (applicationId: string) => {
+    try {
+      await jobService.updateApplicationStep(applicationId, 'CONTRACT_SIGNED')
+      await refreshApplications()
+      alert('Contract signed successfully!')
+    } catch (error) {
+      console.error('Error signing contract:', error)
+      alert('Failed to sign contract. Please try again.')
+    }
+  }
+
+  // Handle flight ticket confirmation
+  const handleFlightConfirmation = async (applicationId: string) => {
+    try {
+      await jobService.updateApplicationStep(applicationId, 'FLIGHT_TICKET_RECEIVED')
+      await refreshApplications()
+      alert('Flight ticket confirmed!')
+    } catch (error) {
+      console.error('Error confirming flight ticket:', error)
+      alert('Failed to confirm flight ticket. Please try again.')
     }
   }
 
@@ -250,6 +314,14 @@ export default function WorkerJobsPage() {
         return <Badge variant="secondary" className="bg-green-100 text-green-700 border-0"><CheckCircle className="h-3 w-3 mr-1" />Accepted</Badge>
       case "REJECTED":
         return <Badge variant="secondary" className="bg-red-100 text-red-700 border-0"><AlertCircle className="h-3 w-3 mr-1" />Rejected</Badge>
+      case "SHORTLISTED":
+        return <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-0"><Star className="h-3 w-3 mr-1" />Shortlisted</Badge>
+      case "CONTRACT_PENDING":
+        return <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-0"><FileText className="h-3 w-3 mr-1" />Contract Pending</Badge>
+      case "VISA_PROCESSING":
+        return <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 border-0"><Shield className="h-3 w-3 mr-1" />Visa Processing</Badge>
+      case "READY_FOR_DEPLOYMENT":
+        return <Badge variant="secondary" className="bg-green-100 text-green-700 border-0"><CheckCircle className="h-3 w-3 mr-1" />Ready for Deployment</Badge>
       default:
         return <Badge variant="secondary" className="border-0">Pending</Badge>
     }
@@ -328,6 +400,15 @@ export default function WorkerJobsPage() {
     return Math.min(score, 95) // Cap at 95%
   }
 
+  // Get applications that require action
+  const getPendingApplications = () => {
+    return applications.filter(app => 
+      app.currentStep === 'MEDICAL_REQUESTED' && !app.medicalSubmitted ||
+      app.currentStep === 'CONTRACT_SENT' && !app.contractSigned ||
+      app.currentStep === 'FLIGHT_TICKET_SENT' && !app.flightTicketReceivedAt
+    )
+  }
+
   // Skeleton loading component
   const JobCardSkeleton = () => (
     <Card className="border-0 shadow-lg animate-pulse bg-white/80 backdrop-blur-sm">
@@ -393,10 +474,38 @@ export default function WorkerJobsPage() {
 
   const displayedJobs = sortedJobs.slice(0, currentPage * jobsPerPage)
   const hasMoreJobs = displayedJobs.length < sortedJobs.length
+  const pendingApplications = getPendingApplications()
 
   return (
     <div className="min-h-screen" style={{ background: currentTheme.colors.background }}>
       <div className="max-w-7xl mx-auto p-6 space-y-8">
+        {/* Pending Actions Alert */}
+        {pendingApplications.length > 0 && (
+          <Card className="border-2 border-amber-200 bg-amber-50/80 backdrop-blur-sm rounded-2xl">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100">
+                  <AlertCircle className="h-6 w-6 text-amber-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-amber-800 mb-1">
+                    Action Required on {pendingApplications.length} Application{pendingApplications.length !== 1 ? 's' : ''}
+                  </h3>
+                  <p className="text-amber-700 text-sm">
+                    You have pending actions that need your attention to move forward with your applications.
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => setActiveTab("applications")}
+                  className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl"
+                >
+                  Review Applications
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Filter Section */}
         <div className="bg-card/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl border">
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
@@ -518,6 +627,9 @@ export default function WorkerJobsPage() {
             >
               <Briefcase className="h-4 w-4 mr-2" />
               Browse Jobs
+              <Badge variant="secondary" className="ml-2 bg-white/20 text-white text-xs">
+                {sortedJobs.length}
+              </Badge>
             </TabsTrigger>
             <TabsTrigger 
               value="applications" 
@@ -529,6 +641,9 @@ export default function WorkerJobsPage() {
             >
               <FileText className="h-4 w-4 mr-2" />
               My Applications
+              <Badge variant="secondary" className="ml-2 bg-white/20 text-white text-xs">
+                {applications.length}
+              </Badge>
             </TabsTrigger>
             <TabsTrigger 
               value="pending" 
@@ -539,7 +654,12 @@ export default function WorkerJobsPage() {
               }}
             >
               <Clock4 className="h-4 w-4 mr-2" />
-              Pending Review
+              Pending Actions
+              {pendingApplications.length > 0 && (
+                <Badge variant="destructive" className="ml-2 bg-red-500 text-white text-xs">
+                  {pendingApplications.length}
+                </Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger 
               value="saved" 
@@ -551,6 +671,9 @@ export default function WorkerJobsPage() {
             >
               <BookmarkCheck className="h-4 w-4 mr-2" />
               Saved Jobs
+              <Badge variant="secondary" className="ml-2 bg-white/20 text-white text-xs">
+                {savedJobsList.length}
+              </Badge>
             </TabsTrigger>
           </TabsList>
 
@@ -756,84 +879,305 @@ export default function WorkerJobsPage() {
           </TabsContent>
 
           {/* My Applications Tab */}
-          <TabsContent value="applications">
-            <div className="space-y-4">
-              {applications.map((application) => (
-                <Card key={application.id} className="border-0 shadow-lg bg-card/80 backdrop-blur-sm">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-card-foreground mb-2">{application.job?.title}</h3>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                          <span className="flex items-center gap-1">
-                            <Building className="h-4 w-4" />
-                            {application.job?.employer?.firstName} {application.job?.employer?.lastName}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            Applied {new Date(application.appliedDate).toLocaleDateString()}
-                          </span>
-                          <span className={`flex items-center gap-1 ${application.employerViewed ? 'text-green-600' : 'text-muted-foreground'}`}>
-                            <Eye className="h-4 w-4" />
-                            {application.employerViewed ? 'Viewed' : 'Not viewed'}
-                          </span>
+          <TabsContent value="applications" className="space-y-6">
+            {applications.map((application) => (
+              <Card key={application.id} className="border-0 shadow-lg bg-card/80 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-4 mb-3">
+                        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg">
+                          {application.job?.title?.split(' ').map(word => word[0]).join('').toUpperCase()}
                         </div>
-                        {getStatusBadge(application.status)}
+                        <div className="flex-1">
+                          <h3 className="text-xl font-semibold text-card-foreground mb-1">
+                            {application.job?.title}
+                          </h3>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Building className="h-4 w-4" />
+                              {application.job?.employer?.firstName} {application.job?.employer?.lastName}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-4 w-4" />
+                              {application.job?.city}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <DollarSign className="h-4 w-4" />
+                              {application.job?.salary} {application.job?.salaryCurrency}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <Button variant="outline" className="rounded-xl border-border">
-                        View Details
-                        <ChevronRight className="h-4 w-4 ml-1" />
-                      </Button>
+                      
+                      {/* Application Status */}
+                      <div className="flex items-center gap-4 mb-4">
+                        {getStatusBadge(application.status)}
+                        <span className="text-sm text-muted-foreground">
+                          Applied {new Date(application.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      
+                      {/* Application Progress Stepper */}
+                      <div className="mt-4">
+                        <ApplicationStepper 
+                          currentStep={application.currentStep || 'APPLICATION_SUBMITTED'}
+                          application={application}
+                          role="employee"
+                          onAction={async (step) => {
+                            if (step === 'MEDICAL_REQUESTED') {
+                              await handleMedicalUpload(application.id)
+                            } else if (step === 'CONTRACT_SENT') {
+                              await handleContractSign(application.id)
+                            } else if (step === 'FLIGHT_TICKET_SENT') {
+                              await handleFlightConfirmation(application.id)
+                            }
+                          }}
+                        />
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-              {applications.length === 0 && (
-                <Card className="border-0 shadow-xl text-center bg-card/80 backdrop-blur-sm">
-                  <CardContent className="py-16">
-                    <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-2xl font-semibold text-card-foreground mb-2">No Applications Yet</h3>
-                    <p className="text-muted-foreground mb-6">Start applying to jobs to see them here.</p>
-                    <Button 
-                      onClick={() => setActiveTab("browse")}
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-6 py-3"
-                    >
-                      Browse Jobs
+                  </div>
+                  
+                  {/* Quick Actions based on current step */}
+                  {application.currentStep === 'MEDICAL_REQUESTED' && !application.medicalSubmitted && (
+                    <div className="p-4 bg-amber-50 rounded-lg border border-amber-200 mt-4">
+                      <div className="flex items-center gap-3">
+                        <Stethoscope className="h-5 w-5 text-amber-600" />
+                        <div className="flex-1">
+                          <h5 className="font-semibold text-amber-800">Medical Document Required</h5>
+                          <p className="text-sm text-amber-700">Please upload your medical examination results to proceed with your application.</p>
+                          <div className="flex gap-2 mt-3">
+                            <Button 
+                              size="sm" 
+                              className="bg-amber-500 hover:bg-amber-600"
+                              onClick={() => handleMedicalUpload(application.id)}
+                              disabled={uploadingDocument === application.id}
+                            >
+                              {uploadingDocument === application.id ? (
+                                <>
+                                  <div className="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                  Uploading...
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="h-4 w-4 mr-2" />
+                                  Upload Medical Document
+                                </>
+                              )}
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                              onClick={() => window.open('/medical-requirements', '_blank')}
+                            >
+                              <FileText className="h-4 w-4 mr-2" />
+                              View Requirements
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {application.currentStep === 'CONTRACT_SENT' && application.contractUrl && !application.contractSigned && (
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 mt-4">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-5 w-5 text-blue-600" />
+                        <div className="flex-1">
+                          <h5 className="font-semibold text-blue-800">Contract Ready for Review</h5>
+                          <p className="text-sm text-blue-700">Your employment contract has been sent. Please review and sign to proceed.</p>
+                          <div className="flex gap-2 mt-3">
+                            <Button 
+                              size="sm" 
+                              className="bg-blue-500 hover:bg-blue-600"
+                              onClick={() => handleContractSign(application.id)}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Sign Contract
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                              onClick={() => window.open(application.contractUrl, '_blank')}
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              Download Contract
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {application.currentStep === 'FLIGHT_TICKET_SENT' && application.flightTicketUrl && !application.flightTicketReceivedAt && (
+                    <div className="p-4 bg-green-50 rounded-lg border border-green-200 mt-4">
+                      <div className="flex items-center gap-3">
+                        <Plane className="h-5 w-5 text-green-600" />
+                        <div className="flex-1">
+                          <h5 className="font-semibold text-green-800">Flight Ticket Available</h5>
+                          <p className="text-sm text-green-700">Your flight ticket has been booked. Please review the details and confirm receipt.</p>
+                          <div className="flex gap-2 mt-3">
+                            <Button 
+                              size="sm" 
+                              className="bg-green-500 hover:bg-green-600"
+                              onClick={() => handleFlightConfirmation(application.id)}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Confirm Receipt
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="border-green-300 text-green-700 hover:bg-green-100"
+                              onClick={() => window.open(application.flightTicketUrl, '_blank')}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Flight Details
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 mt-6 pt-4 border-t">
+                    <Button variant="outline" size="sm">
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Message Employer
                     </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+                    <Button variant="outline" size="sm">
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Job Details
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            
+            {applications.length === 0 && (
+              <Card className="border-0 shadow-xl text-center bg-card/80 backdrop-blur-sm">
+                <CardContent className="py-16">
+                  <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-2xl font-semibold text-card-foreground mb-2">No Applications Yet</h3>
+                  <p className="text-muted-foreground mb-6">Start applying to jobs to see them here.</p>
+                  <Button 
+                    onClick={() => setActiveTab("browse")}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-6 py-3"
+                  >
+                    Browse Jobs
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
-          {/* Pending Review Tab */}
+          {/* Pending Actions Tab */}
           <TabsContent value="pending">
             <div className="space-y-4">
-              {applications.filter(app => app.status === "PENDING_DETAILS").map((application) => (
+              {pendingApplications.map((application) => (
                 <Card key={application.id} className="border-2 border-amber-200 bg-amber-50/50 backdrop-blur-sm">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-3">
                           <AlertCircle className="h-5 w-5 text-amber-600" />
-                          <h3 className="text-xl font-semibold text-amber-800">{application.job?.title}</h3>
+                          <div>
+                            <h3 className="text-xl font-semibold text-amber-800">{application.job?.title}</h3>
+                            <p className="text-amber-600 text-sm">
+                              Employer: {application.job?.employer?.firstName} {application.job?.employer?.lastName}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-amber-700 mb-4">
-                          Additional information required to complete your application. Please provide the requested details to move forward.
-                        </p>
-                        <div className="flex items-center gap-4 text-sm text-amber-600">
-                          <span>Employer: {application.job?.employer?.firstName} {application.job?.employer?.lastName}</span>
-                          <span>Last updated: {new Date(application.lastUpdate).toLocaleDateString()}</span>
-                        </div>
+                        
+                        {application.currentStep === 'MEDICAL_REQUESTED' && !application.medicalSubmitted && (
+                          <div className="space-y-2">
+                            <p className="text-amber-700">
+                              <strong>Action Required:</strong> Upload medical examination results
+                            </p>
+                            <Button 
+                              size="sm" 
+                              className="bg-amber-500 hover:bg-amber-600"
+                              onClick={() => handleMedicalUpload(application.id)}
+                              disabled={uploadingDocument === application.id}
+                            >
+                              {uploadingDocument === application.id ? (
+                                <>
+                                  <div className="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                  Uploading...
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="h-4 w-4 mr-2" />
+                                  Upload Medical Document
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        )}
+
+                        {application.currentStep === 'CONTRACT_SENT' && application.contractUrl && !application.contractSigned && (
+                          <div className="space-y-2">
+                            <p className="text-amber-700">
+                              <strong>Action Required:</strong> Review and sign employment contract
+                            </p>
+                            <div className="flex gap-2">
+                              <Button 
+                                size="sm" 
+                                className="bg-amber-500 hover:bg-amber-600"
+                                onClick={() => handleContractSign(application.id)}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Sign Contract
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                                onClick={() => window.open(application.contractUrl, '_blank')}
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                View Contract
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        {application.currentStep === 'FLIGHT_TICKET_SENT' && application.flightTicketUrl && !application.flightTicketReceivedAt && (
+                          <div className="space-y-2">
+                            <p className="text-amber-700">
+                              <strong>Action Required:</strong> Confirm flight ticket receipt
+                            </p>
+                            <div className="flex gap-2">
+                              <Button 
+                                size="sm" 
+                                className="bg-amber-500 hover:bg-amber-600"
+                                onClick={() => handleFlightConfirmation(application.id)}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Confirm Receipt
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                                onClick={() => window.open(application.flightTicketUrl, '_blank')}
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Ticket
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <Button className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl">
-                        Provide Details
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               ))}
-              {applications.filter(app => app.status === "PENDING_DETAILS").length === 0 && (
+              
+              {pendingApplications.length === 0 && (
                 <Card className="border-0 shadow-xl text-center bg-card/80 backdrop-blur-sm">
                   <CardContent className="py-16">
                     <CheckCircle className="h-16 w-16 text-green-400 mx-auto mb-4" />
@@ -851,6 +1195,7 @@ export default function WorkerJobsPage() {
               {savedJobsList.map((job) => {
                 const CategoryIcon = getCategoryIcon(job.duties?.[0] || "General")
                 const applied = applications.some(app => app.jobId === job.id)
+                const matchScore = calculateMatchScore(job)
                 
                 return (
                   <Card key={job.id} className="border-0 shadow-lg bg-card/80 backdrop-blur-sm group">
@@ -859,14 +1204,19 @@ export default function WorkerJobsPage() {
                         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
                           <CategoryIcon className="h-7 w-7 text-primary" />
                         </div>
-                        <Button 
-                          variant="default" 
-                          size="icon"
-                          className="bg-primary hover:bg-primary/90 rounded-xl"
-                          onClick={() => handleSaveJob(job.id)}
-                        >
-                          <Bookmark className="h-4 w-4 fill-white" />
-                        </Button>
+                        <div className="flex gap-2">
+                          <Badge className="bg-green-500 text-white text-xs">
+                            {matchScore}% Match
+                          </Badge>
+                          <Button 
+                            variant="default" 
+                            size="icon"
+                            className="bg-primary hover:bg-primary/90 rounded-xl"
+                            onClick={() => handleSaveJob(job.id)}
+                          >
+                            <Bookmark className="h-4 w-4 fill-white" />
+                          </Button>
+                        </div>
                       </div>
                       <CardTitle className="text-xl leading-tight line-clamp-2">{job.title}</CardTitle>
                       <CardDescription className="flex items-center gap-2 mt-3">
@@ -885,6 +1235,10 @@ export default function WorkerJobsPage() {
                           {job.salary} {job.salaryCurrency}
                         </div>
                       </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Users className="h-3 w-3" />
+                        {job._count?.applications || 0} applicants
+                      </div>
                     </CardContent>
                     <CardFooter>
                       <Button 
@@ -892,7 +1246,17 @@ export default function WorkerJobsPage() {
                         onClick={() => handleApply(job.id)}
                         disabled={applied}
                       >
-                        {applied ? "Applied" : "Apply Now"}
+                        {applied ? (
+                          <>
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Applied
+                          </>
+                        ) : (
+                          <>
+                            <Briefcase className="h-4 w-4 mr-2" />
+                            Apply Now
+                          </>
+                        )}
                       </Button>
                     </CardFooter>
                   </Card>

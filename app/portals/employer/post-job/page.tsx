@@ -60,6 +60,7 @@ import {
   Droplets,
   Car
 } from "lucide-react"
+import { ApplicationStepper } from "@/components/application-stepper"
 
 // Define color scheme
 const KAZIPERT_COLORS = {
@@ -161,6 +162,11 @@ export default function EmployerJobsPage() {
 
   // Job posting form state
   const [jobForm, setJobForm] = useState(initialJobForm)
+
+  // Applicants modal states
+  const [jobApplications, setJobApplications] = useState<any[]>([])
+  const [selectedJob, setSelectedJob] = useState<any>(null)
+  const [loadingApplications, setLoadingApplications] = useState(false)
 
   // Calculate available from date based on selection
   const getAvailableFromDate = () => {
@@ -470,6 +476,69 @@ export default function EmployerJobsPage() {
     }
   }
 
+  // Add this function to handle viewing applicants
+  const handleViewApplicants = async (job: any) => {
+    console.log('👥 Handling view applicants for job:', job.id)
+    setSelectedJob(job)
+    setApplicantsView(job.id)
+    setLoadingApplications(true)
+    
+    try {
+      console.log('📡 Fetching applications for job:', job.id)
+      const applications = await jobService.getJobApplications(job.id)
+      console.log('✅ Applications fetched:', applications.length)
+      setJobApplications(applications)
+    } catch (error) {
+      console.error('❌ Error fetching applications:', error)
+      alert('Failed to load applicants. Please try again.')
+    } finally {
+      setLoadingApplications(false)
+    }
+  }
+
+  // Add this function to handle application actions
+  const handleApplicationAction = async (applicationId: string, action: string, data?: any) => {
+    console.log('🔄 Handling application action:', action, 'for application:', applicationId)
+    
+    try {
+      switch (action) {
+        case 'SHORTLISTED':
+          await jobService.updateApplicationStep(applicationId, 'SHORTLISTED')
+          break
+        case 'INTERVIEW_SCHEDULED':
+          // For demo, using current date + 3 days
+          const interviewDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
+          await jobService.updateApplicationStep(applicationId, 'INTERVIEW_SCHEDULED', {
+            interviewDate,
+            interviewNotes: 'Please be prepared for the interview'
+          })
+          break
+        case 'MEDICAL_REQUESTED':
+          await jobService.updateApplicationStep(applicationId, 'MEDICAL_REQUESTED')
+          break
+        case 'CONTRACT_SENT':
+          await jobService.updateApplicationStep(applicationId, 'CONTRACT_SENT', {
+            contractUrl: '/sample-contract.pdf' // Replace with actual contract URL
+          })
+          break
+        case 'FLIGHT_TICKET_SENT':
+          // Handle flight ticket upload
+          break
+        default:
+          await jobService.updateApplicationStep(applicationId, action, data)
+      }
+      
+      // Refresh applications
+      const applications = await jobService.getJobApplications(selectedJob.id)
+      setJobApplications(applications)
+      
+      console.log('✅ Application action completed successfully')
+    } catch (error) {
+      console.error('❌ Error updating application:', error)
+      alert('Failed to update application. Please try again.')
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch(status) {
       case 'ACTIVE': return 'bg-green-500/10 text-green-600 border-green-200'
@@ -618,6 +687,152 @@ export default function EmployerJobsPage() {
             </Button>
           </div>
         </div>
+      </div>
+    </div>
+  )
+
+  // Applicants Modal Component
+  const ApplicantsModal = () => (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-2xl font-bold text-gray-900">Applicants for {selectedJob?.title}</h3>
+            <p className="text-gray-600">
+              {selectedJob?.city} • {selectedJob?.salary} {selectedJob?.salaryCurrency} • 
+              {jobApplications.length} applicant{jobApplications.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => {
+              setApplicantsView(null)
+              setSelectedJob(null)
+              setJobApplications([])
+            }}
+          >
+            ✕
+          </Button>
+        </div>
+        
+        {loadingApplications ? (
+          <div className="flex justify-center py-8">
+            <LoadingSpinner />
+          </div>
+        ) : jobApplications.length > 0 ? (
+          <div className="space-y-6">
+            {jobApplications.map((application) => (
+              <Card key={application.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-4 mb-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                          {application.employee?.firstName?.[0]}{application.employee?.lastName?.[0]}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-lg font-semibold text-gray-900">
+                            {application.employee?.firstName} {application.employee?.lastName}
+                          </h4>
+                          <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                            <span>
+                              Age: {application.employee?.kycDetails?.dateOfBirth ? 
+                                Math.floor((new Date().getTime() - new Date(application.employee.kycDetails.dateOfBirth).getTime()) / 3.15576e+10) : 'N/A'
+                              }
+                            </span>
+                            <span>
+                              Experience: {application.employee?.kycDetails?.workExperience || 'N/A'}
+                            </span>
+                            <span>
+                              Applied: {new Date(application.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* KYC Status */}
+                      <div className="flex gap-2 mb-3">
+                        <Badge variant={application.employee?.kycDetails?.profileVerified ? 'default' : 'outline'}>
+                          Profile {application.employee?.kycDetails?.profileVerified ? 'Verified' : 'Pending'}
+                        </Badge>
+                        <Badge variant={application.employee?.kycDetails?.idVerified ? 'default' : 'outline'}>
+                          ID {application.employee?.kycDetails?.idVerified ? 'Verified' : 'Pending'}
+                        </Badge>
+                        <Badge variant={application.employee?.kycDetails?.medicalVerified ? 'default' : 'outline'}>
+                          Medical {application.employee?.kycDetails?.medicalVerified ? 'Verified' : 'Pending'}
+                        </Badge>
+                      </div>
+
+                      {/* Application Status */}
+                      <div className="flex items-center gap-4 text-sm">
+                        <Badge className={
+                          application.status === 'SHORTLISTED' ? 'bg-green-500 text-white' :
+                          application.status === 'REJECTED' ? 'bg-red-500 text-white' :
+                          application.status === 'UNDER_REVIEW' ? 'bg-blue-500 text-white' :
+                          'bg-gray-500 text-white'
+                        }>
+                          {application.status?.replace('_', ' ') || 'PENDING'}
+                        </Badge>
+                        <span className="text-gray-600">
+                          Current Step: {application.currentStep?.replace('_', ' ') || 'Application Submitted'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="text-right space-y-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleApplicationAction(application.id, 'SHORTLISTED')}
+                        disabled={application.status === 'SHORTLISTED'}
+                      >
+                        {application.status === 'SHORTLISTED' ? 'Shortlisted' : 'Shortlist'}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Application Progress Stepper */}
+                  <div className="mt-6 pt-4 border-t">
+                    <h5 className="text-sm font-semibold text-gray-900 mb-4">Application Progress</h5>
+                    <ApplicationStepper 
+                      currentStep={application.currentStep || 'APPLICATION_SUBMITTED'}
+                      application={application}
+                      role="employer"
+                      onAction={(step) => handleApplicationAction(application.id, step)}
+                    />
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 mt-6 pt-4 border-t">
+                    <Button variant="outline" size="sm">
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Message
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <FileText className="h-4 w-4 mr-2" />
+                      View Profile
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleApplicationAction(application.id, 'INTERVIEW_SCHEDULED')}
+                    >
+                      <UserCheck className="h-4 w-4 mr-2" />
+                      Schedule Interview
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <Users className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+            <h4 className="text-lg font-semibold text-gray-900 mb-2">No Applicants Yet</h4>
+            <p className="text-gray-600">No one has applied for this job yet.</p>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -1415,7 +1630,7 @@ export default function EmployerJobsPage() {
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                onClick={() => setApplicantsView(job.id)}
+                                onClick={() => handleViewApplicants(job)}
                               >
                                 <Users className="h-4 w-4 mr-2" />
                                 View Applicants ({job._count?.applications || 0})
@@ -1598,6 +1813,9 @@ export default function EmployerJobsPage() {
 
         {/* Terms Modal */}
         {showTermsModal && <TermsModal />}
+
+        {/* Applicants Modal */}
+        {applicantsView && selectedJob && <ApplicantsModal />}
       </div>
     </div>
   )
