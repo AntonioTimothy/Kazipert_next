@@ -1,115 +1,96 @@
-// app/api/onboarding/progress/route.ts
-import { NextRequest, NextResponse } from 'next/server'
-import { saveOnboardingProgress, fetchOnboardingProgress } from '@/lib/onboarding-service'
-import { getCurrentUser, verifyToken } from '@/lib/auth'
+// app/api/onboarding/progress/route.ts - UPDATED
+import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
-export async function POST(request: NextRequest) {
-    try {
-        // Get current user using cookie-based auth
-        const user = await getCurrentUser()
-
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const { currentStep, data } = await request.json()
-
-        // Validate current step
-        if (typeof currentStep !== 'number' || currentStep < 1 || currentStep > 8) {
-            return NextResponse.json({ error: 'Invalid step number' }, { status: 400 })
-        }
-
-        // Validate data structure
-        if (!data || typeof data !== 'object') {
-            return NextResponse.json({ error: 'Invalid data format' }, { status: 400 })
-        }
-
-        const result = await saveOnboardingProgress(user.id, currentStep, data)
-
-        if (!result.success) {
-            return NextResponse.json({ error: result.error }, { status: 500 })
-        }
-
-        return NextResponse.json({
-            success: true,
-            progress: result.progress,
-            message: 'Progress saved successfully'
-        })
-    } catch (error: any) {
-        console.error('Progress save error:', error)
-        return NextResponse.json({
-            error: 'Internal server error',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
-        }, { status: 500 })
-    }
-}
+const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
     try {
-        // Get current user using cookie-based auth
-        const user = await getCurrentUser()
+        const { searchParams } = new URL(request.url);
+        const userId = searchParams.get('userId');
 
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        if (!userId) {
+            return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
         }
 
-        const progress = await fetchOnboardingProgress(user.id)
+        const progress = await prisma.onboardingProgress.findUnique({
+            where: { userId },
+        });
 
-        return NextResponse.json({
-            success: true,
-            progress,
-            user: {
-                id: user.id,
-                email: user.email,
-                role: user.role
-            }
-        })
-    } catch (error: any) {
-        console.error('Progress fetch error:', error)
-        return NextResponse.json({
-            error: 'Internal server error',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
-        }, { status: 500 })
+        return NextResponse.json(progress || {
+            currentStep: 1,
+            completed: false,
+            data: {},
+            completedSteps: []
+        });
+    } catch (error) {
+        console.error('Error fetching onboarding progress:', error);
+        return NextResponse.json(
+            { error: 'Failed to fetch onboarding progress' },
+            { status: 500 }
+        );
     }
 }
 
-// Optional: PUT method for partial updates
-export async function PUT(request: NextRequest) {
+export async function POST(request: NextRequest) {
     try {
-        const user = await getCurrentUser()
+        const { userId, step, data, completedSteps } = await request.json();
 
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        if (!userId) {
+            return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
         }
 
-        const { step, data } = await request.json()
+        const progress = await prisma.onboardingProgress.upsert({
+            where: { userId },
+            update: {
+                currentStep: step,
+                data: {
+                    ...data,
+                    updatedAt: new Date().toISOString()
+                },
+                completedSteps: completedSteps || [],
+                updatedAt: new Date(),
+            },
+            create: {
+                userId,
+                currentStep: step,
+                data: {
+                    ...data,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                },
+                completedSteps: completedSteps || [],
+            },
+        });
 
-        if (!step || !data) {
-            return NextResponse.json({ error: 'Step and data are required' }, { status: 400 })
+        // Also update KYC details if provided
+        if (data.fullName || data.idNumber) {
+            await prisma.kycDetails.upsert({
+                where: { userId },
+                update: {
+                    ...(data.fullName && { /* map to appropriate fields */ }),
+                    ...(data.idNumber && { idNumber: data.idNumber }),
+                    ...(data.dateOfBirth && { dateOfBirth: new Date(data.dateOfBirth) }),
+                    ...(data.county && { county: data.county }),
+                    ...(data.physicalAddress && { physicalAddress: data.physicalAddress }),
+                    ...(data.gender && { /* map gender if needed */ }),
+                },
+                create: {
+                    userId,
+                    ...(data.idNumber && { idNumber: data.idNumber }),
+                    ...(data.dateOfBirth && { dateOfBirth: new Date(data.dateOfBirth) }),
+                    ...(data.county && { county: data.county }),
+                    ...(data.physicalAddress && { physicalAddress: data.physicalAddress }),
+                },
+            });
         }
 
-        // Get existing progress to merge with new data
-        const existingProgress = await fetchOnboardingProgress(user.id)
-
-        const result = await saveOnboardingProgress(user.id, step, {
-            ...existingProgress.data,
-            ...data
-        })
-
-        if (!result.success) {
-            return NextResponse.json({ error: result.error }, { status: 500 })
-        }
-
-        return NextResponse.json({
-            success: true,
-            progress: result.progress,
-            message: 'Progress updated successfully'
-        })
-    } catch (error: any) {
-        console.error('Progress update error:', error)
-        return NextResponse.json({
-            error: 'Internal server error',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
-        }, { status: 500 })
+        return NextResponse.json(progress);
+    } catch (error) {
+        console.error('Error updating onboarding progress:', error);
+        return NextResponse.json(
+            { error: 'Failed to update onboarding progress' },
+            { status: 500 }
+        );
     }
 }

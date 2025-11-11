@@ -3,7 +3,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -18,27 +17,28 @@ const nextConfig = {
     ],
   },
   
-  serverExternalPackages: ['fs', 'path', 'bcryptjs'],
-  
-  // Proper Turbopack configuration with exclusions
-  experimental: {
-    turbo: {
-      // Exclude database directories from file watching
-      exclude: [
-        '**/pgdata_test/**',
-        '**/pgdata_live/**',
-        '**/.git/**',
-        '**/node_modules/**'
-      ],
-      // Resolve aliases for Turbopack
-      resolveAlias: {
-        'sharp': false,
-        'onnxruntime-node': false,
+  // Add rewrites to proxy verification API calls to microservice
+  async rewrites() {
+    return [
+      {
+        source: '/api/verification/:path*',
+        destination: 'http://localhost:3003/:path*',
       },
-    },
+    ]
   },
-  
-  // Webpack configuration (kept for compatibility)
+
+  // Use the new 'turbopack' key, not 'experimental.turbo'
+  turbopack: {
+    // Add your Turbopack rules here if needed
+    // rules: {
+    //   '*.svg': {
+    //     loaders: ['@svgr/webpack'],
+    //     as: '*.js',
+    //   },
+    // },
+  },
+
+  // Webpack configuration
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -49,10 +49,11 @@ const nextConfig = {
       }
     }
     
+    // Fix the alias configuration
     config.resolve.alias = {
       ...config.resolve.alias,
-      sharp$: false,
-      'onnxruntime-node$': false,
+      sharp: false,
+      'onnxruntime-node': false,
     }
     
     return config

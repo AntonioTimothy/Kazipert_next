@@ -43,4 +43,46 @@ npm run db:push:live   # Push schema to live DB
 
 I want to add the theme colors for kazipert to be as follows 
 
-Primary color to be this #117c82, secondary also slightly over used color to be this #117c82, but not over used than primary and another key color to be this but #6c71b5 but not over used, and a professional brown fade for some backgrounds, review my dashboard page below, tell me where it gets the colors, i did set some global colors but i dont remember where , update the dashboard to have solid cards, colorful icons and look fread based on these colors 
+Primary color to be this #117c82, secondary also slightly over used color to be this #117c82, 
+but not over used than primary and another key color to be this but #6c71b5 but not over used,
+ and a professional brown fade for some backgrounds, review my dashboard page below, 
+ tell me where it gets the colors, i did set some global colors but i dont remember where ,
+  update the dashboard to have solid cards, colorful icons and look fread based on these colors 
+
+
+  Store folder
+  stores/
+├── index.ts                          // Main store exports
+├── types/
+│   ├── index.ts                      // All type exports
+│   ├── common.ts                     // Shared types
+│   ├── employee.ts                   // Employee-specific types
+│   ├── employer.ts                   // Employer-specific types
+│   └── admin.ts                      // Admin-specific types
+├── slices/
+│   ├── index.ts                      // Slice exports
+│   ├── auth-slice.ts                 // Authentication state
+│   ├── ui-slice.ts                   // UI state (sidebar, theme, etc.)
+│   ├── navigation-slice.ts           // Navigation state
+│   ├── notification-slice.ts         // Notifications
+│   ├── socket-slice.ts               // Socket connections
+│   ├── employee-slice.ts             // Employee-specific state
+│   ├── employer-slice.ts             // Employer-specific state
+│   └── admin-slice.ts                // Admin-specific state
+├── api/
+│   ├── index.ts                      // API client configuration
+│   ├── client.ts                     // HTTP client
+│   ├── socket-client.ts              // Socket client
+│   ├── endpoints/
+│   │   ├── index.ts                  // Endpoint exports
+│   │   ├── auth-endpoints.ts         // Authentication endpoints
+│   │   ├── navigation-endpoints.ts   // Navigation endpoints
+│   │   ├── employee-endpoints.ts     // Employee API calls
+│   │   ├── employer-endpoints.ts     // Employer API calls
+│   │   └── admin-endpoints.ts        // Admin API calls
+│   └── types/
+│       └── api-types.ts              // API request/response types
+└── utils/
+    ├── store-utils.ts                 // Store utilities
+    ├── socket-utils.ts                // Socket utilities
+    └── navigation-utils.ts            // Navigation helpers

@@ -15,15 +15,16 @@ export default function WorkerOnboardingPage() {
   const [loading, setLoading] = useState(true)
 
   const calculateProfileCompletion = (user: WorkerProfile) => {
-    return Math.round(
-      ((user.documents.passport ? 1 : 0) +
-        (user.documents.certificate ? 1 : 0) +
-        (user.documents.medicalReport ? 1 : 0) +
-        (user.subscriptions.insurance ? 1 : 0) +
-        (user.subscriptions.legal ? 1 : 0) +
-        (user.subscriptions.medical ? 1 : 0)) *
-        (100 / 6),
-    )
+    // return Math.round(
+    //   ((user.documents.passport ? 1 : 0) +
+    //     (user.documents.certificate ? 1 : 0) +
+    //     (user.documents.medicalReport ? 1 : 0) +
+    //     (user.subscriptions.insurance ? 1 : 0) +
+    //     (user.subscriptions.legal ? 1 : 0) +
+    //     (user.subscriptions.medical ? 1 : 0)) *
+    //     (100 / 6),
+    // )
+    return 50 // Placeholder for demonstration
   }
 
   useEffect(() => {

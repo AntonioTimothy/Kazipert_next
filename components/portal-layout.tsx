@@ -1,4 +1,4 @@
-// components/portal-layout.tsx - IMPROVED VERSION
+// components/portal-layout.tsx - FIXED VERSION
 "use client"
 
 import type React from "react"
@@ -62,7 +62,7 @@ interface PortalLayoutProps {
   notificationCount?: number
 }
 
-// Custom Dropdown Components (keep the same as before)
+// Custom Dropdown Components
 interface CustomDropdownProps {
   trigger: React.ReactNode
   children: React.ReactNode
@@ -332,7 +332,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
   const router = useRouter()
   const { currentTheme } = useTheme()
   
-  // Dynamic navigation based on user role and permissions - WITH DEBUGGING
+  // Dynamic navigation based on user role and permissions
   const { 
     navigation, 
     getCurrentRouteName, 
@@ -425,24 +425,60 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
     }
   }
 
-  // Get flat navigation for mobile (no nested items)
+  // Get flat navigation for mobile (no nested items) - IMPROVED VERSION
   const getFlatNavigationForMobile = () => {
-    if (!navigation) {
-      console.log("⚠️ No navigation available for mobile")
-      return []
+    if (!navigation || navigation.length === 0) {
+      console.log("⚠️ No navigation available for mobile, using fallback")
+      // Return fallback navigation items to ensure mobile menu is always visible
+      return [
+        { name: "Home", href: "/portals", icon: Home },
+        { name: "Jobs", href: "/portals/jobs", icon: Briefcase },
+        { name: "Messages", href: "/portals/messages", icon: MessageSquare },
+        { name: "Profile", href: "/portals/profile", icon: User },
+        { name: "More", href: "#", icon: Menu }
+      ]
     }
     
     const flatNav: any[] = []
     navigation.forEach(item => {
-      // Add parent item if it has a direct href
-      if (item.href !== '#') {
-        flatNav.push(item)
+      // Add parent item if it has a direct href and is not already in the list
+      if (item.href !== '#' && !flatNav.some(nav => nav.href === item.href)) {
+        flatNav.push({
+          name: item.name,
+          href: item.href,
+          icon: item.icon
+        })
       }
       // Add all children
       if (item.children) {
-        flatNav.push(...item.children)
+        item.children.forEach(child => {
+          if (!flatNav.some(nav => nav.href === child.href)) {
+            flatNav.push({
+              name: child.name,
+              href: child.href,
+              icon: child.icon
+            })
+          }
+        })
       }
     })
+    
+    // Ensure we always have at least 3 items for mobile nav
+    if (flatNav.length < 3) {
+      console.log("⚠️ Mobile nav has too few items, adding fallbacks")
+      const fallbacks = [
+        { name: "Home", href: "/portals", icon: Home },
+        { name: "Jobs", href: "/portals/jobs", icon: Briefcase },
+        { name: "Profile", href: "/portals/profile", icon: User }
+      ]
+      
+      fallbacks.forEach(fallback => {
+        if (!flatNav.some(nav => nav.href === fallback.href)) {
+          flatNav.push(fallback)
+        }
+      })
+    }
+    
     return flatNav.slice(0, 5) // Limit to 5 items for mobile
   }
 
@@ -461,6 +497,245 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
       .toUpperCase()
       .slice(0, 2)
   }
+
+  // Enhanced Mobile Sidebar Component
+  const MobileSidebar = () => (
+    <div
+      className={cn(
+        "fixed inset-y-0 left-0 z-50 w-80 transform border-r border-border/40 bg-background/98 backdrop-blur-xl shadow-2xl transition-all duration-300 ease-in-out lg:hidden",
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      )}
+      style={{
+        background: `linear-gradient(to bottom, ${currentTheme.colors.background} 0%, ${currentTheme.colors.backgroundLight} 100%)`
+      }}
+    >
+      {/* Mobile Sidebar Header */}
+      <div className="flex items-center justify-between p-4 border-b border-border/40">
+        <Link 
+          href="/portals" 
+          className="flex items-center gap-3"
+          onClick={() => setSidebarOpen(false)}
+        >
+          <div className="relative">
+            <Image
+              src="/logo.svg"
+              alt="Kazipert"
+              width={140}
+              height={140}
+              className="transition-all duration-300"
+              priority
+            />
+            <div 
+              className="absolute -bottom-1 -right-1 w-2 h-2 rounded-full border border-white"
+              style={{ backgroundColor: currentTheme.colors.primary }}
+            />
+          </div>
+        </Link>
+        
+        {/* Close Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 hover:bg-primary/10 transition-all rounded-lg"
+          onClick={() => setSidebarOpen(false)}
+        >
+          <X className="h-5 w-5 text-primary" />
+        </Button>
+      </div>
+
+      {/* Mobile Navigation */}
+      <nav className="flex-1 overflow-y-auto p-4 space-y-2">
+        {navigation && navigation.length > 0 ? (
+          navigation.map((item) => {
+            const isActive = pathname === item.href
+            const hasChildren = item.children && item.children.length > 0
+            
+            return (
+              <div key={item.name} className="relative">
+                {/* Main Navigation Item */}
+                <Link
+                  href={hasChildren ? '#' : item.href}
+                  onClick={(e) => {
+                    if (hasChildren) {
+                      e.preventDefault()
+                      // Handle expand/collapse for mobile
+                      const nextSibling = e.currentTarget.nextElementSibling as HTMLElement
+                      if (nextSibling) {
+                        nextSibling.style.display = nextSibling.style.display === 'none' ? 'block' : 'none'
+                      }
+                    } else {
+                      setSidebarOpen(false)
+                    }
+                  }}
+                  className={cn(
+                    "flex items-center gap-3 rounded-xl p-3 text-sm font-medium transition-all duration-200 hover:scale-[1.02]",
+                    isActive
+                      ? "text-primary-foreground shadow-lg shadow-primary/20"
+                      : "text-text-muted hover:bg-primary/5 hover:text-text"
+                  )}
+                  style={{
+                    backgroundColor: isActive ? currentTheme.colors.primary : 'transparent',
+                    color: isActive ? currentTheme.colors.text : undefined
+                  }}
+                >
+                  <div className={cn(
+                    "transition-all duration-200",
+                    isActive ? "scale-110" : "hover:scale-110"
+                  )}>
+                    <item.icon className={cn(
+                      "h-5 w-5 transition-colors",
+                      isActive ? "text-primary-foreground" : "text-current"
+                    )} />
+                  </div>
+                  
+                  <span className="flex-1 font-semibold text-left">{item.name}</span>
+                  
+                  {/* Badge and Chevron */}
+                  <div className="flex items-center gap-1">
+                    {item.badge && (
+                      <span 
+                        className="px-1.5 py-0.5 rounded-full text-xs font-bold min-w-[20px] text-center"
+                        style={{
+                          backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : `${currentTheme.colors.primary}20`,
+                          color: isActive ? 'currentColor' : currentTheme.colors.primary
+                        }}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                    
+                    {hasChildren && (
+                      <ChevronRightIcon className="h-4 w-4 transition-transform duration-300" />
+                    )}
+                  </div>
+                </Link>
+
+                {/* Nested Children for Mobile */}
+                {hasChildren && (
+                  <div className="ml-6 mt-1 space-y-1 border-l-2 border-primary/20 pl-2 hidden">
+                    {item.children.map((child) => {
+                      const isChildActive = pathname === child.href
+                      return (
+                        <Link
+                          key={child.name}
+                          href={child.href}
+                          onClick={() => setSidebarOpen(false)}
+                          className={cn(
+                            "flex items-center gap-3 rounded-lg p-2 text-sm transition-all duration-200 hover:scale-[1.02]",
+                            isChildActive
+                              ? "text-primary-foreground shadow-md shadow-primary/10"
+                              : "text-text-muted hover:bg-primary/5 hover:text-text"
+                          )}
+                          style={{
+                            backgroundColor: isChildActive ? currentTheme.colors.primary : 'transparent',
+                            color: isChildActive ? currentTheme.colors.text : undefined
+                          }}
+                        >
+                          <child.icon className={cn(
+                            "h-4 w-4",
+                            isChildActive ? "text-primary-foreground" : "text-current"
+                          )} />
+                          <span className="flex-1 font-medium text-sm">{child.name}</span>
+                          {child.badge && (
+                            <span 
+                              className="px-1.5 py-0.5 rounded-full text-xs font-bold min-w-[18px] text-center"
+                              style={{
+                                backgroundColor: isChildActive ? 'rgba(255,255,255,0.2)' : `${currentTheme.colors.primary}20`,
+                                color: isChildActive ? 'currentColor' : currentTheme.colors.primary
+                              }}
+                            >
+                              {child.badge}
+                            </span>
+                          )}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })
+        ) : (
+          <div className="text-center p-4">
+            <AlertCircle className="h-8 w-8 text-text-muted mx-auto mb-2" />
+            <p className="text-xs text-text-muted">No navigation items available</p>
+            {/* Fallback navigation items */}
+            <div className="mt-4 space-y-2">
+              <Link href="/portals" onClick={() => setSidebarOpen(false)} className="flex items-center gap-3 p-3 rounded-xl text-text-muted hover:bg-primary/5">
+                <Home className="h-5 w-5" />
+                <span className="font-semibold">Dashboard</span>
+              </Link>
+              <Link href="/portals/profile" onClick={() => setSidebarOpen(false)} className="flex items-center gap-3 p-3 rounded-xl text-text-muted hover:bg-primary/5">
+                <User className="h-5 w-5" />
+                <span className="font-semibold">Profile</span>
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Complete Profile CTA for Mobile */}
+        {!user.onboardingCompleted && (
+          <div 
+            className="mt-4 p-3 rounded-xl border border-border/50"
+            style={{
+              background: `linear-gradient(135deg, ${currentTheme.colors.primary}05, ${currentTheme.colors.primary}10)`
+            }}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle className="h-4 w-4 text-primary" />
+              <span className="text-xs font-bold text-text">Complete Profile</span>
+            </div>
+            <p className="text-xs text-text-muted mb-3">Verify your account to access all features</p>
+            <Link href={`/portals/${user.role.toLowerCase() === 'employee' ? 'worker' : user.role.toLowerCase()}/verification`} className="block" onClick={() => setSidebarOpen(false)}>
+              <Button 
+                className="w-full h-8 text-text font-semibold shadow-md hover:shadow-lg transition-all duration-300 rounded-lg text-xs"
+                style={{
+                  backgroundColor: currentTheme.colors.primary,
+                  color: currentTheme.colors.text
+                }}
+              >
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Verify Now
+              </Button>
+            </Link>
+          </div>
+        )}
+      </nav>
+
+      {/* User Info in Mobile Sidebar */}
+      <div className="p-3 border-t border-border/40">
+        <div 
+          className="flex items-center gap-3 p-2 rounded-lg"
+          style={{ backgroundColor: `${currentTheme.colors.primary}08` }}
+        >
+          <Avatar className="h-8 w-8 ring-1 ring-primary/30">
+            <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
+            <AvatarFallback 
+              className="text-text text-sm font-bold"
+              style={{ backgroundColor: currentTheme.colors.primary }}
+            >
+              {getUserInitials(user?.name)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-text truncate">{user?.name}</p>
+            <p className="text-xs text-text-muted truncate capitalize">{user?.role}</p>
+            {user.onboardingCompleted ? (
+              <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
+                <CheckCircle className="h-3 w-3" />
+                Verified
+              </p>
+            ) : (
+              <p className="text-xs text-amber-600 flex items-center gap-1 mt-1">
+                <Clock className="h-3 w-3" />
+                Pending Verification
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 
   // Show loading state
   if (isLoading) {
@@ -505,6 +780,9 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
           onClick={() => setSidebarOpen(false)}
         />
       )}
+
+      {/* Mobile Sidebar */}
+      <MobileSidebar />
 
       {/* Desktop Sidebar */}
       <aside
@@ -595,7 +873,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                 <span className="text-xs font-bold text-text">Complete Profile</span>
               </div>
               <p className="text-xs text-text-muted mb-3">Verify your account to access all features</p>
-              <Link href={`/portals/${user.role.toLowerCase() === 'employee' ? 'worker' : user.role.toLowerCase()}/onboarding`} className="block">
+              <Link href={`/portals/${user.role.toLowerCase() === 'employee' ? 'worker' : user.role.toLowerCase()}/verification`} className="block">
                 <Button 
                   className="w-full h-8 text-text font-semibold shadow-md hover:shadow-lg transition-all duration-300 rounded-lg text-xs"
                   style={{
@@ -1083,5 +1361,3 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
     </div>
   )
 }
-
-// Add missing RefreshCw icon import
