@@ -14,6 +14,7 @@ export function proxy(request: NextRequest) {
         '/signup',
         '/forgot-password',
         '/api/auth',
+        '/api/payment/mpesa-callback',
         '/unauthorized',        // Unauthorized page
         '/_next/static',        // Next.js static files
         '/_next/image',         // Next.js image optimization

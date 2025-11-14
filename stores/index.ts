@@ -1,3 +1,4 @@
+// stores/index.ts
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import {
@@ -8,7 +9,8 @@ import {
     createUISlice,
     createEmployeeSlice,
     createEmployerSlice,
-    createAdminSlice
+    createAdminSlice,
+    createLoadingSlice
 } from './slices'
 import {
     AuthState,
@@ -18,7 +20,8 @@ import {
     UIState,
     EmployeeState,
     EmployerState,
-    AdminState
+    AdminState,
+    LoadingState
 } from './types'
 import { persistOptions } from './utils/store-utils'
 
@@ -31,6 +34,7 @@ export type AppState =
     & EmployeeState
     & EmployerState
     & AdminState
+    & LoadingState
 
 export const useAppStore = create<AppState>()(
     devtools(
@@ -44,6 +48,7 @@ export const useAppStore = create<AppState>()(
                 ...createEmployeeSlice(...a),
                 ...createEmployerSlice(...a),
                 ...createAdminSlice(...a),
+                ...createLoadingSlice(...a),
             }),
             persistOptions
         ),
@@ -53,121 +58,153 @@ export const useAppStore = create<AppState>()(
     )
 )
 
-// Hook selectors for better performance
+// Individual hook selectors for optimal performance - NO COMPOSITE HOOKS
 export const useUser = () => useAppStore(state => state.user)
+
+// Navigation hooks
 export const useNavigation = () => useAppStore(state => state.navigation)
-export const useNotifications = () => useAppStore(state => ({
-    notifications: state.notifications,
-    unreadCount: state.unreadCount,
-    fetchNotifications: state.fetchNotifications,
-    markNotificationAsRead: state.markNotificationAsRead,
-    addNotification: state.addNotification,
-}))
+export const useCurrentPath = () => useAppStore(state => state.currentPath)
+export const useBreadcrumbs = () => useAppStore(state => state.breadcrumbs)
 
-export const useSocket = () => useAppStore(state => ({
-    socket: state.socket,
-    connectSocket: state.connectSocket,
-    disconnectSocket: state.disconnectSocket,
-    sendSocketMessage: state.sendSocketMessage,
-}))
+// Notification hooks
+export const useNotifications = () => useAppStore(state => state.notifications)
+export const useUnreadCount = () => useAppStore(state => state.unreadCount)
 
-export const useUI = () => useAppStore(state => ({
-    currentTheme: state.currentTheme,
-    loading: state.loading,
-    error: state.error,
-    setTheme: state.setTheme,
-    setLoading: state.setLoading,
-    setError: state.setError,
-    clearError: state.clearError,
-}))
+// Socket hooks
+export const useSocket = () => useAppStore(state => state.socket)
 
-export const useEmployee = () => useAppStore(state => ({
-    profile: state.profile,
-    jobs: state.jobs,
-    contracts: state.contracts,
-    wallet: state.wallet,
-    applications: state.applications,
-    // Loading states
-    profileLoading: state.profileLoading,
-    jobsLoading: state.jobsLoading,
-    contractsLoading: state.contractsLoading,
-    walletLoading: state.walletLoading,
-    // Actions
-    fetchProfile: state.fetchProfile,
-    fetchJobs: state.fetchJobs,
-    fetchContracts: state.fetchContracts,
-    fetchWallet: state.fetchWallet,
-    applyToJob: state.applyToJob,
-}))
+// UI hooks
+export const useCurrentTheme = () => useAppStore(state => state.currentTheme)
+export const useUIError = () => useAppStore(state => state.error)
 
-export const useEmployer = () => useAppStore(state => ({
-    profile: state.profile,
-    jobs: state.jobs,
-    contracts: state.contracts,
-    candidates: state.candidates,
-    // Loading states
-    profileLoading: state.profileLoading,
-    jobsLoading: state.jobsLoading,
-    contractsLoading: state.contractsLoading,
-    candidatesLoading: state.candidatesLoading,
-    // Actions
-    fetchProfile: state.fetchProfile,
-    fetchJobs: state.fetchJobs,
-    createJob: state.createJob,
-    fetchContracts: state.fetchContracts,
-    fetchCandidates: state.fetchCandidates,
-}))
+// ✅ FIXED: Individual loading state and actions
+export const useIsLoading = () => useAppStore(state => state.isLoading)
+export const useLoadingCount = () => useAppStore(state => state.loadingCount)
+export const useStartLoading = () => useAppStore(state => state.startLoading)
+export const useStopLoading = () => useAppStore(state => state.stopLoading)
+export const useSetLoading = () => useAppStore(state => state.setLoading)
+export const useResetLoading = () => useAppStore(state => state.resetLoading)
 
-export const useAdmin = () => useAppStore(state => ({
-    dashboardStats: state.dashboardStats,
-    cases: state.cases,
-    users: state.users,
-    financialReports: state.financialReports,
-    analytics: state.analytics,
-    // Loading states
-    statsLoading: state.statsLoading,
-    casesLoading: state.casesLoading,
-    usersLoading: state.usersLoading,
-    financeLoading: state.financeLoading,
-    analyticsLoading: state.analyticsLoading,
-    // Actions
-    fetchDashboardStats: state.fetchDashboardStats,
-    fetchCases: state.fetchCases,
-    updateCase: state.updateCase,
-    fetchUsers: state.fetchUsers,
-    fetchFinancialReports: state.fetchFinancialReports,
-    fetchAnalytics: state.fetchAnalytics,
-}))
+// Employee hooks
+export const useEmployeeProfile = () => useAppStore(state => state.profile)
+export const useEmployeeJobs = () => useAppStore(state => state.jobs)
+export const useEmployeeContracts = () => useAppStore(state => state.contracts)
+export const useEmployeeWallet = () => useAppStore(state => state.wallet)
+export const useEmployeeApplications = () => useAppStore(state => state.applications)
+
+// Employer hooks
+export const useEmployerProfile = () => useAppStore(state => state.profile)
+export const useEmployerJobs = () => useAppStore(state => state.jobs)
+export const useEmployerContracts = () => useAppStore(state => state.contracts)
+export const useEmployerCandidates = () => useAppStore(state => state.candidates)
+
+// Admin hooks
+export const useDashboardStats = () => useAppStore(state => state.dashboardStats)
+export const useAdminCases = () => useAppStore(state => state.cases)
+export const useAdminUsers = () => useAppStore(state => state.users)
+export const useFinancialReports = () => useAppStore(state => state.financialReports)
+export const useAnalytics = () => useAppStore(state => state.analytics)
+
+// Action hooks (individual actions to avoid object creation)
+export const useFetchNavigation = () => useAppStore(state => state.fetchNavigation)
+export const useSetCurrentPath = () => useAppStore(state => state.setCurrentPath)
+export const useFetchNotifications = () => useAppStore(state => state.fetchNotifications)
+export const useMarkNotificationAsRead = () => useAppStore(state => state.markNotificationAsRead)
+export const useConnectSocket = () => useAppStore(state => state.connectSocket)
+export const useSetTheme = () => useAppStore(state => state.setTheme)
+
+// Employee actions
+export const useFetchEmployeeProfile = () => useAppStore(state => state.fetchProfile)
+export const useFetchEmployeeJobs = () => useAppStore(state => state.fetchJobs)
+export const useFetchEmployeeContracts = () => useAppStore(state => state.fetchContracts)
+
+// Employer actions
+export const useFetchEmployerProfile = () => useAppStore(state => state.fetchProfile)
+export const useFetchEmployerJobs = () => useAppStore(state => state.fetchJobs)
+export const useCreateJob = () => useAppStore(state => state.createJob)
+
+// Admin actions
+export const useFetchDashboardStats = () => useAppStore(state => state.fetchDashboardStats)
+export const useFetchCases = () => useAppStore(state => state.fetchCases)
+
+// Auth actions
+export const useInitializeAuth = () => useAppStore(state => state.initializeAuth)
+export const useLogin = () => useAppStore(state => state.login)
+export const useLogout = () => useAppStore(state => state.logout)
+export const useSetUser = () => useAppStore(state => state.setUser);
+
 
 // Initialize store on app start
 export const initializeStore = async () => {
     const store = useAppStore.getState()
 
-    // Initialize auth
-    const user = await store.initializeAuth()
+    // Start initial loading
+    store.startLoading()
 
-    if (user) {
-        // Initialize navigation based on user role
-        await store.fetchNavigation(user.role, user.permissions)
+    try {
+        // Initialize auth
+        const user = await store.initializeAuth()
 
-        // Initialize notifications
-        await store.fetchNotifications()
+        if (user) {
+            // Initialize navigation based on user role
+            await store.fetchNavigation(user.role, user.permissions)
 
-        // Connect to socket
-        store.connectSocket()
+            // Initialize notifications
+            await store.fetchNotifications()
 
-        // Load role-specific data
-        if (user.role === 'employee') {
-            await store.fetchProfile?.()
-            await store.fetchJobs?.()
-        } else if (user.role === 'employer') {
-            await store.fetchProfile?.()
-            await store.fetchJobs?.()
-        } else if (user.role === 'admin') {
-            await store.fetchDashboardStats?.()
-            await store.fetchCases?.()
+            // Connect to socket
+            store.connectSocket()
+
+            // Load role-specific data
+            if (user.role === 'employee') {
+                await store.fetchProfile?.()
+                await store.fetchJobs?.()
+            } else if (user.role === 'employer') {
+                await store.fetchProfile?.()
+                await store.fetchJobs?.()
+            } else if (user.role === 'admin') {
+                await store.fetchDashboardStats?.()
+                await store.fetchCases?.()
+            }
         }
-    }
 
-    return store
+        return store
+    } finally {
+        // Ensure loading stops even if there's an error
+        store.resetLoading()
+    }
 }
+
+// Utility function for API calls with loading state
+export const withLoading = async <T>(
+    operation: Promise<T>,
+    store = useAppStore.getState()
+): Promise<T> => {
+    store.startLoading()
+    try {
+        const result = await operation
+        return result
+    } finally {
+        store.stopLoading()
+    }
+}
+
+// Batch operations with single loading state
+export const withBatchLoading = async <T>(
+    operations: Promise<T>[],
+    store = useAppStore.getState()
+): Promise<T[]> => {
+    store.startLoading()
+    try {
+        const results = await Promise.all(operations)
+        return results
+    } finally {
+        store.stopLoading()
+    }
+}
+
+// REMOVED: All composite hooks that cause infinite loops
+// export const useLoadingActions = () => useAppStore(state => ({ ... }))
+// export const useLoading = () => useAppStore(state => ({ ... }))
+// export const useEmployee = () => useAppStore(state => ({ ... }))
+// etc...

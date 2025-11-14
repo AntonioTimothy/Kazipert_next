@@ -2,7 +2,7 @@
 import { StateCreator } from 'zustand'
 import { navigationEndpoints } from '../api/endpoints'
 import { NavigationItem, NavigationState } from '../types'
-import { getNavigationForRole } from '@/lib/navigation-config'
+import { getNavigationForRole } from '@/lib/navigation'
 
 export const createNavigationSlice: StateCreator<NavigationState> = (set, get) => ({
     navigation: [],

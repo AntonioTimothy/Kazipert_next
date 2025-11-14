@@ -1,4 +1,4 @@
-// app/portals/worker/verification/page.tsx - UPDATED WITH SESSION MANAGEMENT
+// app/portals/worker/verification/page.tsx - UPDATED WITH SAFETY CHECKS
 "use client"
 
 import { useEffect, useState } from "react"
@@ -10,6 +10,7 @@ import Step3IdBack from '@/components/verification/steps/Step3IdBack'
 import Step4Selfie from '@/components/verification/steps/Step4Selfie'
 import Step5KycDetails from '@/components/verification/steps/Step5KycDetails'
 import Step6Payment from '@/components/verification/steps/Step6Payment'
+import Step7Completion from '@/components/verification/steps/Step7Completion' // Add completion step
 import { getOnboardingProgress, updateOnboardingProgress, createSession } from '@/lib/verification'
 
 const KAZIPERT_COLORS = {
@@ -43,6 +44,33 @@ export default function WorkerVerificationPage() {
     ocrData: {} as any,
   })
 
+  const steps = [
+    { number: 1, title: 'Instructions', component: Step1Instructions },
+    { number: 2, title: 'ID Front', component: Step2IdFront },
+    { number: 3, title: 'ID Back', component: Step3IdBack },
+    { number: 4, title: 'Selfie', component: Step4Selfie },
+    { number: 5, title: 'KYC Details', component: Step5KycDetails },
+    { number: 6, title: 'Payment', component: Step6Payment },
+    { number: 7, title: 'Completion', component: Step7Completion }, // Add completion step
+  ]
+
+  // ✅ SAFE COMPONENT RESOLUTION
+  const getCurrentStepComponent = () => {
+    // Ensure currentStep is within bounds
+    const safeStep = Math.max(1, Math.min(currentStep, steps.length))
+    const stepIndex = safeStep - 1
+    
+    if (stepIndex >= 0 && stepIndex < steps.length) {
+      return steps[stepIndex].component
+    }
+    
+    // Fallback to first step if invalid
+    console.warn(`Invalid step ${currentStep}, falling back to step 1`)
+    return steps[0].component
+  }
+
+  const CurrentStepComponent = getCurrentStepComponent()
+
   useEffect(() => {
     const initializeVerification = async () => {
       const userData = sessionStorage.getItem("user")
@@ -65,13 +93,15 @@ export default function WorkerVerificationPage() {
         
         if (progressData) {
           setProgress(progressData)
-          setCurrentStep(progressData.currentStep || 1)
+          // ✅ SAFE STEP SETTING - ensure step is within bounds
+          const safeStep = Math.max(1, Math.min(progressData.currentStep || 1, steps.length))
+          setCurrentStep(safeStep)
+          
           if (progressData.data) {
             const savedData = progressData.data
             setFormData(prev => ({ 
               ...prev, 
               ...savedData,
-              // Convert file data back if needed
               sessionId: savedData.sessionId || null
             }))
             setSessionId(savedData.sessionId || null)
@@ -113,15 +143,19 @@ export default function WorkerVerificationPage() {
       const updatedData = { 
         ...formData, 
         ...data,
-        sessionId: sessionId // Ensure sessionId is always included
+        sessionId: sessionId
       }
       setFormData(updatedData)
 
-      // Save to database with session ID
-      await updateOnboardingProgress(user.id, step, updatedData)
-      setCurrentStep(step)
+      // ✅ SAFE STEP SAVING - ensure step is within bounds
+      const safeStep = Math.max(1, Math.min(step, steps.length))
       
-      if (step === 6) {
+      await updateOnboardingProgress(user.id, safeStep, updatedData)
+      setCurrentStep(safeStep)
+      
+      // ✅ Handle completion (step 7) instead of step 6
+      if (safeStep === steps.length) { // Last step
+        console.log('Verification process completed!')
         // Redirect to dashboard after completion
         setTimeout(() => {
           router.push('/portals/worker/dashboard')
@@ -130,7 +164,8 @@ export default function WorkerVerificationPage() {
     } catch (error) {
       console.error('Error updating step:', error)
       // Still update the UI even if saving fails
-      setCurrentStep(step)
+      const safeStep = Math.max(1, Math.min(step, steps.length))
+      setCurrentStep(safeStep)
       if (data) {
         setFormData(prev => ({ ...prev, ...data }))
       }
@@ -138,15 +173,6 @@ export default function WorkerVerificationPage() {
       setSaving(false)
     }
   }
-
-  const steps = [
-    { number: 1, title: 'Instructions', component: Step1Instructions },
-    { number: 2, title: 'ID Front', component: Step2IdFront },
-    { number: 3, title: 'ID Back', component: Step3IdBack },
-    { number: 4, title: 'Selfie', component: Step4Selfie },
-    { number: 5, title: 'KYC Details', component: Step5KycDetails },
-    { number: 6, title: 'Payment', component: Step6Payment },
-  ]
 
   if (loading) {
     return (
@@ -161,8 +187,6 @@ export default function WorkerVerificationPage() {
   if (!user) {
     return null
   }
-
-  const CurrentStepComponent = steps[currentStep - 1].component
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: KAZIPERT_COLORS.background }}>

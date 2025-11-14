@@ -686,6 +686,7 @@ export default function WorkerWalletPage() {
           </TabsContent>
 
           {/* Statement Tab - Excel-like Design */}
+          
           <TabsContent value="statement" className="space-y-4">
             <Card className="border-0 shadow-lg bg-card/80 backdrop-blur-sm">
               <CardHeader className="pb-3">

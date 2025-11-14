@@ -188,14 +188,87 @@ export const navigationConfig: NavigationItem[] = [
 
     },
 
-    // Cases Management
+    // User Management
     {
-        name: "Cases",
-        href: "/portals/admin/cases",
-        icon: FileSearch,
+        name: "User Management",
+        href: "/portals/admin/user-analytics",
+        icon: Users,
         roles: ["admin"],
-        permissions: ["manage_cases"],
-        badge: "12",
+        permissions: ["manage_users"],
+        children: [
+            {
+                name: "All Workers",
+                href: "/portals/admin/allUsers",
+                icon: Users,
+                roles: ["admin"],
+                permissions: ["view_workers"]
+            },
+            {
+                name: "User Analytics",
+                href: "/portals/admin/analytics",
+                icon: BarChart3,
+                roles: ["admin"],
+                permissions: ["view_employers"]
+            }
+            
+        ]
+    },
+
+    // Job & Contract Management
+    {
+        name: "Jobs & Contracts",
+        href: "/portals/admin/loading",
+        icon: Briefcase,
+        roles: ["admin"],
+        permissions: ["manage_jobs"],
+        children: [
+            {
+                name: "All Jobs",
+                href: "/portals/admin/loading",
+                icon: FolderOpen,
+                roles: ["admin"],
+                permissions: ["view_jobs"]
+            },
+            {
+                name: "Active Contracts",
+                href: "/portals/admin/loading",
+                icon: FileText,
+                roles: ["admin"],
+                permissions: ["view_contracts"],
+                badge: "45"
+            },
+            {
+                name: "Contract History",
+                href: "/portals/admin/loading",
+                icon: ClipboardList,
+                roles: ["admin"],
+                permissions: ["view_contract_history"]
+            },
+            {
+                name: "Job Categories",
+                href: "/portals/admin/loading",
+                icon: Target,
+                roles: ["admin"],
+                permissions: ["manage_categories"]
+            },
+            {
+                name: "Skills Management",
+                href: "/portals/admin/loading",
+                icon: Award,
+                roles: ["admin"],
+                permissions: ["manage_skills"]
+            }
+        ]
+    },
+
+    // Support & Communication
+    {
+        name: "Support Center",
+        href: "/portals/admin/loading",
+        icon: Headphones,
+        roles: ["admin"],
+        permissions: ["manage_support"],
+        badge: "23",
         children: [
             {
                 name: "All Cases",
@@ -205,87 +278,25 @@ export const navigationConfig: NavigationItem[] = [
                 permissions: ["view_cases"]
             },
             {
-                name: "Worker Reports",
-                href: "/portals/admin/cases/loading",
-                icon: Users,
+                name: "Support Tickets",
+                href: "/portals/admin/loading",
+                icon: MessageSquare,
                 roles: ["admin"],
-                permissions: ["view_worker_cases"],
-                badge: "8"
+                permissions: ["view_support_tickets"],
+                badge: "18"
             },
             {
-                name: "Employer Reports",
-                href: "/portals/admin/cases/loading",
-                icon: Building,
+                name: "Live Chat",
+                href: "/portals/admin/loading",
+                icon: MessageSquare,
                 roles: ["admin"],
-                permissions: ["view_employer_cases"],
-                badge: "4"
-            },
-            {
-                name: "Dispute Resolution",
-                href: "/portals/admin/cases/",
-                icon: Scale,
-                roles: ["admin"],
-                permissions: ["manage_disputes"],
-                badge: "3"
-            },
-            {
-                name: "Case Analytics",
-                href: "/portals/admin/cases/loading",
-                icon: TrendingUp,
-                roles: ["admin"],
-                permissions: ["view_case_analytics"]
+                permissions: ["manage_live_chat"],
+                badge: "5"
             }
         ]
     },
 
-    // User Management
-    {
-        name: "User Management",
-        href: "/portals/admin/loading",
-        icon: Users,
-        roles: ["admin"],
-        permissions: ["manage_users"],
-        children: [
-            {
-                name: "All Workers",
-                href: "/portals/admin/loading",
-                icon: Users,
-                roles: ["admin"],
-                permissions: ["view_workers"]
-            },
-            {
-                name: "All Employers",
-                href: "/portals/admin/loading",
-                icon: Building,
-                roles: ["admin"],
-                permissions: ["view_employers"]
-            },
-            {
-                name: "Pending Verification",
-                href: "/portals/admin/loading",
-                icon: UserCheck,
-                roles: ["admin"],
-                permissions: ["verify_users"],
-                badge: "15"
-            },
-            {
-                name: "Suspended Accounts",
-                href: "/portals/admin/loading",
-                icon: ShieldCheck,
-                roles: ["admin"],
-                permissions: ["manage_users"],
-                badge: "2"
-            },
-            {
-                name: "User Activity",
-                href: "/portals/admin/users/loading",
-                icon: Activity,
-                roles: ["admin"],
-                permissions: ["view_user_activity"]
-            }
-        ]
-    },
-
+   
     // Finance & Accounting
     {
         name: "Finance",
@@ -344,13 +355,6 @@ export const navigationConfig: NavigationItem[] = [
                 icon: BarChart3,
                 roles: ["admin"],
                 permissions: ["view_financial_reports"]
-            },
-            {
-                name: "Payment Gateway",
-                href: "/portals/admin/loading",
-                icon: Banknote,
-                roles: ["admin"],
-                permissions: ["manage_payments"]
             }
         ]
     },
@@ -460,13 +464,7 @@ export const navigationConfig: NavigationItem[] = [
                 permissions: ["view_distress_analytics"],
                 badge: "Live"
             },
-            {
-                name: "Platform Performance",
-                href: "/portals/admin/loading",
-                icon: Zap,
-                roles: ["admin"],
-                permissions: ["view_performance_metrics"]
-            },
+           
             {
                 name: "Geographic Analytics",
                 href: "/portals/admin/loading",
@@ -484,52 +482,7 @@ export const navigationConfig: NavigationItem[] = [
         ]
     },
 
-    // Job & Contract Management
-    {
-        name: "Jobs & Contracts",
-        href: "/portals/admin/loading",
-        icon: Briefcase,
-        roles: ["admin"],
-        permissions: ["manage_jobs"],
-        children: [
-            {
-                name: "All Jobs",
-                href: "/portals/admin/loading",
-                icon: FolderOpen,
-                roles: ["admin"],
-                permissions: ["view_jobs"]
-            },
-            {
-                name: "Active Contracts",
-                href: "/portals/admin/loading",
-                icon: FileText,
-                roles: ["admin"],
-                permissions: ["view_contracts"],
-                badge: "45"
-            },
-            {
-                name: "Contract History",
-                href: "/portals/admin/loading",
-                icon: ClipboardList,
-                roles: ["admin"],
-                permissions: ["view_contract_history"]
-            },
-            {
-                name: "Job Categories",
-                href: "/portals/admin/loading",
-                icon: Target,
-                roles: ["admin"],
-                permissions: ["manage_categories"]
-            },
-            {
-                name: "Skills Management",
-                href: "/portals/admin/loading",
-                icon: Award,
-                roles: ["admin"],
-                permissions: ["manage_skills"]
-            }
-        ]
-    },
+    
 
     // Services & Training
     {
@@ -546,20 +499,7 @@ export const navigationConfig: NavigationItem[] = [
                 roles: ["admin"],
                 permissions: ["view_services"]
             },
-            {
-                name: "Training Programs",
-                href: "/portals/admin/loading",
-                icon: Video,
-                roles: ["admin"],
-                permissions: ["manage_training"]
-            },
-            {
-                name: "Certifications",
-                href: "/portals/admin/loading",
-                icon: Award,
-                roles: ["admin"],
-                permissions: ["manage_certifications"]
-            },
+            
             {
                 name: "Service Analytics",
                 href: "/portals/admin/loading",
@@ -570,56 +510,8 @@ export const navigationConfig: NavigationItem[] = [
         ]
     },
 
-    // Support & Communication
-    {
-        name: "Support Center",
-        href: "/portals/admin/loading",
-        icon: Headphones,
-        roles: ["admin"],
-        permissions: ["manage_support"],
-        badge: "23",
-        children: [
-            {
-                name: "Support Tickets",
-                href: "/portals/admin/loading",
-                icon: MessageSquare,
-                roles: ["admin"],
-                permissions: ["view_support_tickets"],
-                badge: "18"
-            },
-            {
-                name: "Live Chat",
-                href: "/portals/admin/loading",
-                icon: MessageSquare,
-                roles: ["admin"],
-                permissions: ["manage_live_chat"],
-                badge: "5"
-            },
-            {
-                name: "Email Support",
-                href: "/portals/admin/loading",
-                icon: Mail,
-                roles: ["admin"],
-                permissions: ["manage_email_support"]
-            },
-            {
-                name: "Call Center",
-                href: "/portals/admin/loading",
-                icon: Phone,
-                roles: ["admin"],
-                permissions: ["view_call_center"]
-            },
-            {
-                name: "Knowledge Base",
-                href: "/portals/admin/loading",
-                icon: BookOpen,
-                roles: ["admin"],
-                permissions: ["manage_knowledge_base"]
-            }
-        ]
-    },
-
     // System & Settings
+
     {
         name: "Settings",
         href: "/portals/admin/settings",
@@ -647,13 +539,6 @@ export const navigationConfig: NavigationItem[] = [
                 icon: Bell,
                 roles: ["admin"],
                 permissions: ["manage_notifications"]
-            },
-            {
-                name: "Database Management",
-                href: "/portals/admin/loading",
-                icon: Database,
-                roles: ["admin"],
-                permissions: ["manage_database"]
             }
 
         ]

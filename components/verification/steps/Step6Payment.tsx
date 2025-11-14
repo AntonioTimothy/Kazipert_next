@@ -30,7 +30,7 @@ export default function Step6Payment({ formData, updateStep }: any) {
     setPaymentStatus('processing');
 
     try {
-      const result = await processPayment(phoneNumber, 500); // KES 500
+      const result = await processPayment(phoneNumber, 200); // KES 500
       
       if (result.success) {
         setPaymentStatus('success');

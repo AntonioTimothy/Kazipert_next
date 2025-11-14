@@ -1,4 +1,4 @@
-// app/login/page.tsx - UPDATED WITH FORGOT PASSWORD
+// app/login/page.tsx - UPDATED WITH GLOBAL LOADER & STORE INTEGRATION
 "use client";
 
 import React, { useEffect, useState, useCallback, Suspense } from "react";
@@ -19,6 +19,15 @@ import {
   ArrowLeft,
   Key,
 } from "lucide-react";
+import { 
+  useIsLoading, 
+  useStartLoading, 
+  useStopLoading,
+  useSetUser,
+  useLogin,
+  useInitializeAuth
+} from '@/stores';
+import { GlobalLoader } from '@/components/global-loader';
 
 const slides = [
   {
@@ -132,16 +141,20 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Use individual Zustand loading hooks for optimal performance
+  const isLoading = useIsLoading();
+  const startLoading = useStartLoading();
+  const stopLoading = useStopLoading();
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
+    startLoading();
 
     try {
       const res = await fetch("/api/auth/forgot-password", {
@@ -161,14 +174,14 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
     } catch (err: any) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   };
 
   const handleVerifyOtp = async (code: string) => {
     setOtp(code);
     setError("");
-    setLoading(true);
+    startLoading();
 
     try {
       const res = await fetch("/api/auth/verify-forgot-password-otp", {
@@ -188,7 +201,7 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
     } catch (err: any) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   };
 
@@ -206,7 +219,7 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
       return;
     }
 
-    setLoading(true);
+    startLoading();
 
     try {
       const res = await fetch("/api/auth/reset-password", {
@@ -228,13 +241,13 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
     } catch (err: any) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   };
 
   const resendOtp = async () => {
     setError("");
-    setLoading(true);
+    startLoading();
 
     try {
       const res = await fetch("/api/auth/forgot-password", {
@@ -253,7 +266,7 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
     } catch (err: any) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   };
 
@@ -334,10 +347,10 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
               type="submit"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              disabled={loading}
+              disabled={isLoading}
               className="flex-1 bg-[#FFD700] hover:bg-[#FFA500] text-gray-900 font-semibold py-3 rounded-lg shadow hover:shadow-md transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? (
+              {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
                   Sending...
@@ -358,7 +371,7 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
           <div className="flex gap-3">
             <button
               onClick={() => setStep("email")}
-              disabled={loading}
+              disabled={isLoading}
               className="flex-1 py-3 rounded-lg border border-gray-300 hover:border-gray-400 text-sm text-gray-700 flex items-center justify-center gap-2"
             >
               <ArrowLeft size={14} />
@@ -369,16 +382,16 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
                 const firstEmpty = document.querySelector('input[value=""]') as HTMLInputElement;
                 if (firstEmpty) firstEmpty.focus();
               }}
-              disabled={loading}
+              disabled={isLoading}
               className="flex-1 bg-[#FFD700] hover:bg-[#FFA500] text-gray-900 font-medium rounded-lg text-sm py-3"
             >
-              {loading ? "Verifying..." : "Verify Code"}
+              {isLoading ? "Verifying..." : "Verify Code"}
             </button>
           </div>
 
           <button
             onClick={resendOtp}
-            disabled={loading}
+            disabled={isLoading}
             className="w-full text-[#FFD700] hover:text-[#FFA500] font-medium text-sm"
           >
             Resend Code
@@ -443,7 +456,7 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
             <button
               type="button"
               onClick={() => setStep("otp")}
-              disabled={loading}
+              disabled={isLoading}
               className="flex-1 py-3 rounded-lg border border-gray-300 hover:border-gray-400 text-sm text-gray-700 flex items-center justify-center gap-2"
             >
               <ArrowLeft size={14} />
@@ -453,10 +466,10 @@ function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin: () => void }) {
               type="submit"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              disabled={loading}
+              disabled={isLoading}
               className="flex-1 bg-[#FFD700] hover:bg-[#FFA500] text-gray-900 font-semibold py-3 rounded-lg shadow hover:shadow-md transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? (
+              {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
                   Resetting...
@@ -476,7 +489,6 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [slide, setSlide] = useState(0);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -485,6 +497,14 @@ function LoginForm() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+
+  // Use individual Zustand loading hooks for optimal performance
+  const isLoading = useIsLoading();
+  const startLoading = useStartLoading();
+  const stopLoading = useStopLoading();
+  const setUser = useSetUser();
+  const storeLogin = useLogin();
+  const initializeAuth = useInitializeAuth();
 
   const [form, setForm] = useState({
     email: "",
@@ -513,9 +533,13 @@ function LoginForm() {
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
+    startLoading();
 
     try {
+      // Option 1: Use store login action (if you have one)
+      // const result = await storeLogin(form.email, form.password, rememberMe);
+      
+      // Option 2: Direct API call with store integration
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -535,12 +559,15 @@ function LoginForm() {
         setPendingEmail(form.email);
         setOtpStep(true);
         setSuccess("Verification code sent to your email");
+      } else {
+        // Save user to store immediately if no OTP required
+        await handleSuccessfulLogin(data);
       }
 
     } catch (err: any) {
       setError(err.message || "Login failed. Please try again.");
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   };
 
@@ -553,8 +580,11 @@ function LoginForm() {
       case 'ADMIN':
         return '/portals';
       case 'SUPER_ADMIN':
+        return '/portals';
       case 'HOSPITAL_ADMIN':
+        return '/portals';
       case 'PHOTO_STUDIO_ADMIN':
+        return '/portals';
       case 'EMBASSY_ADMIN':
         return '/portals';
       default:
@@ -565,18 +595,21 @@ function LoginForm() {
   const getDashboardRoute = (role: string) => {
     switch (role) {
       case 'EMPLOYEE':
-        return '/portals';
+        return '/portals/employee/dashboard';
       case 'EMPLOYER':
-        return '/portals';
+        return '/portals/employer/dashboard';
       case 'ADMIN':
-        return '/portals';
+        return '/portals/admin/dashboard';
       case 'SUPER_ADMIN':
+        return '/portals/super-admin/dashboard';
       case 'HOSPITAL_ADMIN':
+        return '/portals/hospital/dashboard';
       case 'PHOTO_STUDIO_ADMIN':
+        return '/portals/photo-studio/dashboard';
       case 'EMBASSY_ADMIN':
-        return '/portals';
+        return '/portals/embassy/dashboard';
       default:
-        return '/portals';
+        return '/portals/dashboard';
     }
   };
 
@@ -584,6 +617,24 @@ function LoginForm() {
     setSuccess("Login successful! Redirecting...");
 
     if (data.user) {
+      // ✅ SAVE USER TO ZUSTAND STORE
+      setUser({
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.name,
+        role: data.user.role,
+        avatar: data.user.avatar,
+        permissions: data.user.permissions,
+        isSuperAdmin: data.user.isSuperAdmin,
+        onboardingCompleted: data.user.onboardingCompleted,
+        kycVerified: data.user.kycVerified,
+        // Additional user data
+        profile: data.user.profile,
+        preferences: data.user.preferences,
+        lastLogin: new Date().toISOString(),
+      });
+
+      // ✅ OPTIONAL: Save to sessionStorage for quick access
       sessionStorage.setItem("user", JSON.stringify({
         id: data.user.id,
         email: data.user.email,
@@ -595,6 +646,9 @@ function LoginForm() {
         onboardingCompleted: data.user.onboardingCompleted,
         kycVerified: data.user.kycVerified,
       }));
+
+      // ✅ Initialize auth state in store
+      await initializeAuth();
     }
 
     setTimeout(async () => {
@@ -623,7 +677,7 @@ function LoginForm() {
     if (!pendingEmail || isVerifying) return;
 
     setIsVerifying(true);
-    setLoading(true);
+    startLoading();
 
     try {
       const res = await fetch("/api/auth/verify-login-otp", {
@@ -648,15 +702,15 @@ function LoginForm() {
     } catch (err: any) {
       setError(err.message || "Verification failed");
     } finally {
-      setLoading(false);
+      stopLoading();
       setIsVerifying(false);
     }
-  }, [pendingEmail, form.password, isVerifying]);
+  }, [pendingEmail, form.password, isVerifying, startLoading, stopLoading]);
 
   const resendOtp = async () => {
     if (!pendingEmail) return;
 
-    setLoading(true);
+    startLoading();
     try {
       const res = await fetch("/api/auth/send-login-otp", {
         method: "POST",
@@ -671,7 +725,7 @@ function LoginForm() {
     } catch (err: any) {
       setError(err.message || "Failed to resend code");
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   };
 
@@ -682,6 +736,9 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white">
+      {/* Global Loader - Shows during API calls */}
+      <GlobalLoader />
+      
       {/* LEFT SECTION - Hidden on mobile */}
       <div className="hidden lg:flex w-1/2 relative items-center justify-center overflow-hidden">
         <AnimatePresence mode="wait">
@@ -843,7 +900,7 @@ function LoginForm() {
                   <div className="flex gap-3">
                     <button
                       onClick={goBack}
-                      disabled={loading}
+                      disabled={isLoading}
                       className="flex-1 py-2 rounded-lg border border-gray-300 hover:border-gray-400 text-sm text-gray-700 flex items-center justify-center gap-2"
                     >
                       <ArrowLeft size={14} />
@@ -854,15 +911,15 @@ function LoginForm() {
                         const firstEmpty = document.querySelector('input[value=""]') as HTMLInputElement;
                         if (firstEmpty) firstEmpty.focus();
                       }}
-                      disabled={loading}
+                      disabled={isLoading}
                       className="flex-1 bg-[#FFD700] hover:bg-[#FFA500] text-gray-900 font-medium rounded-lg text-sm py-2"
                     >
-                      {loading ? "Verifying..." : "Verify Code"}
+                      {isLoading ? "Verifying..." : "Verify Code"}
                     </button>
                   </div>
                   <button
                     onClick={resendOtp}
-                    disabled={loading}
+                    disabled={isLoading}
                     className="text-[#FFD700] hover:text-[#FFA500] font-medium text-xs"
                   >
                     Resend Code
@@ -953,10 +1010,10 @@ function LoginForm() {
                   type="submit"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  disabled={loading}
+                  disabled={isLoading}
                   className="w-full bg-[#FFD700] hover:bg-[#FFA500] text-gray-900 font-semibold py-3 rounded-lg shadow hover:shadow-md transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {loading ? (
+                  {isLoading ? (
                     <>
                       <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
                       Signing in...

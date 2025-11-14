@@ -18,7 +18,20 @@ import {
   MessageSquare,
   Shield,
   TrendingUp,
-  Activity
+  Activity,
+  Search,
+  Filter,
+  Download,
+  RefreshCw,
+  BarChart3,
+  UserCheck,
+  Clock4,
+  Zap,
+  Bell,
+  Settings,
+  LogOut,
+  ChevronDown,
+  MoreHorizontal
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -31,13 +44,17 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 
-// Enhanced mock distress reports data
+// Enhanced mock distress reports data with more realistic fields
 const mockDistressReports = [
   {
     id: "DR001",
@@ -54,7 +71,12 @@ const mockDistressReports = [
     contact: "+968 1234 5678",
     lastUpdated: "2 hours ago",
     responseTime: "12 hours",
-    assignedAgent: "Not assigned"
+    assignedAgent: "Not assigned",
+    escalationLevel: 3,
+    riskScore: 92,
+    followUps: 2,
+    attachments: 1,
+    category: "Financial"
   },
   {
     id: "DR002",
@@ -71,7 +93,12 @@ const mockDistressReports = [
     contact: "+968 2345 6789",
     lastUpdated: "30 minutes ago",
     responseTime: "4 hours",
-    assignedAgent: "Agent Sarah"
+    assignedAgent: "Agent Sarah",
+    escalationLevel: 2,
+    riskScore: 88,
+    followUps: 3,
+    attachments: 0,
+    category: "Safety"
   },
   {
     id: "DR003",
@@ -89,7 +116,12 @@ const mockDistressReports = [
     contact: "+968 3456 7890",
     lastUpdated: "3 days ago",
     responseTime: "2 hours",
-    assignedAgent: "Agent David"
+    assignedAgent: "Agent David",
+    escalationLevel: 1,
+    riskScore: 65,
+    followUps: 5,
+    attachments: 2,
+    category: "Contract"
   },
   {
     id: "DR004",
@@ -106,7 +138,12 @@ const mockDistressReports = [
     contact: "+968 4567 8901",
     lastUpdated: "1 hour ago",
     responseTime: "6 hours",
-    assignedAgent: "Not assigned"
+    assignedAgent: "Not assigned",
+    escalationLevel: 3,
+    riskScore: 95,
+    followUps: 1,
+    attachments: 0,
+    category: "Harassment"
   },
   {
     id: "DR005",
@@ -123,7 +160,12 @@ const mockDistressReports = [
     contact: "+968 5678 9012",
     lastUpdated: "15 minutes ago",
     responseTime: "1 hour",
-    assignedAgent: "Agent Mike"
+    assignedAgent: "Agent Mike",
+    escalationLevel: 3,
+    riskScore: 98,
+    followUps: 0,
+    attachments: 1,
+    category: "Medical"
   },
   {
     id: "DR006",
@@ -140,8 +182,25 @@ const mockDistressReports = [
     contact: "+968 6789 0123",
     lastUpdated: "5 hours ago",
     responseTime: "24 hours",
-    assignedAgent: "Not assigned"
+    assignedAgent: "Not assigned",
+    escalationLevel: 1,
+    riskScore: 45,
+    followUps: 1,
+    attachments: 3,
+    category: "Accommodation"
   }
+]
+
+// Mock data for additional features
+const mockAgents = ["Agent Sarah", "Agent David", "Agent Mike", "Agent Lisa", "Agent John"]
+const mockCategories = ["Financial", "Safety", "Contract", "Harassment", "Medical", "Accommodation", "Legal", "Other"]
+const mockResponseTimes = [
+  { hour: "00", reports: 2, avgTime: "3.2h" },
+  { hour: "04", reports: 1, avgTime: "2.8h" },
+  { hour: "08", reports: 5, avgTime: "1.5h" },
+  { hour: "12", reports: 8, avgTime: "2.1h" },
+  { hour: "16", reports: 6, avgTime: "3.4h" },
+  { hour: "20", reports: 3, avgTime: "4.2h" }
 ]
 
 // Animated Counter Component
@@ -173,6 +232,29 @@ const AnimatedCounter = ({ value, duration = 1500, className = "" }: { value: nu
   )
 }
 
+// Risk Score Indicator
+const RiskScore = ({ score }: { score: number }) => {
+  let color = "text-green-500"
+  if (score >= 80) color = "text-red-500"
+  else if (score >= 60) color = "text-yellow-500"
+  
+  return (
+    <div className="flex items-center gap-2">
+      <div className="w-16 bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+        <div 
+          className={cn("h-2 rounded-full", {
+            "bg-red-500": score >= 80,
+            "bg-yellow-500": score >= 60 && score < 80,
+            "bg-green-500": score < 60
+          })}
+          style={{ width: `${score}%` }}
+        ></div>
+      </div>
+      <span className={cn("text-sm font-medium", color)}>{score}</span>
+    </div>
+  )
+}
+
 export default function AdminDistressPage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
@@ -180,6 +262,10 @@ export default function AdminDistressPage() {
   const [selectedReport, setSelectedReport] = useState<any>(null)
   const [actionNotes, setActionNotes] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [priorityFilter, setPriorityFilter] = useState("all")
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     const userData = sessionStorage.getItem("user")
@@ -239,6 +325,30 @@ export default function AdminDistressPage() {
     }
   }
 
+  const handleRefresh = () => {
+    setRefreshing(true)
+    // Simulate API call
+    setTimeout(() => setRefreshing(false), 1000)
+  }
+
+  const handleExportData = () => {
+    // Simulate export functionality
+    alert("Exporting distress reports data...")
+  }
+
+  // Filter reports based on search and filters
+  const filteredReports = mockDistressReports.filter(report => {
+    const matchesSearch = 
+      report.workerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      report.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      report.type.toLowerCase().includes(searchQuery.toLowerCase())
+    
+    const matchesStatus = statusFilter === "all" || report.status === statusFilter
+    const matchesPriority = priorityFilter === "all" || report.priority === priorityFilter
+    
+    return matchesSearch && matchesStatus && matchesPriority
+  })
+
   const criticalReports = mockDistressReports.filter((r) => r.priority === "critical" && r.status !== "resolved")
   const openReports = mockDistressReports.filter((r) => r.status === "open")
   const investigatingReports = mockDistressReports.filter((r) => r.status === "investigating")
@@ -251,7 +361,9 @@ export default function AdminDistressPage() {
     investigating: investigatingReports.length,
     resolved: resolvedReports.length,
     responseRate: 87,
-    avgResponseTime: "4.2 hours"
+    avgResponseTime: "4.2 hours",
+    avgRiskScore: Math.round(mockDistressReports.reduce((acc, r) => acc + r.riskScore, 0) / mockDistressReports.length),
+    unassigned: mockDistressReports.filter(r => r.assignedAgent === "Not assigned").length
   }
 
   if (loading || !user) {
@@ -261,7 +373,7 @@ export default function AdminDistressPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-900 dark:to-gray-900 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
+        {/* Header with User Info */}
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
@@ -276,13 +388,34 @@ export default function AdminDistressPage() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div className="text-right">
               <div className="text-sm text-muted-foreground">Active Cases</div>
               <div className="text-2xl font-bold text-red-600">
                 <AnimatedCounter value={stats.critical} />
               </div>
             </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold">
+                    {user?.name?.charAt(0) || 'A'}
+                  </div>
+                  <span className="hidden sm:block">{user?.name || 'Admin'}</span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/login')}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -308,9 +441,9 @@ export default function AdminDistressPage() {
           </Card>
         )}
 
-        {/* Stats Overview */}
+        {/* Enhanced Stats Overview */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="bg-white dark:bg-gray-800 border-l-4 border-l-blue-500 shadow-sm">
+          <Card className="bg-white dark:bg-gray-800 border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -327,7 +460,7 @@ export default function AdminDistressPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 border-l-4 border-l-red-500 shadow-sm">
+          <Card className="bg-white dark:bg-gray-800 border-l-4 border-l-red-500 shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -344,49 +477,57 @@ export default function AdminDistressPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 border-l-4 border-l-yellow-500 shadow-sm">
+          <Card className="bg-white dark:bg-gray-800 border-l-4 border-l-yellow-500 shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-2xl font-bold text-yellow-600">
-                    <AnimatedCounter value={stats.investigating} />
+                    <AnimatedCounter value={stats.unassigned} />
                   </div>
-                  <div className="text-sm text-muted-foreground">Investigating</div>
+                  <div className="text-sm text-muted-foreground">Unassigned</div>
                 </div>
                 <div className="p-2 bg-yellow-500/10 rounded-lg">
-                  <Clock className="h-6 w-6 text-yellow-500" />
+                  <UserCheck className="h-6 w-6 text-yellow-500" />
                 </div>
               </div>
-              <Progress value={(stats.investigating / stats.total) * 100} className="h-1 mt-2 bg-yellow-200" />
+              <Progress value={(stats.unassigned / stats.total) * 100} className="h-1 mt-2 bg-yellow-200" />
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-gray-800 border-l-4 border-l-green-500 shadow-sm">
+          <Card className="bg-white dark:bg-gray-800 border-l-4 border-l-purple-500 shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold text-green-600">
-                    <AnimatedCounter value={stats.resolved} />
+                  <div className="text-2xl font-bold text-purple-600">
+                    {stats.avgRiskScore}
                   </div>
-                  <div className="text-sm text-muted-foreground">Resolved</div>
+                  <div className="text-sm text-muted-foreground">Avg Risk Score</div>
                 </div>
-                <div className="p-2 bg-green-500/10 rounded-lg">
-                  <CheckCircle className="h-6 w-6 text-green-500" />
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <BarChart3 className="h-6 w-6 text-purple-500" />
                 </div>
               </div>
-              <Progress value={(stats.resolved / stats.total) * 100} className="h-1 mt-2 bg-green-200" />
+              <Progress value={stats.avgRiskScore} className="h-1 mt-2 bg-purple-200" />
             </CardContent>
           </Card>
         </div>
 
-        {/* Performance Metrics */}
+        {/* Enhanced Performance Metrics */}
         <div className="grid gap-6 lg:grid-cols-3">
           <Card className="lg:col-span-2 bg-white dark:bg-gray-800 shadow-sm">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-green-500" />
                 Response Performance
               </CardTitle>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
+                  <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleExportData}>
+                  <Download className="h-4 w-4" />
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-6">
@@ -399,6 +540,23 @@ export default function AdminDistressPage() {
                   <div className="text-3xl font-bold text-blue-600">{stats.avgResponseTime}</div>
                   <div className="text-sm text-muted-foreground">Avg Response Time</div>
                   <Progress value={75} className="h-2 mt-2 bg-blue-200" />
+                </div>
+              </div>
+              
+              {/* Response Time Chart */}
+              <div className="mt-6">
+                <h4 className="text-sm font-medium mb-3">Response Time by Hour</h4>
+                <div className="flex items-end justify-between h-20 gap-1">
+                  {mockResponseTimes.map((item, index) => (
+                    <div key={index} className="flex-1 flex flex-col items-center">
+                      <div 
+                        className="w-full bg-blue-500 rounded-t transition-all hover:bg-blue-600"
+                        style={{ height: `${(parseFloat(item.avgTime) / 6) * 40}px` }}
+                      ></div>
+                      <div className="text-xs text-muted-foreground mt-1">{item.hour}:00</div>
+                      <div className="text-xs font-medium">{item.avgTime}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </CardContent>
@@ -425,22 +583,85 @@ export default function AdminDistressPage() {
                   <Users className="h-4 w-4 mr-2" />
                   Assign Agent
                 </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <Bell className="h-4 w-4 mr-2" />
+                  Send Alert
+                </Button>
+              </div>
+              
+              {/* Recent Activity */}
+              <div className="mt-6 pt-4 border-t">
+                <h4 className="text-sm font-medium mb-3">Recent Activity</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>New critical report</span>
+                    <span className="text-muted-foreground">2m ago</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Case DR004 assigned</span>
+                    <span className="text-muted-foreground">15m ago</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Case DR003 resolved</span>
+                    <span className="text-muted-foreground">1h ago</span>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Reports Table */}
+        {/* Enhanced Reports Table with Search and Filters */}
         <Card className="bg-white dark:bg-gray-800 shadow-sm">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <CardTitle>All Distress Reports</CardTitle>
                 <CardDescription>Comprehensive view of all worker distress reports and their status</CardDescription>
               </div>
-              <Badge variant="outline" className="text-sm">
-                Updated just now
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-sm">
+                  {filteredReports.length} reports
+                </Badge>
+                <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
+                  <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
+                </Button>
+              </div>
+            </div>
+            
+            {/* Search and Filters */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search reports by ID, worker name, or type..."
+                  className="pl-9"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="open">Open</SelectItem>
+                  <SelectItem value="investigating">Investigating</SelectItem>
+                  <SelectItem value="resolved">Resolved</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Priority</SelectItem>
+                  <SelectItem value="critical">Critical</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardHeader>
           <CardContent>
@@ -459,6 +680,7 @@ export default function AdminDistressPage() {
                       <TableRow>
                         <TableHead>Report Details</TableHead>
                         <TableHead>Priority</TableHead>
+                        <TableHead>Risk Score</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Response Time</TableHead>
                         <TableHead>Assigned To</TableHead>
@@ -466,7 +688,7 @@ export default function AdminDistressPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {mockDistressReports.map((report) => (
+                      {filteredReports.map((report) => (
                         <TableRow key={report.id} className="hover:bg-muted/50 transition-colors">
                           <TableCell>
                             <div className="space-y-1">
@@ -476,7 +698,7 @@ export default function AdminDistressPage() {
                                   {report.priority}
                                 </Badge>
                               </div>
-                              <div className="text-sm font-medium">{report.workerName}</div>
+                              <div className="font-medium">{report.workerName}</div>
                               <div className="text-xs text-muted-foreground flex items-center gap-1">
                                 <MapPin className="h-3 w-3" />
                                 {report.location}
@@ -493,6 +715,9 @@ export default function AdminDistressPage() {
                             >
                               {report.priority}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <RiskScore score={report.riskScore} />
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -515,16 +740,31 @@ export default function AdminDistressPage() {
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedReport(report)
-                                setIsDialogOpen(true)
-                              }}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
+                            <div className="flex justify-end gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedReport(report)
+                                  setIsDialogOpen(true)
+                                }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button size="sm" variant="outline">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem>Assign Agent</DropdownMenuItem>
+                                  <DropdownMenuItem>Escalate Case</DropdownMenuItem>
+                                  <DropdownMenuItem>Add Note</DropdownMenuItem>
+                                  <DropdownMenuItem className="text-red-600">Mark Urgent</DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -535,7 +775,6 @@ export default function AdminDistressPage() {
 
               {/* Filtered tabs content would go here */}
               <TabsContent value="open" className="mt-6">
-                {/* Similar table structure for open reports */}
                 <div className="text-center py-8 text-muted-foreground">
                   Open reports table view
                 </div>
@@ -557,13 +796,13 @@ export default function AdminDistressPage() {
         </Card>
       </div>
 
-      {/* Report Details Dialog */}
+      {/* Enhanced Report Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-red-500" />
-              Distress Report Details
+              Distress Report Details - {selectedReport?.id}
             </DialogTitle>
             <DialogDescription>
               Review and take action on this emergency report
@@ -573,7 +812,7 @@ export default function AdminDistressPage() {
           {selectedReport && (
             <div className="space-y-6">
               {/* Header with critical info */}
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="bg-red-50 dark:bg-red-950/20 border-red-200">
                   <CardContent className="p-4">
                     <div className="text-sm text-red-700 dark:text-red-300 font-medium">Priority</div>
@@ -585,8 +824,8 @@ export default function AdminDistressPage() {
                 
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-sm text-muted-foreground">Report ID</div>
-                    <div className="font-mono font-bold">{selectedReport.id}</div>
+                    <div className="text-sm text-muted-foreground">Risk Score</div>
+                    <div className="font-bold text-red-600">{selectedReport.riskScore}</div>
                   </CardContent>
                 </Card>
                 
@@ -594,6 +833,13 @@ export default function AdminDistressPage() {
                   <CardContent className="p-4">
                     <div className="text-sm text-muted-foreground">Response Time</div>
                     <div className="font-bold text-green-600">{selectedReport.responseTime}</div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-sm text-muted-foreground">Escalation Level</div>
+                    <div className="font-bold text-orange-600">Level {selectedReport.escalationLevel}</div>
                   </CardContent>
                 </Card>
               </div>
@@ -659,9 +905,17 @@ export default function AdminDistressPage() {
                   <CardTitle className="text-sm">Incident Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Issue Type</Label>
-                    <div className="font-medium">{selectedReport.type}</div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Issue Type</Label>
+                      <div className="font-medium">{selectedReport.type}</div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Category</Label>
+                      <div>
+                        <Badge variant="outline">{selectedReport.category}</Badge>
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Description</Label>
@@ -669,7 +923,7 @@ export default function AdminDistressPage() {
                       {selectedReport.description}
                     </div>
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-4 sm:grid-cols-3">
                     <div>
                       <Label className="text-xs text-muted-foreground">Reported Date</Label>
                       <div className="flex items-center gap-2">
@@ -685,6 +939,10 @@ export default function AdminDistressPage() {
                       )}>
                         {selectedReport.assignedAgent}
                       </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Follow-ups</Label>
+                      <div className="font-medium">{selectedReport.followUps}</div>
                     </div>
                   </div>
                 </CardContent>
@@ -708,7 +966,7 @@ export default function AdminDistressPage() {
                     />
                   </div>
 
-                  <div className="flex gap-3 pt-4">
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     <Button className="flex-1 bg-red-500 hover:bg-red-600">
                       <AlertTriangle className="mr-2 h-4 w-4" />
                       Emergency Response
@@ -726,6 +984,18 @@ export default function AdminDistressPage() {
               </Card>
             </div>
           )}
+          
+          <DialogFooter className="flex flex-col sm:flex-row gap-3">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Close
+            </Button>
+            <Button onClick={() => {
+              // Handle save action
+              setIsDialogOpen(false)
+            }}>
+              Save Actions
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -1,43 +1,18 @@
-// components/global-loader.tsx
-"use client"
+// components/global-loader.tsx - UPDATED WITH INDIVIDUAL HOOK
+'use client';
 
-import { useLoading } from '@/contexts/loading-context'
-import { LoadingSpinner } from './loading-spinner'
-import { usePathname, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useIsLoading } from '@/stores'; // Import individual hook
+import styles from './GlobalLoader.module.css';
 
-export function GlobalLoader() {
-  const { isLoading, setLoading } = useLoading()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const [isNavigating, setIsNavigating] = useState(false)
+export const GlobalLoader: React.FC = () => {
+  const isLoading = useIsLoading(); // Use individual hook
 
-  // Handle route changes
-  useEffect(() => {
-    const handleStart = () => {
-      setIsNavigating(true)
-      setLoading(true)
-    }
+  if (!isLoading) return null;
 
-    const handleComplete = () => {
-      setIsNavigating(false)
-      // Add a small delay for smoother transition
-      setTimeout(() => setLoading(false), 500)
-    }
-
-    handleComplete()
-  }, [pathname, searchParams, setLoading])
-
-  // Initial load
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false)
-    }, 2000) // Simulate initial loading time
-
-    return () => clearTimeout(timer)
-  }, [setLoading])
-
-  if (!isLoading && !isNavigating) return null
-
-  return <LoadingSpinner />
-}
+  return (
+    <div className={styles.container} data-testid="global-loader">
+      <div className={styles.triangle}></div>
+      {/* <p className={styles.loadingText}>...</p> */}
+    </div>
+  );
+};
