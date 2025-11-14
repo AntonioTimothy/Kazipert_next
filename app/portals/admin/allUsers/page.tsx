@@ -373,31 +373,7 @@ export default function AdminUsersPage() {
                 <AnimatedCounter value={stats.total} />
               </div>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-cyan-600 rounded-full flex items-center justify-center text-white font-bold">
-                    {user?.name?.charAt(0) || user?.firstName?.charAt(0) || user?.email?.charAt(0).toUpperCase() || 'A'}
-                  </div>
-                  <span className="hidden sm:block">{user?.name || user?.firstName || 'Admin'}</span>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => router.push('/admin/analytics')}>
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  Analytics
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/login')}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            
           </div>
         </div>
 

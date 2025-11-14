@@ -114,7 +114,7 @@ export const navigationConfig: NavigationItem[] = [
         icon: Video,
         roles: ["employee"]
     },
-    
+
     {
         name: "Settings",
         href: "/portals/worker/settings",
@@ -191,17 +191,24 @@ export const navigationConfig: NavigationItem[] = [
     // User Management
     {
         name: "User Management",
-        href: "/portals/admin/user-analytics",
+        href: "",
         icon: Users,
         roles: ["admin"],
         permissions: ["manage_users"],
         children: [
             {
-                name: "All Workers",
+                name: "All Users",
                 href: "/portals/admin/allUsers",
                 icon: Users,
                 roles: ["admin"],
                 permissions: ["view_workers"]
+            },
+            {
+                name: "Registrations",
+                href: "/portals/admin/kyc",
+                icon: Lock,
+                roles: ["admin"],
+                permissions: ["manage_security"]
             },
             {
                 name: "User Analytics",
@@ -210,84 +217,64 @@ export const navigationConfig: NavigationItem[] = [
                 roles: ["admin"],
                 permissions: ["view_employers"]
             }
-            
+
         ]
     },
 
     // Job & Contract Management
     {
         name: "Jobs & Contracts",
-        href: "/portals/admin/loading",
+        href: "",
         icon: Briefcase,
         roles: ["admin"],
         permissions: ["manage_jobs"],
         children: [
             {
-                name: "All Jobs",
-                href: "/portals/admin/loading",
+                name: "Jobs",
+                href: "/portals/admin/jobs",
                 icon: FolderOpen,
                 roles: ["admin"],
                 permissions: ["view_jobs"]
             },
             {
-                name: "Active Contracts",
-                href: "/portals/admin/loading",
+                name: "Contracts",
+                href: "/portals/admin/contracts",
                 icon: FileText,
                 roles: ["admin"],
                 permissions: ["view_contracts"],
                 badge: "45"
-            },
-            {
-                name: "Contract History",
-                href: "/portals/admin/loading",
-                icon: ClipboardList,
-                roles: ["admin"],
-                permissions: ["view_contract_history"]
-            },
-            {
-                name: "Job Categories",
-                href: "/portals/admin/loading",
-                icon: Target,
-                roles: ["admin"],
-                permissions: ["manage_categories"]
-            },
-            {
-                name: "Skills Management",
-                href: "/portals/admin/loading",
-                icon: Award,
-                roles: ["admin"],
-                permissions: ["manage_skills"]
             }
+
         ]
     },
 
     // Support & Communication
     {
         name: "Support Center",
-        href: "/portals/admin/loading",
+        href: "",
         icon: Headphones,
         roles: ["admin"],
         permissions: ["manage_support"],
         badge: "23",
         children: [
             {
-                name: "All Cases",
+                name: "Distress Report",
                 href: "/portals/admin/distress",
                 icon: ClipboardList,
                 roles: ["admin"],
                 permissions: ["view_cases"]
             },
             {
-                name: "Support Tickets",
-                href: "/portals/admin/loading",
-                icon: MessageSquare,
+                name: "All Cases",
+                href: "/portals/admin/cases",
+                icon: ClipboardList,
                 roles: ["admin"],
-                permissions: ["view_support_tickets"],
-                badge: "18"
+                permissions: ["view_cases"]
             },
+
             {
                 name: "Live Chat",
-                href: "/portals/admin/loading",
+                href: "/portals/admin/livechat",
                 icon: MessageSquare,
                 roles: ["admin"],
                 permissions: ["manage_live_chat"],
@@ -296,25 +283,25 @@ export const navigationConfig: NavigationItem[] = [
         ]
     },
 
-   
+
     // Finance & Accounting
     {
         name: "Finance",
-        href: "/portals/admin/loading",
+        href: "",
         icon: DollarSign,
         roles: ["admin"],
         permissions: ["manage_finance"],
         children: [
             {
                 name: "Financial Dashboard",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: PieChart,
                 roles: ["admin"],
                 permissions: ["view_finance"]
             },
             {
                 name: "Revenue & Profit",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: TrendingUp,
                 roles: ["admin"],
                 permissions: ["view_revenue"],
@@ -322,21 +309,21 @@ export const navigationConfig: NavigationItem[] = [
             },
             {
                 name: "Expenses",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: Receipt,
                 roles: ["admin"],
                 permissions: ["manage_expenses"]
             },
             {
                 name: "Transactions",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: CreditCard,
                 roles: ["admin"],
                 permissions: ["view_transactions"]
             },
             {
                 name: "Invoicing",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: FileText,
                 roles: ["admin"],
                 permissions: ["manage_invoices"],
@@ -344,14 +331,14 @@ export const navigationConfig: NavigationItem[] = [
             },
             {
                 name: "Tax Management",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: Calculator,
                 roles: ["admin"],
                 permissions: ["manage_taxes"]
             },
             {
                 name: "Financial Reports",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: BarChart3,
                 roles: ["admin"],
                 permissions: ["view_financial_reports"]
@@ -362,21 +349,21 @@ export const navigationConfig: NavigationItem[] = [
     // HR & Payroll Management
     {
         name: "Human Resources",
-        href: "/portals/admin/loading",
+        href: "",
         icon: UserCog,
         roles: ["admin"],
         permissions: ["manage_hr"],
         children: [
             {
                 name: "Employee Directory",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: Users,
                 roles: ["admin"],
                 permissions: ["view_employees"]
             },
             {
                 name: "Payroll Processing",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: Calculator,
                 roles: ["admin"],
                 permissions: ["process_payroll"],
@@ -384,35 +371,35 @@ export const navigationConfig: NavigationItem[] = [
             },
             {
                 name: "Salary Structure",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: DollarSign,
                 roles: ["admin"],
                 permissions: ["manage_salaries"]
             },
             {
                 name: "Tax & Deductions",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: Scale,
                 roles: ["admin"],
                 permissions: ["manage_tax_deductions"]
             },
             {
                 name: "Attendance",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: Clock,
                 roles: ["admin"],
                 permissions: ["view_attendance"]
             },
             {
                 name: "Performance Reviews",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: Award,
                 roles: ["admin"],
                 permissions: ["manage_performance"]
             },
             {
                 name: "HR Analytics",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: BarChart3,
                 roles: ["admin"],
                 permissions: ["view_hr_analytics"]
@@ -423,89 +410,61 @@ export const navigationConfig: NavigationItem[] = [
     // Analytics & Business Intelligence
     {
         name: "Analytics",
-        href: "/portals/admin/loading",
+        href: "",
         icon: BarChart3,
         roles: ["admin"],
         permissions: ["view_analytics"],
         children: [
             {
                 name: "Business Overview",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: PieChart,
                 roles: ["admin"],
                 permissions: ["view_business_analytics"]
             },
             {
                 name: "Financial Performance",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: DollarSign,
                 roles: ["admin"],
                 permissions: ["view_financial_analytics"]
             },
             {
                 name: "User Analytics",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: Users,
                 roles: ["admin"],
                 permissions: ["view_user_analytics"]
             },
             {
                 name: "Call Center Dashboard",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: Headphones,
                 roles: ["admin"],
                 permissions: ["view_call_analytics"]
             },
             {
                 name: "Distress Analytics",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: AlertTriangle,
                 roles: ["admin"],
                 permissions: ["view_distress_analytics"],
                 badge: "Live"
             },
-           
+
             {
                 name: "Geographic Analytics",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: Globe,
                 roles: ["admin"],
                 permissions: ["view_geo_analytics"]
             },
             {
                 name: "Custom Reports",
-                href: "/portals/admin/loading",
+                href: "",
                 icon: LineChart,
                 roles: ["admin"],
                 permissions: ["create_custom_reports"]
-            }
-        ]
-    },
-
-    
-
-    // Services & Training
-    {
-        name: "Services",
-        href: "/portals/admin/loading",
-        icon: Shield,
-        roles: ["admin"],
-        permissions: ["manage_services"],
-        children: [
-            {
-                name: "Service Catalog",
-                href: "/portals/admin/loading",
-                icon: Shield,
-                roles: ["admin"],
-                permissions: ["view_services"]
-            },
-            
-            {
-                name: "Service Analytics",
-                href: "/portals/admin/loading",
-                icon: BarChart3,
-                roles: ["admin"],
-                permissions: ["view_service_analytics"]
             }
         ]
     },
@@ -525,24 +484,18 @@ export const navigationConfig: NavigationItem[] = [
                 icon: Cog,
                 roles: ["admin"],
                 permissions: ["manage_settings"]
-            },
-            {
-                name: "Profile",
-                href: "/portals/admin/kyc",
-                icon: Lock,
-                roles: ["admin"],
-                permissions: ["manage_security"]
-            },
-            {
-                name: "Notifications",
-                href: "/portals/admin/loading",
-                icon: Bell,
-                roles: ["admin"],
-                permissions: ["manage_notifications"]
             }
 
         ]
-    }
+    },
+    {
+        name: "Notifications",
+        href: "/portals/admin/notifications",
+        icon: Bell,
+        roles: ["admin"],
+        permissions: ["manage_cases"],
+
+    },
 ]
 
 // Create a dummy permission set that includes all possible permissions

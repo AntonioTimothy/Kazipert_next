@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
 
         // Configuration
         const config = {
-            authUrl: 'https://apps.nationalbank.co.ke/auth2_uat/master/protocol/openid-connect/token',
-            stkPushUrl: 'https://apps.nationalbank.co.ke/stk_uat/stk_request',
+            authUrl: 'https://apps.nationalbank.co.ke/auth2/master/protocol/openid-connect/token',
+            stkPushUrl: 'https://apps.nationalbank.co.ke/stk/stk_request',
             credentials: {
                 clientId: process.env.MPESA_CLIENT_ID || 'TEST',
                 clientSecret: process.env.MPESA_CLIENT_SECRET || 'AINpW0FFvp09kuLhz9eBdjyngyY9LNok',
@@ -102,12 +102,12 @@ export async function POST(request: NextRequest) {
         const transactionReference = generateTransactionReference();
 
         const requestData = {
-            accountReference: accountReference,
+            accountReference: "20173154#MARTSTEC",
             businessShortCode: process.env.MPESA_BUSINESS_SHORTCODE || "174379",
             phoneNumber: phoneNumber,
             requestDate: getCurrentDate(),
             // transAmount: amount.toString(),
-            transAmount:"1", // For testing purposes
+            transAmount: "1", // For testing purposes
             transactionDesc: "Kazipert Verification Fee",
             transactionReference: transactionReference,
             callbackurl: `https://kazipert.com/api/payment/mpesa-callback`
