@@ -34,10 +34,10 @@ export async function POST(request: NextRequest) {
             authUrl: 'https://apps.nationalbank.co.ke/auth2/master/protocol/openid-connect/token',
             stkPushUrl: 'https://apps.nationalbank.co.ke/stk/stk_request',
             credentials: {
-                clientId: process.env.MPESA_CLIENT_ID || 'TEST',
-                clientSecret: process.env.MPESA_CLIENT_SECRET || 'AINpW0FFvp09kuLhz9eBdjyngyY9LNok',
-                username: process.env.MPESA_USERNAME || 'test',
-                password: process.env.MPESA_PASSWORD || 'test'
+                clientId: "MARTSTEC",
+                clientSecret: "9aC8X0X!Z8$PUQb4fVQv1bgJkFJy",
+                username: "MARTSTEC",
+                password: "COt$2233B123#k12"
             }
         };
 

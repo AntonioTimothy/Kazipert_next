@@ -24,6 +24,8 @@ model User {
   adminStatus       AdminStatus?   @default(PENDING)
   kycId             String?        
   verified          Boolean        @default(false)
+  onboardingCompleted Boolean      @default(false)
+
   emailVerified     Boolean        @default(false)
   phoneVerified     Boolean        @default(false)
   otp               String?        
@@ -34,6 +36,7 @@ model User {
   lastLogin         DateTime?
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
+
   
   // Relations
   refreshTokens     RefreshToken[]
@@ -151,7 +154,8 @@ model OnboardingProgress {
   data        Json?    // Store all onboarding data including KYC details
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  completedSteps Int[]   @default([])
+  completedSteps Int[]   @default([])  // Make sure this exists
+  
   @@map("onboarding_progress")
 }
 
@@ -167,32 +171,10 @@ model KycDetails {
   
   // Identity Details
   idNumber          String?
-  passportNumber    String?
-  passportIssueDate DateTime?
-  passportExpiryDate DateTime?
-  kraPin            String?
-  
-  // Work Details
-  workExperience    String?
-  skills            String[] // Store as JSON array
-  languages         Json?    // Store as {english: 'fluent', arabic: 'basic'}
-  
-  // Documents
-  profilePicture    String?
-  idDocumentFront   String?
-  idDocumentBack    String?
-  passportDocument  String?
-  kraDocument       String?
-  goodConductUrl   String?
-  educationCertUrl String?
-  workCertUrl      String?
-  medicalDocument  String?
   
   // Verification Status
-  profileVerified   Boolean @default(false)
   idVerified        Boolean @default(false)
   faceVerified      Boolean @default(false)
-  medicalVerified   Boolean @default(false)
   paymentVerified   Boolean @default(false)
   
   // Payment

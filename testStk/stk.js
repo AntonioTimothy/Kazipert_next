@@ -156,7 +156,7 @@ class STKPushTester {
         const requestData = {
             accountReference: "20173154#MARTSTEC", // From docs
             businessShortCode: "625625", // From docs
-            phoneNumber: "254794582656", // From docs
+            phoneNumber: "254726862144", // From docs
             requestDate: this.getCurrentDate(),
             transAmount: "1", // From docs
             transactionDesc: "Kazipert Registration", // From docs

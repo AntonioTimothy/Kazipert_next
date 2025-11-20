@@ -105,6 +105,8 @@ const ContractStatusBadge = ({ status }: { status: string }) => {
     EXPIRED: "Expired"
   }
 
+  // useEffect(() => { }, [status])  
+
   return (
     <Badge className={cn("flex items-center gap-1", config.color)}>
       <IconComponent className="h-3 w-3" />

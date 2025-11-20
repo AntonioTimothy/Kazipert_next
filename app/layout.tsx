@@ -12,6 +12,8 @@ import { ThemeInitializer } from '@/components/ThemeInitializer'
 import { GlobalLoader } from '@/components/global-loader'
 import { SuspenseLoader } from '@/components/suspense-loader'
 import { StoreInitializer } from '@/components/store-initializer'
+import RegisterSW from "@/components/register-sw";
+import PWAInstallPrompt from "@/components/pwa-install";
 
 export const metadata: Metadata = {
   title: "Kazipert - Connecting Kenyan Workers with Gulf Employers",
@@ -26,7 +28,18 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+      <head>
+      <link rel="manifest" href="/manifest.json" />
+          <meta name="theme-color" content="#0EA5A8" />
+
+          {/* iOS splash screen support */}
+          <link rel="apple-touch-icon" href="/logo.png" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+          <meta name="apple-mobile-web-app-title" content="Kazipert" />
+      </head>
       <body className="font-sans antialiased">
+
         <ThemeProvider>
           <ThemeInitializer />
           
@@ -43,8 +56,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
           
           {/* <LiveChatWidget /> */}
         </ThemeProvider>
-
+        <RegisterSW />
+        <PWAInstallPrompt />
         <Analytics />
+        
+
       </body>
     </html>
   )

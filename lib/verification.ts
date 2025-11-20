@@ -154,6 +154,65 @@ export async function updateOnboardingProgress(userId: string, step: number, dat
     }
 }
 
+// lib/verification.ts - UPDATED
+export async function finalizeVerification(
+    sessionId: string,
+    formData: any,
+    paymentData: any
+): Promise<{ success: boolean; user?: any; message?: string }> {
+    try {
+        const response = await fetch('/api/verification/finalize', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                sessionId,
+                formData,
+                paymentData
+            }),
+        })
+
+        if (!response.ok) {
+            throw new Error('Failed to finalize verification')
+        }
+
+        return await response.json()
+    } catch (error) {
+        console.error('Error finalizing verification:', error)
+        throw error
+    }
+}
+
+export async function uploadVerificationFile(
+    file: File,
+    fileType: 'idFront' | 'idBack' | 'selfie',
+    userId: string
+): Promise<{ success: boolean; fileUrl?: string }> {
+    try {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('fileType', fileType)
+        formData.append('userId', userId)
+
+        const response = await fetch('/api/verification/upload', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData,
+        })
+
+        if (!response.ok) {
+            throw new Error('Failed to upload file')
+        }
+
+        return await response.json()
+    } catch (error) {
+        console.error('Error uploading file:', error)
+        throw error
+    }
+}
+
 
 
 

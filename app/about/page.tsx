@@ -107,6 +107,7 @@ export default function AboutPage() {
         </section>
 
         {/* How We Work */}
+        
         <section className="py-20">
           <div className="container">
             <div className="mx-auto max-w-3xl">

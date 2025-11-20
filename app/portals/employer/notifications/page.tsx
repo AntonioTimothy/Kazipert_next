@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Clock
 } from "lucide-react"
+import { useRouter } from "next/router"
 
 const KAZIPERT_COLORS = {
   primary: '#117c82',
@@ -27,6 +28,8 @@ const KAZIPERT_COLORS = {
 }
 
 export default function EmployerNotificationsPage() {
+
+  const router = useRouter()
   const notifications = [
     {
       id: 1,
@@ -74,7 +77,7 @@ export default function EmployerNotificationsPage() {
       read: false,
       action: {
         label: "Complete Profile",
-        onClick: () => console.log("Complete profile")
+        onClick: () => router.push('/portals/employer/verification')  
       }
     }
   ]

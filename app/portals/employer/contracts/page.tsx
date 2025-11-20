@@ -19,6 +19,7 @@ import {
   MapPin,
   DollarSign
 } from "lucide-react"
+import { useRouter } from "next/router"
 
 const KAZIPERT_COLORS = {
   primary: '#117c82',
@@ -30,6 +31,8 @@ const KAZIPERT_COLORS = {
 }
 
 export default function EmployerContractsPage() {
+    const router = useRouter()
+  
   const [profileComplete, setProfileComplete] = useState(false)
   const [activeTab, setActiveTab] = useState("all")
 
@@ -142,8 +145,8 @@ export default function EmployerContractsPage() {
                 </div>
                 <Button 
                   className="bg-amber-500 hover:bg-amber-600 text-white"
-                  onClick={() => setProfileComplete(true)}
-                >
+                  onClick={() => router.push('/portals/employer/verification')}
+                  >
                   Complete Profile
                 </Button>
               </div>
