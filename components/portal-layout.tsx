@@ -11,14 +11,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useNavigation } from "@/hooks/useNavigation"
 import { RefreshCw } from "lucide-react"
 
-import { 
-  Menu, 
-  X, 
-  LogOut, 
-  Settings, 
-  User, 
-  Bell, 
-  Briefcase, 
+import {
+  Menu,
+  X,
+  LogOut,
+  Settings,
+  User,
+  Bell,
+  Briefcase,
   Home,
   Search,
   MessageSquare,
@@ -98,7 +98,7 @@ function CustomDropdown({ trigger, children, align = "end", className, maxHeight
         {trigger}
       </div>
       {isOpen && (
-        <div 
+        <div
           className={cn(
             "absolute top-full mt-2 min-w-[280px] rounded-2xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-2xl z-[1000] overflow-hidden",
             alignmentClasses[align],
@@ -113,11 +113,11 @@ function CustomDropdown({ trigger, children, align = "end", className, maxHeight
   )
 }
 
-function CustomDropdownItem({ 
-  children, 
+function CustomDropdownItem({
+  children,
   onClick,
-  className 
-}: { 
+  className
+}: {
   children: React.ReactNode
   onClick?: () => void
   className?: string
@@ -135,10 +135,10 @@ function CustomDropdownItem({
   )
 }
 
-function CustomDropdownLabel({ 
+function CustomDropdownLabel({
   children,
-  className 
-}: { 
+  className
+}: {
   children: React.ReactNode
   className?: string
 }) {
@@ -155,7 +155,7 @@ function CustomDropdownSeparator() {
 
 function ScrollableDropdownContent({ children, maxHeight = "320px" }: { children: React.ReactNode; maxHeight?: string }) {
   return (
-    <div 
+    <div
       className="overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent"
       style={{ maxHeight }}
     >
@@ -228,15 +228,15 @@ function NavigationItem({ item, isActive, sidebarCollapsed, currentTheme, pathna
             (isActive || isChildActive) ? "text-primary-foreground" : "text-current"
           )} />
         </div>
-        
+
         {!sidebarCollapsed && (
           <>
             <span className="flex-1 font-semibold text-left">{item.name}</span>
-            
+
             {/* Badge and Chevron */}
             <div className="flex items-center gap-1">
               {item.badge && (
-                <span 
+                <span
                   className="px-1.5 py-0.5 rounded-full text-xs font-bold min-w-[20px] text-center"
                   style={{
                     backgroundColor: (isActive || isChildActive) ? 'rgba(255,255,255,0.2)' : `${currentTheme.colors.primary}20`,
@@ -246,13 +246,13 @@ function NavigationItem({ item, isActive, sidebarCollapsed, currentTheme, pathna
                   {item.badge}
                 </span>
               )}
-              
+
               {hasChildren && (
-                <ChevronRightIcon 
+                <ChevronRightIcon
                   className={cn(
                     "h-4 w-4 transition-transform duration-300",
                     isExpanded ? "rotate-90" : ""
-                  )} 
+                  )}
                 />
               )}
             </div>
@@ -287,7 +287,7 @@ function NavigationItem({ item, isActive, sidebarCollapsed, currentTheme, pathna
                 )} />
                 <span className="flex-1 font-medium text-sm">{child.name}</span>
                 {child.badge && (
-                  <span 
+                  <span
                     className="px-1.5 py-0.5 rounded-full text-xs font-bold min-w-[18px] text-center"
                     style={{
                       backgroundColor: isChildActive ? 'rgba(255,255,255,0.2)' : `${currentTheme.colors.primary}20`,
@@ -308,7 +308,7 @@ function NavigationItem({ item, isActive, sidebarCollapsed, currentTheme, pathna
         <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 whitespace-nowrap shadow-lg">
           {item.name}
           {item.badge && (
-            <span 
+            <span
               className="ml-1 px-1 rounded text-[10px] font-bold"
               style={{
                 backgroundColor: currentTheme.colors.primary,
@@ -331,14 +331,14 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
   const pathname = usePathname()
   const router = useRouter()
   const { currentTheme } = useTheme()
-  
+
   // Dynamic navigation based on user role and permissions
-  const { 
-    navigation, 
-    getCurrentRouteName, 
+  const {
+    navigation,
+    getCurrentRouteName,
     getMobileNavigation,
     isLoading,
-    error: navError 
+    error: navError
   } = useNavigation()
 
   // Check if user needs verification
@@ -356,7 +356,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
   const handleLogout = async () => {
     try {
       console.log("🚪 Starting logout process...")
-      
+
       // Call logout API first
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
@@ -371,20 +371,20 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
       }
 
       console.log("✅ Logout API call successful")
-      
+
       // Clear all user data from storage
       sessionStorage.removeItem("user")
       sessionStorage.removeItem("onboarding_state")
       sessionStorage.removeItem("auth-storage")
-      
+
       localStorage.removeItem("accessToken")
       localStorage.removeItem("refreshToken")
       localStorage.removeItem("kazipert_user")
       localStorage.removeItem("auth-storage")
-      
+
       // Clear any other app-specific storage
-      const appKeys = Object.keys(localStorage).filter(key => 
-        key.startsWith('kazipert_') || 
+      const appKeys = Object.keys(localStorage).filter(key =>
+        key.startsWith('kazipert_') ||
         key.startsWith('onboarding_') ||
         key.startsWith('auth_')
       )
@@ -406,7 +406,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
 
       // Redirect to login page
       router.push("/login")
-      
+
       // Force reload to ensure clean state and clear any memory
       setTimeout(() => {
         window.location.reload()
@@ -414,14 +414,14 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
 
     } catch (error) {
       console.error('❌ Logout error:', error)
-      
+
       // Even if API call fails, clear client-side data and redirect
       sessionStorage.clear()
       localStorage.clear()
-      
+
       // Redirect to login page with error parameter
       router.push("/login?error=logout_failed")
-      
+
       // Still force reload for clean state
       setTimeout(() => {
         window.location.reload()
@@ -442,7 +442,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
         { name: "More", href: "#", icon: Menu }
       ]
     }
-    
+
     const flatNav: any[] = []
     navigation.forEach(item => {
       // Add parent item if it has a direct href and is not already in the list
@@ -466,7 +466,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
         })
       }
     })
-    
+
     // Ensure we always have at least 3 items for mobile nav
     if (flatNav.length < 3) {
       console.log("⚠️ Mobile nav has too few items, adding fallbacks")
@@ -475,14 +475,14 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
         { name: "Jobs", href: "/portals/jobs", icon: Briefcase },
         { name: "Profile", href: "/portals/profile", icon: User }
       ]
-      
+
       fallbacks.forEach(fallback => {
         if (!flatNav.some(nav => nav.href === fallback.href)) {
           flatNav.push(fallback)
         }
       })
     }
-    
+
     return flatNav.slice(0, 5) // Limit to 5 items for mobile
   }
 
@@ -493,7 +493,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
     if (!name || typeof name !== 'string') {
       return 'U'
     }
-    
+
     return name
       .split(' ')
       .map(part => part.charAt(0))
@@ -515,8 +515,8 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
     >
       {/* Mobile Sidebar Header */}
       <div className="flex items-center justify-between p-4 border-b border-border/40">
-        <Link 
-          href="/portals" 
+        <Link
+          href="/portals"
           className="flex items-center gap-3"
           onClick={() => setSidebarOpen(false)}
         >
@@ -529,13 +529,13 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
               className="transition-all duration-300"
               priority
             />
-            <div 
+            <div
               className="absolute -bottom-1 -right-1 w-2 h-2 rounded-full border border-white"
               style={{ backgroundColor: currentTheme.colors.primary }}
             />
           </div>
         </Link>
-        
+
         {/* Close Button */}
         <Button
           variant="ghost"
@@ -553,7 +553,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
           navigation.map((item) => {
             const isActive = pathname === item.href
             const hasChildren = item.children && item.children.length > 0
-            
+
             return (
               <div key={item.name} className="relative">
                 {/* Main Navigation Item */}
@@ -591,13 +591,13 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                       isActive ? "text-primary-foreground" : "text-current"
                     )} />
                   </div>
-                  
+
                   <span className="flex-1 font-semibold text-left">{item.name}</span>
-                  
+
                   {/* Badge and Chevron */}
                   <div className="flex items-center gap-1">
                     {item.badge && (
-                      <span 
+                      <span
                         className="px-1.5 py-0.5 rounded-full text-xs font-bold min-w-[20px] text-center"
                         style={{
                           backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : `${currentTheme.colors.primary}20`,
@@ -607,7 +607,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                         {item.badge}
                       </span>
                     )}
-                    
+
                     {hasChildren && (
                       <ChevronRightIcon className="h-4 w-4 transition-transform duration-300" />
                     )}
@@ -641,7 +641,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                           )} />
                           <span className="flex-1 font-medium text-sm">{child.name}</span>
                           {child.badge && (
-                            <span 
+                            <span
                               className="px-1.5 py-0.5 rounded-full text-xs font-bold min-w-[18px] text-center"
                               style={{
                                 backgroundColor: isChildActive ? 'rgba(255,255,255,0.2)' : `${currentTheme.colors.primary}20`,
@@ -679,7 +679,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
 
         {/* Complete Profile CTA for Mobile */}
         {needsVerification && !isVerificationPage && (
-          <div 
+          <div
             className="mt-4 p-3 rounded-xl border border-border/50"
             style={{
               background: `linear-gradient(135deg, ${currentTheme.colors.primary}05, ${currentTheme.colors.primary}10)`
@@ -691,7 +691,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
             </div>
             <p className="text-xs text-text-muted mb-3">Verify your identity to access all features</p>
             <Link href="/portals/worker/verification" className="block" onClick={() => setSidebarOpen(false)}>
-              <Button 
+              <Button
                 className="w-full h-8 text-text font-semibold shadow-md hover:shadow-lg transition-all duration-300 rounded-lg text-xs"
                 style={{
                   backgroundColor: currentTheme.colors.primary,
@@ -708,13 +708,13 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
 
       {/* User Info in Mobile Sidebar */}
       <div className="p-3 border-t border-border/40">
-        <div 
+        <div
           className="flex items-center gap-3 p-2 rounded-lg"
           style={{ backgroundColor: `${currentTheme.colors.primary}08` }}
         >
           <Avatar className="h-8 w-8 ring-1 ring-primary/30">
-            <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
-            <AvatarFallback 
+            <AvatarImage src={user?.avatar || user?.profile?.avatar || "/placeholder.svg"} alt={user?.name} />
+            <AvatarFallback
               className="text-text text-sm font-bold"
               style={{ backgroundColor: currentTheme.colors.primary }}
             >
@@ -763,7 +763,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-text mb-2">Navigation Error</h2>
           <p className="text-text-muted mb-4">We're having trouble loading your navigation menu.</p>
-          <Button 
+          <Button
             onClick={() => window.location.reload()}
             style={{ backgroundColor: currentTheme.colors.primary }}
           >
@@ -802,8 +802,8 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
       >
         {/* Logo Section */}
         <div className="flex items-center justify-between p-4 border-b border-border/40">
-          <Link 
-            href="/portals" 
+          <Link
+            href="/portals"
             className={cn(
               "flex items-center gap-3 transition-all duration-300",
               sidebarCollapsed ? "justify-center w-full" : ""
@@ -818,13 +818,13 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                 className="transition-all duration-300"
                 priority
               />
-              <div 
+              <div
                 className="absolute -bottom-1 -right-1 w-2 h-2 rounded-full border border-white"
                 style={{ backgroundColor: currentTheme.colors.primary }}
               />
             </div>
           </Link>
-          
+
           {/* Collapse Toggle */}
           <Button
             variant="ghost"
@@ -866,7 +866,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
 
           {/* Complete Profile CTA - Only show if verification is needed AND not already on verification page */}
           {!sidebarCollapsed && needsVerification && !isVerificationPage && (
-            <div 
+            <div
               className="mt-4 p-3 rounded-xl border border-border/50"
               style={{
                 background: `linear-gradient(135deg, ${currentTheme.colors.primary}05, ${currentTheme.colors.primary}10)`
@@ -878,7 +878,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
               </div>
               <p className="text-xs text-text-muted mb-3">Verify your identity to access all features</p>
               <Link href="/portals/worker/verification" className="block">
-                <Button 
+                <Button
                   className="w-full h-8 text-text font-semibold shadow-md hover:shadow-lg transition-all duration-300 rounded-lg text-xs"
                   style={{
                     backgroundColor: currentTheme.colors.primary,
@@ -896,13 +896,13 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
         {/* User Info in Sidebar */}
         {!sidebarCollapsed && (
           <div className="p-3 border-t border-border/40">
-            <div 
+            <div
               className="flex items-center gap-3 p-2 rounded-lg"
               style={{ backgroundColor: `${currentTheme.colors.primary}08` }}
             >
               <Avatar className="h-8 w-8 ring-1 ring-primary/30">
                 <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
-                <AvatarFallback 
+                <AvatarFallback
                   className="text-text text-sm font-bold"
                   style={{ backgroundColor: currentTheme.colors.primary }}
                 >
@@ -935,19 +935,19 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
         sidebarCollapsed ? "lg:ml-20" : "lg:ml-64"
       )}>
         {/* Enhanced Header */}
-        <header 
+        <header
           className="flex h-16 items-center justify-between border-b border-border/40 bg-background/90 backdrop-blur-xl px-4 lg:px-6 shadow-sm relative z-40"
         >
           <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="lg:hidden hover:bg-primary/10 transition-all rounded-lg"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu className="h-5 w-5 text-primary" />
             </Button>
-            
+
             {/* Dynamic Breadcrumb */}
             <div className="flex items-center gap-2 text-sm text-text-muted">
               <Home className="h-4 w-4 text-primary" />
@@ -983,7 +983,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                   <Button variant="ghost" size="icon" className="relative hover:bg-primary/10 transition-all rounded-lg group">
                     <Bell className="h-5 w-5 text-primary group-hover:text-primary-dark transition-colors" />
                     {notificationCount > 0 && (
-                      <span 
+                      <span
                         className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold text-text shadow-lg"
                         style={{ backgroundColor: currentTheme.colors.primary }}
                       >
@@ -999,7 +999,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                 <div className="p-3">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-bold text-text text-sm">Notifications</h3>
-                    <span 
+                    <span
                       className="text-xs text-text font-semibold px-2 py-1 rounded-full"
                       style={{ backgroundColor: `${currentTheme.colors.primary}15` }}
                     >
@@ -1009,7 +1009,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                   <ScrollableDropdownContent maxHeight="280px">
                     <div className="space-y-2">
                       {needsVerification && (
-                        <div 
+                        <div
                           className="p-2 rounded-lg border border-border/30"
                           style={{ backgroundColor: `${currentTheme.colors.primary}05` }}
                         >
@@ -1018,7 +1018,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                           <span className="text-xs text-primary mt-1 block">Important</span>
                         </div>
                       )}
-                      <div 
+                      <div
                         className="p-2 rounded-lg border border-border/30"
                         style={{ backgroundColor: `${currentTheme.colors.primary}05` }}
                       >
@@ -1028,8 +1028,8 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                       </div>
                     </div>
                   </ScrollableDropdownContent>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="w-full mt-2 text-text-muted hover:bg-primary/5 rounded-lg text-sm font-medium"
                   >
                     View all notifications
@@ -1040,16 +1040,16 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
               {/* Enhanced User Dropdown with Logout - Custom Dropdown */}
               <CustomDropdown
                 trigger={
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="flex items-center gap-2 hover:bg-primary/10 transition-all rounded-lg px-2 py-1 group"
                   >
                     <div className="relative">
                       <Avatar className="h-8 w-8 ring-2 ring-primary/30 group-hover:ring-primary/50 transition-all duration-300">
                         <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
-                        <AvatarFallback 
+                        <AvatarFallback
                           className="text-text text-sm font-bold shadow-md"
-                          style={{ 
+                          style={{
                             background: `linear-gradient(135deg, ${currentTheme.colors.primary}, ${currentTheme.colors.primaryDark})`
                           }}
                         >
@@ -1057,7 +1057,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                         </AvatarFallback>
                       </Avatar>
                       {!user?.verified && (
-                        <div 
+                        <div
                           className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white shadow-sm"
                           style={{ backgroundColor: currentTheme.colors.primary }}
                         />
@@ -1091,18 +1091,18 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
               >
                 <ScrollableDropdownContent maxHeight="460px">
                   {/* User Header Section */}
-                  <div 
+                  <div
                     className="p-4 border-b border-border/40"
-                    style={{ 
+                    style={{
                       background: `linear-gradient(135deg, ${currentTheme.colors.primary}08, ${currentTheme.colors.primary}15)`
                     }}
                   >
                     <div className="flex items-center gap-3">
                       <Avatar className="h-12 w-12 ring-2 ring-primary/30 shadow-md">
                         <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
-                        <AvatarFallback 
+                        <AvatarFallback
                           className="text-text text-lg font-bold"
-                          style={{ 
+                          style={{
                             background: `linear-gradient(135deg, ${currentTheme.colors.primary}, ${currentTheme.colors.primaryDark})`
                           }}
                         >
@@ -1115,8 +1115,8 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                         <div className="flex items-center gap-2 mt-2">
                           <span className={cn(
                             "px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1",
-                            user?.verified && user?.onboardingCompleted 
-                              ? "bg-success/10 text-success" 
+                            user?.verified && user?.onboardingCompleted
+                              ? "bg-success/10 text-success"
                               : "bg-primary/10 text-primary"
                           )}>
                             {user?.verified && user?.onboardingCompleted ? (
@@ -1131,9 +1131,9 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                               </>
                             )}
                           </span>
-                          <span 
+                          <span
                             className="px-2 py-1 rounded-full text-xs font-semibold capitalize"
-                            style={{ 
+                            style={{
                               backgroundColor: `${currentTheme.colors.primary}15`,
                               color: currentTheme.colors.primary
                             }}
@@ -1146,7 +1146,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                   </div>
 
                   {/* Quick Stats */}
-                  <div 
+                  <div
                     className="p-3 border-b border-border/30"
                     style={{ backgroundColor: `${currentTheme.colors.primary}03` }}
                   >
@@ -1173,10 +1173,10 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                   {/* Main Menu Items */}
                   <div>
                     <CustomDropdownLabel>ACCOUNT</CustomDropdownLabel>
-                    
+
                     <CustomDropdownItem onClick={() => router.push(`/portals/${user.role.toLowerCase()}/profile`)}>
                       <div className="flex items-center gap-3">
-                        <div 
+                        <div
                           className="p-2 rounded-lg"
                           style={{ backgroundColor: `${currentTheme.colors.primary}10` }}
                         >
@@ -1194,7 +1194,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                     {needsVerification && !isVerificationPage && (
                       <CustomDropdownItem onClick={() => router.push('/portals/worker/verification')}>
                         <div className="flex items-center gap-3">
-                          <div 
+                          <div
                             className="p-2 rounded-lg"
                             style={{ backgroundColor: `${currentTheme.colors.primary}10` }}
                           >
@@ -1211,7 +1211,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
 
                     <CustomDropdownItem onClick={() => router.push(`/portals/${user.role.toLowerCase()}/settings`)}>
                       <div className="flex items-center gap-3">
-                        <div 
+                        <div
                           className="p-2 rounded-lg"
                           style={{ backgroundColor: `${currentTheme.colors.primary}10` }}
                         >
@@ -1231,10 +1231,10 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                   {/* Support Section */}
                   <div>
                     <CustomDropdownLabel>SUPPORT</CustomDropdownLabel>
-                    
+
                     <CustomDropdownItem onClick={() => router.push(`/portals/${user.role.toLowerCase()}/support`)}>
                       <div className="flex items-center gap-3">
-                        <div 
+                        <div
                           className="p-2 rounded-lg"
                           style={{ backgroundColor: `${currentTheme.colors.primary}10` }}
                         >
@@ -1253,8 +1253,8 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                   {/* Logout Section */}
                   <div style={{ backgroundColor: `${currentTheme.colors.error}05` }}>
                     <CustomDropdownLabel className="text-error/70">SESSION</CustomDropdownLabel>
-                    
-                    <CustomDropdownItem 
+
+                    <CustomDropdownItem
                       onClick={handleLogout}
                       className="hover:bg-error/10"
                     >
@@ -1271,7 +1271,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                   </div>
 
                   {/* Footer */}
-                  <div 
+                  <div
                     className="p-3 border-t border-border/30"
                     style={{ backgroundColor: `${currentTheme.colors.primary}05` }}
                   >
@@ -1294,7 +1294,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
 
         {/* Enhanced Mobile Bottom Navigation */}
         {mobileNav && mobileNav.length > 0 && (
-          <nav 
+          <nav
             className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between border-t border-border/40 bg-background/95 backdrop-blur-xl px-4 py-2 shadow-2xl lg:hidden"
           >
             {mobileNav.map((item, i) => {
@@ -1319,7 +1319,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                     >
                       <Briefcase className="h-5 w-5" />
                       {showJobsPopup && (
-                        <div 
+                        <div
                           className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap"
                           style={{ backgroundColor: currentTheme.colors.primaryDark }}
                         >
@@ -1332,17 +1332,17 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                       href={item.href}
                       className={cn(
                         "flex flex-col items-center justify-center text-xs transition-all duration-300 flex-1",
-                        isActive 
-                          ? "text-text font-bold" 
+                        isActive
+                          ? "text-text font-bold"
                           : "text-text-muted hover:text-text",
                       )}
                       onClick={() => setShowJobsPopup(false)}
                     >
-                      <div 
+                      <div
                         className={cn(
                           "p-2 rounded-xl mb-1 transition-all duration-300",
-                          isActive 
-                            ? "shadow-md" 
+                          isActive
+                            ? "shadow-md"
                             : "hover:bg-primary/5"
                         )}
                         style={{

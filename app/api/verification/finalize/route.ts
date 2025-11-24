@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
         console.log('📝 VERIFICATION FINALIZE API - Finalizing verification for user:', user.email)
 
-        // Update user as verified
+        // Update user as verified and set profile picture
         const updatedUser = await prisma.user.update({
             where: { id: user.id },
             data: {
@@ -66,6 +66,19 @@ export async function POST(request: NextRequest) {
                 firstName: formData.fullName?.split(' ')[0],
                 lastName: formData.fullName?.split(' ').slice(1).join(' '),
                 gender: formData.gender,
+                profile: {
+                    upsert: {
+                        create: {
+                            avatar: formData.selfiePath
+                        },
+                        update: {
+                            avatar: formData.selfiePath
+                        }
+                    }
+                }
+            },
+            include: {
+                profile: true // Include profile in the response
             }
         })
 

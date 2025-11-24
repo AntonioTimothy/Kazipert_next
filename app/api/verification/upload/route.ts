@@ -50,8 +50,15 @@ export async function POST(request: NextRequest) {
 
         // Create uploads directory if it doesn't exist
         const uploadsDir = join(process.cwd(), 'public', 'uploads', 'verification', user.id)
-        if (!existsSync(uploadsDir)) {
-            await mkdir(uploadsDir, { recursive: true })
+        console.log('📂 Creating upload directory:', uploadsDir)
+
+        try {
+            if (!existsSync(uploadsDir)) {
+                await mkdir(uploadsDir, { recursive: true })
+            }
+        } catch (mkdirError) {
+            console.error('❌ Error creating directory:', mkdirError)
+            return NextResponse.json({ error: 'Failed to create upload directory' }, { status: 500 })
         }
 
         // Generate unique filename
@@ -59,15 +66,23 @@ export async function POST(request: NextRequest) {
         const fileExtension = file.name.split('.').pop()
         const fileName = `${fileType}_${timestamp}.${fileExtension}`
         const filePath = join(uploadsDir, fileName)
+        console.log('📝 Writing file to:', filePath)
 
         // Convert file to buffer and save
-        const bytes = await file.arrayBuffer()
-        const buffer = Buffer.from(bytes)
-        await writeFile(filePath, buffer)
+        try {
+            const bytes = await file.arrayBuffer()
+            const buffer = Buffer.from(bytes)
+            await writeFile(filePath, buffer)
+            console.log('✅ File written successfully')
+        } catch (writeError) {
+            console.error('❌ Error writing file:', writeError)
+            return NextResponse.json({ error: 'Failed to write file' }, { status: 500 })
+        }
 
         // Return relative file URL
         const fileUrl = `/uploads/verification/${user.id}/${fileName}`
 
+        // Update KYC details with file URL
         // Update KYC details with file URL
         if (fileType === 'idFront') {
             await prisma.kycDetails.upsert({
@@ -75,17 +90,59 @@ export async function POST(request: NextRequest) {
                 update: { idDocumentFront: fileUrl },
                 create: { userId: user.id, idDocumentFront: fileUrl }
             })
+
+            // Also update onboarding progress data for session resumption
+            const progress = await prisma.onboardingProgress.findUnique({ where: { userId: user.id } })
+            const currentData = (progress?.data as any) || {}
+            await prisma.onboardingProgress.upsert({
+                where: { userId: user.id },
+                update: {
+                    data: { ...currentData, idFrontPath: fileUrl }
+                },
+                create: {
+                    userId: user.id,
+                    data: { idFrontPath: fileUrl }
+                }
+            })
         } else if (fileType === 'idBack') {
             await prisma.kycDetails.upsert({
                 where: { userId: user.id },
                 update: { idDocumentBack: fileUrl },
                 create: { userId: user.id, idDocumentBack: fileUrl }
             })
+
+            // Also update onboarding progress data for session resumption
+            const progress = await prisma.onboardingProgress.findUnique({ where: { userId: user.id } })
+            const currentData = (progress?.data as any) || {}
+            await prisma.onboardingProgress.upsert({
+                where: { userId: user.id },
+                update: {
+                    data: { ...currentData, idBackPath: fileUrl }
+                },
+                create: {
+                    userId: user.id,
+                    data: { idBackPath: fileUrl }
+                }
+            })
         } else if (fileType === 'selfie') {
             await prisma.kycDetails.upsert({
                 where: { userId: user.id },
-                update: { profilePicture: fileUrl },
-                create: { userId: user.id, profilePicture: fileUrl }
+                update: { selfieUrl: fileUrl },
+                create: { userId: user.id, selfieUrl: fileUrl }
+            })
+
+            // Also update onboarding progress data for session resumption
+            const progress = await prisma.onboardingProgress.findUnique({ where: { userId: user.id } })
+            const currentData = (progress?.data as any) || {}
+            await prisma.onboardingProgress.upsert({
+                where: { userId: user.id },
+                update: {
+                    data: { ...currentData, selfiePath: fileUrl }
+                },
+                create: {
+                    userId: user.id,
+                    data: { selfiePath: fileUrl }
+                }
             })
         }
 

@@ -15,7 +15,7 @@ import { getOnboardingProgress, updateOnboardingProgress, createSession, finaliz
 
 const KAZIPERT_COLORS = {
   primary: '#117c82',
-  secondary: '#117c82', 
+  secondary: '#117c82',
   accent: '#6c71b5',
   background: '#f8fafc',
   text: '#1a202c',
@@ -50,23 +50,58 @@ export default function WorkerVerificationPage() {
   })
 
   const steps = [
-    { number: 1, title: 'Instructions', component: Step1Instructions },
-    { number: 2, title: 'ID Front', component: Step2IdFront },
-    { number: 3, title: 'ID Back', component: Step3IdBack },
-    { number: 4, title: 'Selfie', component: Step4Selfie },
-    { number: 5, title: 'KYC Details', component: Step5KycDetails },
-    { number: 6, title: 'Payment', component: Step6Payment },
-    { number: 7, title: 'Completion', component: Step7Completion },
-  ]
+    {
+      number: 1,
+      title: "Instructions",
+      description: "Overview & Fees",
+      component: Step1Instructions
+    },
+    {
+      number: 2,
+      title: "ID Front",
+      description: "Capture Front Side",
+      component: Step2IdFront
+    },
+    {
+      number: 3,
+      title: "ID Back",
+      description: "Capture Back Side",
+      component: Step3IdBack
+    },
+    {
+      number: 4,
+      title: "Selfie",
+      description: "Face Verification",
+      component: Step4Selfie
+    },
+    {
+      number: 5,
+      title: "Details",
+      description: "Personal Info",
+      component: Step5KycDetails
+    },
+    {
+      number: 6,
+      title: "Payment",
+      description: "Processing Fee",
+      component: Step6Payment
+    },
+    {
+      number: 7,
+      title: "Complete",
+      description: "Final Review",
+      component: Step7Completion
+    },
+  ];
 
   const getCurrentStepComponent = () => {
     const safeStep = Math.max(1, Math.min(currentStep, steps.length))
     const stepIndex = safeStep - 1
-    
+
     if (stepIndex >= 0 && stepIndex < steps.length) {
       return steps[stepIndex].component
     }
-    
+
     console.warn(`Invalid step ${currentStep}, falling back to step 1`)
     return steps[0].component
   }
@@ -94,7 +129,7 @@ export default function WorkerVerificationPage() {
       }
 
       setUser(parsedUser)
-      
+
       try {
         // Load verification progress with error handling
         let progressData;
@@ -110,12 +145,12 @@ export default function WorkerVerificationPage() {
             completedSteps: [1]
           }
         }
-        
+
         if (progressData) {
           setProgress(progressData)
           const safeStep = Math.max(1, Math.min(progressData.currentStep || 1, steps.length))
           setCurrentStep(safeStep)
-          
+
           // Set completed steps from progress data
           if (progressData.completedSteps && Array.isArray(progressData.completedSteps)) {
             setCompletedSteps(progressData.completedSteps)
@@ -123,11 +158,11 @@ export default function WorkerVerificationPage() {
             // Initialize with step 1 completed by default
             setCompletedSteps([1])
           }
-          
+
           if (progressData.data) {
             const savedData = progressData.data
-            setFormData(prev => ({ 
-              ...prev, 
+            setFormData(prev => ({
+              ...prev,
               ...savedData,
               sessionId: savedData.sessionId || null
             }))
@@ -143,7 +178,7 @@ export default function WorkerVerificationPage() {
           const newSessionId = await createSession()
           setSessionId(newSessionId)
           setFormData(prev => ({ ...prev, sessionId: newSessionId }))
-          
+
           try {
             await updateOnboardingProgress(parsedUser.id, 1, {
               sessionId: newSessionId,
@@ -162,7 +197,7 @@ export default function WorkerVerificationPage() {
         setCurrentStep(1)
         setCompletedSteps([1]) // Initialize with step 1 completed
       }
-      
+
       setLoading(false)
     }
 
@@ -184,20 +219,20 @@ export default function WorkerVerificationPage() {
     setFinalizing(true)
     try {
       console.log('Finalizing verification...')
-      
-      // Upload files first if they exist
+
+      // Upload files first if they exist and are new files
       const uploadPromises = []
-      if (formData.idFront) {
+      if (formData.idFront && formData.idFront instanceof File) {
         uploadPromises.push(
           uploadVerificationFile(formData.idFront, 'idFront', user.id)
         )
       }
-      if (formData.idBack) {
+      if (formData.idBack && formData.idBack instanceof File) {
         uploadPromises.push(
           uploadVerificationFile(formData.idBack, 'idBack', user.id)
         )
       }
-      if (formData.selfie) {
+      if (formData.selfie && formData.selfie instanceof File) {
         uploadPromises.push(
           uploadVerificationFile(formData.selfie, 'selfie', user.id)
         )
@@ -216,7 +251,7 @@ export default function WorkerVerificationPage() {
 
       if (result.success) {
         console.log('Verification finalized successfully!')
-        
+
         // Update user in session storage
         const userData = sessionStorage.getItem("user")
         if (userData) {
@@ -249,22 +284,22 @@ export default function WorkerVerificationPage() {
 
     setSaving(true)
     try {
-      const updatedData = { 
-        ...formData, 
+      const updatedData = {
+        ...formData,
         ...data,
         sessionId: sessionId
       }
       setFormData(updatedData)
 
       const safeStep = Math.max(1, Math.min(step, steps.length))
-      
+
       // Update completed steps - mark current step as completed when moving to next step
       const newCompletedSteps = [...completedSteps]
       if (!newCompletedSteps.includes(safeStep)) {
         newCompletedSteps.push(safeStep)
         setCompletedSteps(newCompletedSteps)
       }
-      
+
       // Update progress with error handling
       try {
         await updateOnboardingProgress(user.id, safeStep, updatedData, newCompletedSteps)
@@ -273,9 +308,9 @@ export default function WorkerVerificationPage() {
         console.warn('⚠️ Could not save progress, continuing:', error)
         // Continue even if saving fails - we don't want to block the user
       }
-      
+
       setCurrentStep(safeStep)
-      
+
       // Handle completion - finalize verification
       if (safeStep === steps.length) {
         await handleFinalizeVerification()
@@ -308,7 +343,7 @@ export default function WorkerVerificationPage() {
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: KAZIPERT_COLORS.background }}>
         <div className="text-center">
           <div className="text-red-500 text-lg mb-4">User not found</div>
-          <button 
+          <button
             onClick={() => router.push('/login')}
             className="px-4 py-2 rounded-lg text-white"
             style={{ backgroundColor: KAZIPERT_COLORS.primary }}
@@ -322,10 +357,10 @@ export default function WorkerVerificationPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: KAZIPERT_COLORS.background }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: KAZIPERT_COLORS.text }}>
+          <h1 className="text-xl md:text-3xl font-bold mb-2" style={{ color: KAZIPERT_COLORS.text }}>
             Identity Verification
           </h1>
           <p className="text-lg" style={{ color: KAZIPERT_COLORS.textLight }}>
@@ -339,28 +374,30 @@ export default function WorkerVerificationPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Stepper Sidebar */}
-          <div className="lg:col-span-1">
-            <VerificationStepper
-              steps={steps}
-              currentStep={currentStep}
-              completedSteps={completedSteps}
-              sessionId={sessionId}
-            />
-          </div>
+        <div className="space-y-8">
+          {/* Stepper at Top */}
+          <VerificationStepper
+            steps={steps}
+            currentStep={currentStep}
+            onStepClick={(step) => {
+              // Allow navigation to completed steps or current step
+              if (completedSteps.includes(step) || step === currentStep) {
+                setCurrentStep(step)
+              }
+            }}
+            completedSteps={completedSteps}
+          />
 
           {/* Main Content */}
-          <div className="lg:col-span-3">
-            <div className="bg-white rounded-2xl shadow-lg p-6 lg:p-8">
-              <CurrentStepComponent
-                formData={formData}
-                updateStep={updateStep}
-                currentStep={currentStep}
-                sessionId={sessionId}
-                finalizing={finalizing}
-              />
-            </div>
+          <div className="bg-white rounded-2xl shadow-lg p-6 lg:p-8">
+            <CurrentStepComponent
+              formData={formData}
+              updateStep={updateStep}
+              currentStep={currentStep}
+              sessionId={sessionId}
+              finalizing={finalizing}
+              role="EMPLOYEE"
+            />
           </div>
         </div>
 

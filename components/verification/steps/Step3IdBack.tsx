@@ -1,9 +1,10 @@
-// components/verification/steps/Step3IdBack.tsx - FIXED
+// components/verification/steps/Step3IdBack.tsx - IMPROVED CAMERA & CROP
 "use client";
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import Webcam from 'react-webcam';
 import { uploadIdBack } from '@/lib/verification';
+import { cropImage } from '@/lib/imageUtils';
 
 export default function Step3IdBack({ formData, updateStep, sessionId }: any) {
   const webcamRef = useRef<Webcam>(null);
@@ -13,14 +14,69 @@ export default function Step3IdBack({ formData, updateStep, sessionId }: any) {
   const [ocrResult, setOcrResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+  const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const capture = useCallback(() => {
+  const [isRetaking, setIsRetaking] = useState(false);
+
+  // Initialize with saved data if available
+  useEffect(() => {
+    if (formData.idBackPath && !capturedImage && !uploadedFile) {
+      console.log('Found existing ID Back path:', formData.idBackPath);
+    }
+  }, [formData.idBackPath]);
+
+  // Measure container for responsive overlay
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        setContainerDimensions({
+          width: containerRef.current.offsetWidth,
+          height: containerRef.current.offsetHeight
+        });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
+  const capture = useCallback(async () => {
     if (webcamRef.current) {
       const imageSrc = webcamRef.current.getScreenshot();
-      setCapturedImage(imageSrc);
-      setUploadedFile(null);
-      setError(null);
-      setOcrResult(null);
+      if (!imageSrc) return;
+
+      try {
+        const video = webcamRef.current.video;
+        if (!video) return;
+
+        const videoWidth = video.videoWidth;
+        const videoHeight = video.videoHeight;
+
+        // Define the crop box (matching the visual overlay)
+        // Overlay is approx 90% width, aspect ratio 1.58 (ID card)
+        const cropWidth = videoWidth * 0.90;
+        const cropHeight = cropWidth / 1.586; // Standard ID card ratio
+        const cropX = (videoWidth - cropWidth) / 2;
+        const cropY = (videoHeight - cropHeight) / 2;
+
+        const croppedImageSrc = await cropImage(imageSrc, {
+          x: cropX,
+          y: cropY,
+          width: cropWidth,
+          height: cropHeight
+        });
+
+        setCapturedImage(croppedImageSrc);
+        setUploadedFile(null);
+        setError(null);
+        setOcrResult(null);
+        setIsRetaking(false);
+      } catch (err) {
+        console.error('Error cropping image:', err);
+        setCapturedImage(imageSrc);
+      }
     }
   }, [webcamRef]);
 
@@ -29,6 +85,7 @@ export default function Step3IdBack({ formData, updateStep, sessionId }: any) {
     setUploadedFile(null);
     setOcrResult(null);
     setError(null);
+    setIsRetaking(true);
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,7 +102,7 @@ export default function Step3IdBack({ formData, updateStep, sessionId }: any) {
       }
 
       setUploadedFile(file);
-      
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const image = new Image();
@@ -70,6 +127,12 @@ export default function Step3IdBack({ formData, updateStep, sessionId }: any) {
       return;
     }
 
+    // Allow proceeding if we have a saved path and user hasn't taken a new photo
+    if (!capturedImage && !uploadedFile && formData.idBackPath) {
+      updateStep(4);
+      return;
+    }
+
     if (!capturedImage && !uploadedFile) {
       setError('Please capture or upload an image first.');
       return;
@@ -80,7 +143,7 @@ export default function Step3IdBack({ formData, updateStep, sessionId }: any) {
 
     try {
       console.log('🔄 Processing ID back image with session:', sessionId);
-      
+
       let fileToUpload: File;
 
       if (uploadedFile) {
@@ -98,7 +161,7 @@ export default function Step3IdBack({ formData, updateStep, sessionId }: any) {
       }
 
       console.log('📤 Sending to verification service...');
-      
+
       const result = await uploadIdBack(fileToUpload, sessionId);
       setOcrResult(result);
 
@@ -111,8 +174,8 @@ export default function Step3IdBack({ formData, updateStep, sessionId }: any) {
         console.log('✅ ID back verification successful');
         updateStep(4, {
           idBack: fileToUpload,
-          ocrData: { 
-            ...formData.ocrData, 
+          ocrData: {
+            ...formData.ocrData,
             back: {
               ...result,
               ocr: result.ocrText || result.ocr
@@ -124,8 +187,8 @@ export default function Step3IdBack({ formData, updateStep, sessionId }: any) {
       }
     } catch (error) {
       console.error('❌ Error processing image:', error);
-      const errorMessage = error instanceof Error 
-        ? error.message 
+      const errorMessage = error instanceof Error
+        ? error.message
         : 'Failed to process ID back. Please check if the verification service is running and try again.';
       setError(errorMessage);
     } finally {
@@ -142,49 +205,60 @@ export default function Step3IdBack({ formData, updateStep, sessionId }: any) {
           Back Side of ID Card
         </h2>
         <p className="text-gray-600">
-          Take a clear photo of the back side of your Kenyan National ID card
+          Take a clear photo of the back side of your ID card
         </p>
       </div>
 
       <div className="space-y-6">
         {/* Camera/Preview Section */}
-        <div className="bg-gray-900 rounded-2xl overflow-hidden relative">
-          {!capturedImage ? (
-            <div className="relative">
+        <div
+          ref={containerRef}
+          className="bg-gray-900 rounded-2xl overflow-hidden relative w-full aspect-video shadow-xl"
+        >
+          {!capturedImage && (!formData.idBackPath || isRetaking) ? (
+            <div className="relative w-full h-full">
               <Webcam
                 ref={webcamRef}
                 audio={false}
                 screenshotFormat="image/jpeg"
                 videoConstraints={{
-                  facingMode: 'environment',
-                  width: 1280,
-                  height: 720
+                  facingMode: 'environment', // Use back camera
+                  width: { ideal: 1920 },
+                  height: { ideal: 1080 },
+                  aspectRatio: 1.777,
+                  // @ts-ignore
+                  advanced: [{ focusMode: "continuous" }]
                 }}
-                className="w-full h-auto"
-                screenshotQuality={0.92}
-                onUserMedia={() => {
-                  setImageSize({ width: 1280, height: 720 });
-                }}
+                className="w-full h-full object-cover transform scale-x-[-1]"
+                screenshotQuality={0.95}
               />
-              
+
+              {/* Overlay Guide */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="border-2 border-green-400 border-dashed w-64 h-40 rounded-lg bg-transparent">
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-green-400 text-sm font-medium">
-                    Fit ID Card Here
+                <div className="relative w-[90%] aspect-[1.586/1] border-2 border-white rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]">
+                  <div className="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-green-500 -mt-1 -ml-1 rounded-tl"></div>
+                  <div className="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-green-500 -mt-1 -mr-1 rounded-tr"></div>
+                  <div className="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-green-500 -mb-1 -ml-1 rounded-bl"></div>
+                  <div className="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-green-500 -mb-1 -mr-1 rounded-br"></div>
+
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-white font-medium text-sm bg-black/50 px-3 py-1 rounded-full whitespace-nowrap">
+                    Fit ID card within frame
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <img
-              src={capturedImage}
-              alt="Captured ID back"
-              className="w-full h-auto"
-              onLoad={(e) => {
-                const img = e.target as HTMLImageElement;
-                setImageSize({ width: img.naturalWidth, height: img.naturalHeight });
-              }}
-            />
+            <div className="relative w-full h-full flex items-center justify-center bg-black">
+              <img
+                src={capturedImage || (!isRetaking ? formData.idBackPath : null)}
+                alt="Captured ID back"
+                className="max-w-full max-h-full object-contain transform scale-x-[-1]"
+              />
+              {/* Overlay for saved/captured image to indicate it's done */}
+              <div className="absolute bottom-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center">
+                <span className="mr-1">✓</span> Photo Ready
+              </div>
+            </div>
           )}
         </div>
 
@@ -209,9 +283,8 @@ export default function Step3IdBack({ formData, updateStep, sessionId }: any) {
 
         {/* OCR Results */}
         {ocrResult && !error && (
-          <div className={`p-4 rounded-lg ${
-            canProceed ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'
-          }`}>
+          <div className={`p-4 rounded-lg ${canProceed ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'
+            }`}>
             <h4 className="font-semibold mb-3">Verification Results:</h4>
             {canProceed ? (
               <div className="text-green-700 space-y-2">
@@ -246,20 +319,26 @@ export default function Step3IdBack({ formData, updateStep, sessionId }: any) {
         )}
 
         {/* Controls */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          {!capturedImage ? (
+        <div className="flex flex-col gap-4 w-full">
+          {!capturedImage && (!formData.idBackPath || isRetaking) ? (
             <>
               <button
                 onClick={capture}
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center transition-colors duration-200"
+                className="w-full bg-[#117c82] hover:bg-[#0e666b] text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center transition-all duration-200 shadow-lg active:scale-[0.98]"
               >
-                <span className="mr-2">📷</span>
-                Capture Photo
+                <span className="mr-3 text-2xl">📷</span>
+                <span className="text-lg">Capture Photo</span>
               </button>
-              
-              <label className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center cursor-pointer transition-colors duration-200">
-                <span className="mr-2">📁</span>
-                Upload Photo
+
+              <div className="relative flex items-center justify-center">
+                <div className="border-t border-gray-300 w-full"></div>
+                <span className="bg-white px-3 text-gray-500 text-sm">OR</span>
+                <div className="border-t border-gray-300 w-full"></div>
+              </div>
+
+              <label className="w-full bg-white border-2 border-[#117c82] text-[#117c82] hover:bg-gray-50 font-semibold py-3 px-6 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-200 shadow-sm">
+                <span className="mr-2 text-xl">📁</span>
+                Upload from Gallery
                 <input
                   type="file"
                   accept="image/jpeg,image/jpg,image/png"
@@ -269,30 +348,33 @@ export default function Step3IdBack({ formData, updateStep, sessionId }: any) {
               </label>
             </>
           ) : (
-            <>
-              <button
-                onClick={retake}
-                disabled={uploading}
-                className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 disabled:opacity-50"
-              >
-                Retake Photo
-              </button>
-              
+            <div className="flex flex-col gap-3">
               <button
                 onClick={processImage}
                 disabled={uploading}
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg disabled:opacity-50 flex items-center justify-center transition-colors duration-200"
+                className="w-full bg-[#117c82] hover:bg-[#0e666b] text-white font-bold py-4 px-6 rounded-xl disabled:opacity-50 flex items-center justify-center transition-all duration-200 shadow-lg active:scale-[0.98]"
               >
                 {uploading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
                     Processing...
                   </>
                 ) : (
-                  'Verify & Continue'
+                  <>
+                    <span className="mr-2">✨</span>
+                    Verify & Continue
+                  </>
                 )}
               </button>
-            </>
+
+              <button
+                onClick={retake}
+                disabled={uploading}
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-colors duration-200 disabled:opacity-50"
+              >
+                Retake Photo
+              </button>
+            </div>
           )}
         </div>
 

@@ -7,9 +7,11 @@ interface Step7CompletionProps {
   updateStep: (step: number, data?: any) => void
   currentStep: number
   sessionId: string | null
+  role?: string
+  finalizing?: boolean
 }
 
-export default function Step7Completion({ formData, updateStep, currentStep, sessionId }: Step7CompletionProps) {
+export default function Step7Completion({ formData, updateStep, currentStep, sessionId, role, finalizing }: Step7CompletionProps) {
   useEffect(() => {
     // Auto-redirect after showing completion message
     const timer = setTimeout(() => {

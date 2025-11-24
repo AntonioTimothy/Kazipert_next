@@ -1,11 +1,22 @@
 // components/verification/steps/Step1Instructions.tsx
 "use client"
-export default function Step1Instructions({ updateStep, formData }: any) {
+
+interface Step1Props {
+  updateStep: (step: number) => void;
+  formData: any;
+  role?: string;
+}
+
+export default function Step1Instructions({ updateStep, formData, role = 'EMPLOYEE' }: Step1Props) {
+  const isEmployer = role === 'EMPLOYER';
+
   const requirements = [
     {
       icon: '🆔',
-      title: 'Kenyan National ID',
-      description: 'Valid, non-expired Kenyan National ID card'
+      title: isEmployer ? 'Omani National ID / Passport' : 'Kenyan National ID',
+      description: isEmployer
+        ? 'Valid Omani ID or Passport'
+        : 'Valid, non-expired Kenyan National ID card'
     },
     {
       icon: '📱',
@@ -102,7 +113,7 @@ export default function Step1Instructions({ updateStep, formData }: any) {
                 <br />
                 • You must be at least 22 years old to proceed
                 <br />
-                • Verification fee: KES 200 (refundable if verification fails)
+                • Verification fee: {isEmployer ? 'OMR 5' : 'KES 200'} (refundable if verification fails)
               </p>
             </div>
           </div>

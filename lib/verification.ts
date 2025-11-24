@@ -133,7 +133,7 @@ export async function getOnboardingProgress(userId: string) {
     }
 }
 
-export async function updateOnboardingProgress(userId: string, step: number, data: any) {
+export async function updateOnboardingProgress(userId: string, step: number, data: any, completedSteps?: number[]) {
     try {
         const response = await fetch('/api/onboarding/progress', {
             method: 'POST',
@@ -142,7 +142,7 @@ export async function updateOnboardingProgress(userId: string, step: number, dat
                 userId,
                 step,
                 data,
-                completedSteps: Array.from({ length: step }, (_, i) => i + 1)
+                completedSteps: completedSteps || Array.from({ length: step }, (_, i) => i + 1)
             }),
         });
 
@@ -203,7 +203,9 @@ export async function uploadVerificationFile(
         })
 
         if (!response.ok) {
-            throw new Error('Failed to upload file')
+            const errorText = await response.text()
+            console.error('Upload failed with status:', response.status, 'Response:', errorText)
+            throw new Error(`Failed to upload file: ${errorText}`)
         }
 
         return await response.json()

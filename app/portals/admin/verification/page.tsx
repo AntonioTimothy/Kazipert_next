@@ -11,11 +11,11 @@ import Step4Selfie from '@/components/verification/steps/Step4Selfie'
 import Step5KycDetails from '@/components/verification/steps/Step5KycDetails'
 import Step6Payment from '@/components/verification/steps/Step6Payment'
 import Step7Completion from '@/components/verification/steps/Step7Completion' // Add completion step
-import { getOnboardingProgress, updateOnboardingProgress, createSession } from '@/lib/verification'
+import { getOnboardingProgress, updateOnboardingProgress, createSession, finalizeVerification, uploadVerificationFile } from '@/lib/verification'
 
 const KAZIPERT_COLORS = {
   primary: '#117c82',
-  secondary: '#117c82', 
+  secondary: '#117c82',
   accent: '#6c71b5',
   background: '#f8fafc',
   text: '#1a202c',
@@ -30,6 +30,7 @@ export default function WorkerVerificationPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [completedSteps, setCompletedSteps] = useState<number[]>([])
   const [formData, setFormData] = useState({
     sessionId: null as string | null,
     idFront: null as File | null,
@@ -45,13 +46,48 @@ export default function WorkerVerificationPage() {
   })
 
   const steps = [
-    { number: 1, title: 'Instructions', component: Step1Instructions },
-    { number: 2, title: 'ID Front', component: Step2IdFront },
-    { number: 3, title: 'ID Back', component: Step3IdBack },
-    { number: 4, title: 'Selfie', component: Step4Selfie },
-    { number: 5, title: 'KYC Details', component: Step5KycDetails },
-    { number: 6, title: 'Payment', component: Step6Payment },
-    { number: 7, title: 'Completion', component: Step7Completion }, // Add completion step
+    {
+      number: 1,
+      title: "Instructions",
+      description: "Overview & Fees",
+      component: Step1Instructions
+    },
+    {
+      number: 2,
+      title: "ID Front",
+      description: "Capture Front Side",
+      component: Step2IdFront
+    },
+    {
+      number: 3,
+      title: "ID Back",
+      description: "Capture Back Side",
+      component: Step3IdBack
+    },
+    {
+      number: 4,
+      title: "Selfie",
+      description: "Face Verification",
+      component: Step4Selfie
+    },
+    {
+      number: 5,
+      title: "Details",
+      description: "Personal Info",
+      component: Step5KycDetails
+    },
+    {
+      number: 6,
+      title: "Payment",
+      description: "Processing Fee",
+      component: Step6Payment
+    },
+    {
+      number: 7,
+      title: "Complete",
+      description: "Final Review",
+      component: Step7Completion
+    },
   ]
 
   // ✅ SAFE COMPONENT RESOLUTION
@@ -59,11 +95,11 @@ export default function WorkerVerificationPage() {
     // Ensure currentStep is within bounds
     const safeStep = Math.max(1, Math.min(currentStep, steps.length))
     const stepIndex = safeStep - 1
-    
+
     if (stepIndex >= 0 && stepIndex < steps.length) {
       return steps[stepIndex].component
     }
-    
+
     // Fallback to first step if invalid
     console.warn(`Invalid step ${currentStep}, falling back to step 1`)
     return steps[0].component
@@ -80,32 +116,66 @@ export default function WorkerVerificationPage() {
       }
 
       const parsedUser = JSON.parse(userData)
-      if (parsedUser.role !== "EMPLOYEE") {
+      // Allow all admin roles
+      const allowedRoles = ["ADMIN", "SUPER_ADMIN", "HOSPITAL_ADMIN", "PHOTO_STUDIO_ADMIN", "EMBASSY_ADMIN"]
+      if (!allowedRoles.includes(parsedUser.role)) {
         router.push("/login")
         return
       }
 
       setUser(parsedUser)
-      
+
       try {
         // Load verification progress
         const progressData = await getOnboardingProgress(parsedUser.id)
-        
+
         if (progressData) {
           setProgress(progressData)
           // ✅ SAFE STEP SETTING - ensure step is within bounds
           const safeStep = Math.max(1, Math.min(progressData.currentStep || 1, steps.length))
           setCurrentStep(safeStep)
-          
+
+          // Set completed steps
+          if (progressData.completedSteps && Array.isArray(progressData.completedSteps)) {
+            setCompletedSteps(progressData.completedSteps)
+          } else {
+            setCompletedSteps([1])
+          }
+
           if (progressData.data) {
             const savedData = progressData.data
-            setFormData(prev => ({ 
-              ...prev, 
+            setFormData(prev => ({
+              ...prev,
               ...savedData,
               sessionId: savedData.sessionId || null
             }))
             setSessionId(savedData.sessionId || null)
           }
+
+          // Upload files first if they exist and are new files
+          const uploadPromises = []
+          if (formData.idFront && formData.idFront instanceof File) {
+            uploadPromises.push(
+              uploadVerificationFile(formData.idFront, 'idFront', parsedUser.id)
+            )
+          }
+          if (formData.idBack && formData.idBack instanceof File) {
+            uploadPromises.push(
+              uploadVerificationFile(formData.idBack, 'idBack', parsedUser.id)
+            )
+          }
+          if (formData.selfie && formData.selfie instanceof File) {
+            uploadPromises.push(
+              uploadVerificationFile(formData.selfie, 'selfie', parsedUser.id)
+            )
+          }
+
+          // Wait for all file uploads to complete
+          if (uploadPromises.length > 0) {
+            await Promise.all(uploadPromises)
+          }
+        } else {
+          setCompletedSteps([1])
         }
 
         // Create session if doesn't exist
@@ -113,12 +183,12 @@ export default function WorkerVerificationPage() {
           const newSessionId = await createSession()
           setSessionId(newSessionId)
           setFormData(prev => ({ ...prev, sessionId: newSessionId }))
-          
+
           // Save initial session to database
           await updateOnboardingProgress(parsedUser.id, 1, {
             sessionId: newSessionId,
             currentStep: 1
-          })
+          }, [1])
         }
       } catch (error) {
         console.error("Failed to initialize verification:", error)
@@ -127,8 +197,9 @@ export default function WorkerVerificationPage() {
         setSessionId(newSessionId)
         setFormData(prev => ({ ...prev, sessionId: newSessionId }))
         setCurrentStep(1)
+        setCompletedSteps([1])
       }
-      
+
       setLoading(false)
     }
 
@@ -140,8 +211,8 @@ export default function WorkerVerificationPage() {
 
     setSaving(true)
     try {
-      const updatedData = { 
-        ...formData, 
+      const updatedData = {
+        ...formData,
         ...data,
         sessionId: sessionId
       }
@@ -149,16 +220,23 @@ export default function WorkerVerificationPage() {
 
       // ✅ SAFE STEP SAVING - ensure step is within bounds
       const safeStep = Math.max(1, Math.min(step, steps.length))
-      
-      await updateOnboardingProgress(user.id, safeStep, updatedData)
+
+      // Update completed steps - mark current step as completed
+      const newCompletedSteps = [...completedSteps]
+      if (!newCompletedSteps.includes(currentStep)) {
+        newCompletedSteps.push(currentStep)
+        setCompletedSteps(newCompletedSteps)
+      }
+
+      await updateOnboardingProgress(user.id, safeStep, updatedData, newCompletedSteps)
       setCurrentStep(safeStep)
-      
+
       // ✅ Handle completion (step 7) instead of step 6
       if (safeStep === steps.length) { // Last step
         console.log('Verification process completed!')
         // Redirect to dashboard after completion
         setTimeout(() => {
-          router.push('/portals/worker/dashboard')
+          router.push('/portals/admin/dashboard')
         }, 3000)
       }
     } catch (error) {
@@ -190,10 +268,10 @@ export default function WorkerVerificationPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: KAZIPERT_COLORS.background }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: KAZIPERT_COLORS.text }}>
+          <h1 className="text-xl md:text-3xl font-bold mb-2" style={{ color: KAZIPERT_COLORS.text }}>
             Identity Verification
           </h1>
           <p className="text-lg" style={{ color: KAZIPERT_COLORS.textLight }}>
@@ -207,27 +285,28 @@ export default function WorkerVerificationPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Stepper Sidebar */}
-          <div className="lg:col-span-1">
-            <VerificationStepper
-              steps={steps}
-              currentStep={currentStep}
-              completedSteps={progress?.completedSteps || []}
-              sessionId={sessionId}
-            />
-          </div>
+        <div className="space-y-8">
+          {/* Stepper at Top */}
+          <VerificationStepper
+            steps={steps}
+            currentStep={currentStep}
+            onStepClick={(step) => {
+              if (completedSteps.includes(step) || step === currentStep || completedSteps.includes(step - 1)) {
+                setCurrentStep(step)
+              }
+            }}
+            completedSteps={completedSteps}
+          />
 
           {/* Main Content */}
-          <div className="lg:col-span-3">
-            <div className="bg-white rounded-2xl shadow-lg p-6 lg:p-8">
-              <CurrentStepComponent
-                formData={formData}
-                updateStep={updateStep}
-                currentStep={currentStep}
-                sessionId={sessionId}
-              />
-            </div>
+          <div className="bg-white rounded-2xl shadow-lg p-6 lg:p-8">
+            <CurrentStepComponent
+              formData={formData}
+              updateStep={updateStep}
+              currentStep={currentStep}
+              sessionId={sessionId}
+              role="ADMIN"
+            />
           </div>
         </div>
       </div>

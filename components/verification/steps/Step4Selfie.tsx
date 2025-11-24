@@ -1,9 +1,10 @@
-// components/verification/steps/Step4Selfie.tsx - FIXED
+// components/verification/steps/Step4Selfie.tsx - IMPROVED CAMERA & CROP
 "use client";
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import Webcam from 'react-webcam';
 import { verifySelfie } from '@/lib/verification';
+import { cropImage } from '@/lib/imageUtils';
 
 export default function Step4Selfie({ formData, updateStep, sessionId }: any) {
   const webcamRef = useRef<Webcam>(null);
@@ -12,14 +13,69 @@ export default function Step4Selfie({ formData, updateStep, sessionId }: any) {
   const [uploading, setUploading] = useState(false);
   const [verificationResult, setVerificationResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const capture = useCallback(() => {
+  const [isRetaking, setIsRetaking] = useState(false);
+
+  // Initialize with saved data if available
+  useEffect(() => {
+    if (formData.selfiePath && !capturedImage && !uploadedFile) {
+      console.log('Found existing Selfie path:', formData.selfiePath);
+    }
+  }, [formData.selfiePath]);
+
+  // Measure container for responsive overlay
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        setContainerDimensions({
+          width: containerRef.current.offsetWidth,
+          height: containerRef.current.offsetHeight
+        });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
+  const capture = useCallback(async () => {
     if (webcamRef.current) {
       const imageSrc = webcamRef.current.getScreenshot();
-      setCapturedImage(imageSrc);
-      setUploadedFile(null);
-      setError(null);
-      setVerificationResult(null);
+      if (!imageSrc) return;
+
+      try {
+        const video = webcamRef.current.video;
+        if (!video) return;
+
+        const videoWidth = video.videoWidth;
+        const videoHeight = video.videoHeight;
+
+        // Define the crop box (matching the visual overlay)
+        // Overlay is a circle/square, approx 70% of min dimension
+        const minDim = Math.min(videoWidth, videoHeight);
+        const cropSize = minDim * 0.75;
+        const cropX = (videoWidth - cropSize) / 2;
+        const cropY = (videoHeight - cropSize) / 2;
+
+        const croppedImageSrc = await cropImage(imageSrc, {
+          x: cropX,
+          y: cropY,
+          width: cropSize,
+          height: cropSize
+        });
+
+        setCapturedImage(croppedImageSrc);
+        setUploadedFile(null);
+        setError(null);
+        setVerificationResult(null);
+        setIsRetaking(false);
+      } catch (err) {
+        console.error('Error cropping image:', err);
+        setCapturedImage(imageSrc);
+      }
     }
   }, [webcamRef]);
 
@@ -28,6 +84,7 @@ export default function Step4Selfie({ formData, updateStep, sessionId }: any) {
     setUploadedFile(null);
     setVerificationResult(null);
     setError(null);
+    setIsRetaking(true);
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,7 +101,7 @@ export default function Step4Selfie({ formData, updateStep, sessionId }: any) {
       }
 
       setUploadedFile(file);
-      
+
       const reader = new FileReader();
       reader.onload = (e) => {
         setCapturedImage(e.target?.result as string);
@@ -64,12 +121,19 @@ export default function Step4Selfie({ formData, updateStep, sessionId }: any) {
       return;
     }
 
+    // Allow proceeding if we have a saved path and user hasn't taken a new photo
+    if (!capturedImage && !uploadedFile && formData.selfiePath) {
+      updateStep(5);
+      return;
+    }
+
     if (!capturedImage && !uploadedFile) {
       setError('Please capture or upload a selfie first.');
       return;
     }
 
-    if (!formData.idFront) {
+    // Check if we have ID front file OR a saved path from previous session
+    if (!formData.idFront && !formData.idFrontPath) {
       setError('ID front image is required for face verification. Please go back to Step 2 and upload your ID front first.');
       return;
     }
@@ -86,7 +150,7 @@ export default function Step4Selfie({ formData, updateStep, sessionId }: any) {
         const base64Response = await fetch(capturedImage);
         const blob = await base64Response.blob();
         const fileType = blob.type || 'image/jpeg';
-        const fileName = `selfie-capture.${fileType.split('/')[1] || 'jpg'}`;
+        const fileName = `selfie - capture.${fileType.split('/')[1] || 'jpg'} `;
         selfieFile = new File([blob], fileName, { type: fileType });
       } else {
         setError('No selfie available to process');
@@ -95,19 +159,21 @@ export default function Step4Selfie({ formData, updateStep, sessionId }: any) {
       }
 
       console.log('🔄 Verifying selfie with session:', sessionId);
-      
-      const result = await verifySelfie(selfieFile, formData.idFront, sessionId);
+
+      // Pass either the file object or the saved path string
+      const idFrontSource = formData.idFront || formData.idFrontPath;
+      const result = await verifySelfie(selfieFile, idFrontSource, sessionId);
       setVerificationResult(result);
 
       if (result.error) {
-        setError(`Verification service error: ${result.error}`);
+        setError(`Verification service error: ${result.error} `);
         return;
       }
 
       // FIXED: Use the correct field names from backend response
       const similarityScore = parseFloat(result.similarityScore) || 0;
       const matchProbability = parseFloat(result.matchProbability) || 0;
-      
+
       console.log('📊 Verification result:', {
         match: result.match,
         similarityScore,
@@ -118,13 +184,13 @@ export default function Step4Selfie({ formData, updateStep, sessionId }: any) {
 
       // Use 51% threshold as requested
       const MINIMUM_SIMILARITY = 0.51;
-      
+
       if (result.match && similarityScore >= MINIMUM_SIMILARITY) {
         console.log('✅ Face verification successful');
         updateStep(5, {
           selfie: selfieFile,
-          ocrData: { 
-            ...formData.ocrData, 
+          ocrData: {
+            ...formData.ocrData,
             faceVerification: {
               ...result,
               similarityScore,
@@ -134,12 +200,12 @@ export default function Step4Selfie({ formData, updateStep, sessionId }: any) {
         });
       } else {
         const similarityPercent = (similarityScore * 100).toFixed(1);
-        setError(`Face match failed. Similarity: ${similarityPercent}% (minimum 51% required). Please try again with better lighting and ensure you're looking directly at the camera.`);
+        setError(`Face match failed.Similarity: ${similarityPercent}% (minimum 51 % required). Please try again with better lighting and ensure you're looking directly at the camera.`);
       }
     } catch (error) {
       console.error('❌ Error verifying selfie:', error);
-      const errorMessage = error instanceof Error 
-        ? error.message 
+      const errorMessage = error instanceof Error
+        ? error.message
         : 'Failed to verify face. Please check if the verification service is running and try again.';
       setError(errorMessage);
     } finally {
@@ -148,7 +214,7 @@ export default function Step4Selfie({ formData, updateStep, sessionId }: any) {
   };
 
   // FIXED: Use correct field name and 51% threshold
-  const similarityScore = verificationResult ? 
+  const similarityScore = verificationResult ?
     (parseFloat(verificationResult.similarityScore) || 0) : 0;
   const canProceed = verificationResult?.match && similarityScore >= 0.51;
 
@@ -165,36 +231,49 @@ export default function Step4Selfie({ formData, updateStep, sessionId }: any) {
 
       <div className="space-y-6">
         {/* Camera/Preview Section */}
-        <div className="bg-gray-900 rounded-2xl overflow-hidden relative">
-          {!capturedImage ? (
-            <div className="relative">
+        <div
+          ref={containerRef}
+          className="bg-gray-900 rounded-2xl overflow-hidden relative w-full aspect-square max-w-[500px] mx-auto shadow-xl"
+        >
+          {!capturedImage && (!formData.selfiePath || isRetaking) ? (
+            <div className="relative w-full h-full">
               <Webcam
                 ref={webcamRef}
                 audio={false}
                 screenshotFormat="image/jpeg"
                 videoConstraints={{
-                  facingMode: 'user',
-                  width: 720,
-                  height: 720
+                  facingMode: 'user', // Use front camera
+                  width: { ideal: 720 },
+                  height: { ideal: 720 },
+                  aspectRatio: 1,
+                  // @ts-ignore
+                  advanced: [{ focusMode: "continuous" }]
                 }}
-                className="w-full h-auto aspect-square"
+                className="w-full h-full object-cover transform scale-x-[-1]" // Mirror the preview
                 screenshotQuality={0.92}
               />
-              
+
+              {/* Overlay Guide */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="border-2 border-green-400 border-dashed w-48 h-48 rounded-full bg-transparent">
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-green-400 text-sm font-medium">
-                    Position Your Face
+                <div className="relative w-[75%] aspect-square border-2 border-green-400 border-dashed rounded-full shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]">
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-white font-medium text-sm bg-black/50 px-3 py-1 rounded-full whitespace-nowrap">
+                    Position face in circle
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <img
-              src={capturedImage}
-              alt="Captured selfie"
-              className="w-full h-auto aspect-square object-cover"
-            />
+            <div className="relative w-full h-full flex items-center justify-center bg-black">
+              <img
+                src={capturedImage || (!isRetaking ? formData.selfiePath : null)}
+                alt="Captured selfie"
+                className="w-full h-full object-cover transform scale-x-[-1]" // Mirror captured selfie too
+              />
+              {/* Overlay for saved/captured image to indicate it's done */}
+              <div className="absolute bottom-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center">
+                <span className="mr-1">✓</span> Photo Ready
+              </div>
+            </div>
           )}
         </div>
 
@@ -219,9 +298,8 @@ export default function Step4Selfie({ formData, updateStep, sessionId }: any) {
 
         {/* Verification Results */}
         {verificationResult && !error && (
-          <div className={`p-4 rounded-lg ${
-            canProceed ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'
-          }`}>
+          <div className={`p-4 rounded-lg ${canProceed ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'
+            }`}>
             <h4 className="font-semibold mb-3">Face Verification Results:</h4>
             {canProceed ? (
               <div className="text-green-700 space-y-2">
@@ -254,20 +332,26 @@ export default function Step4Selfie({ formData, updateStep, sessionId }: any) {
         )}
 
         {/* Controls */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          {!capturedImage ? (
+        <div className="flex flex-col gap-4 w-full">
+          {!capturedImage && (!formData.selfiePath || isRetaking) ? (
             <>
               <button
                 onClick={capture}
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center transition-colors duration-200"
+                className="w-full bg-[#117c82] hover:bg-[#0e666b] text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center transition-all duration-200 shadow-lg active:scale-[0.98]"
               >
-                <span className="mr-2">🤳</span>
-                Take Selfie
+                <span className="mr-3 text-2xl">🤳</span>
+                <span className="text-lg">Take Selfie</span>
               </button>
-              
-              <label className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center cursor-pointer transition-colors duration-200">
-                <span className="mr-2">📁</span>
-                Upload Photo
+
+              <div className="relative flex items-center justify-center">
+                <div className="border-t border-gray-300 w-full"></div>
+                <span className="bg-white px-3 text-gray-500 text-sm">OR</span>
+                <div className="border-t border-gray-300 w-full"></div>
+              </div>
+
+              <label className="w-full bg-white border-2 border-[#117c82] text-[#117c82] hover:bg-gray-50 font-semibold py-3 px-6 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-200 shadow-sm">
+                <span className="mr-2 text-xl">📁</span>
+                Upload from Gallery
                 <input
                   type="file"
                   accept="image/jpeg,image/jpg,image/png"
@@ -277,30 +361,33 @@ export default function Step4Selfie({ formData, updateStep, sessionId }: any) {
               </label>
             </>
           ) : (
-            <>
-              <button
-                onClick={retake}
-                disabled={uploading}
-                className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 disabled:opacity-50"
-              >
-                Retake Selfie
-              </button>
-              
+            <div className="flex flex-col gap-3">
               <button
                 onClick={processSelfie}
                 disabled={uploading}
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg disabled:opacity-50 flex items-center justify-center transition-colors duration-200"
+                className="w-full bg-[#117c82] hover:bg-[#0e666b] text-white font-bold py-4 px-6 rounded-xl disabled:opacity-50 flex items-center justify-center transition-all duration-200 shadow-lg active:scale-[0.98]"
               >
                 {uploading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
                     Verifying...
                   </>
                 ) : (
-                  'Verify Face & Continue'
+                  <>
+                    <span className="mr-2">✨</span>
+                    Verify Face & Continue
+                  </>
                 )}
               </button>
-            </>
+
+              <button
+                onClick={retake}
+                disabled={uploading}
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-colors duration-200 disabled:opacity-50"
+              >
+                Retake Selfie
+              </button>
+            </div>
           )}
         </div>
 

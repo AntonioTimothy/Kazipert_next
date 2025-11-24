@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 
-const COUNTIES = [
+const KENYA_COUNTIES = [
   'Baringo', 'Bomet', 'Bungoma', 'Busia', 'Elgeyo-Marakwet',
   'Embu', 'Garissa', 'Homa Bay', 'Isiolo', 'Kajiado',
   'Kakamega', 'Kericho', 'Kiambu', 'Kilifi', 'Kirinyaga',
@@ -16,7 +16,24 @@ const COUNTIES = [
   'Vihiga', 'Wajir', 'West Pokot'
 ].sort();
 
-export default function Step5KycDetails({ formData, updateStep }: any) {
+const OMAN_REGIONS = [
+  'Ad Dakhiliyah', 'Ad Dhahirah', 'Al Batinah North', 'Al Batinah South',
+  'Al Buraimi', 'Al Wusta', 'Ash Sharqiyah North', 'Ash Sharqiyah South',
+  'Dhofar', 'Muscat', 'Musandam'
+].sort();
+
+interface Step5Props {
+  formData: any;
+  updateStep: (step: number, data?: any) => void;
+  role?: string;
+}
+
+export default function Step5KycDetails({ formData, updateStep, role = 'EMPLOYEE' }: Step5Props) {
+  const isEmployer = role === 'EMPLOYER';
+  const regions = isEmployer ? OMAN_REGIONS : KENYA_COUNTIES;
+  const regionLabel = isEmployer ? 'Region' : 'County';
+  const idLabel = isEmployer ? 'National ID / Passport Number' : 'National ID Number';
+
   const [form, setForm] = useState({
     fullName: formData.fullName || '',
     gender: formData.gender || '',
@@ -46,12 +63,13 @@ export default function Step5KycDetails({ formData, updateStep }: any) {
     if (!form.fullName.trim()) newErrors.fullName = 'Full name is required';
     if (!form.gender) newErrors.gender = 'Gender is required';
     if (!form.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
-    if (!form.county) newErrors.county = 'County is required';
+    if (!form.county) newErrors.county = `${regionLabel} is required`;
     if (!form.idNumber.trim()) newErrors.idNumber = 'ID number is required';
     if (!form.physicalAddress.trim()) newErrors.physicalAddress = 'Physical address is required';
 
     // Validate ID number format (Kenyan ID numbers are typically 8 digits)
-    if (form.idNumber && !/^\d{8}$/.test(form.idNumber)) {
+    // For Oman/Passport, we might want less strict validation or different validation
+    if (!isEmployer && form.idNumber && !/^\d{8}$/.test(form.idNumber)) {
       newErrors.idNumber = 'ID number must be 8 digits';
     }
 
@@ -65,11 +83,11 @@ export default function Step5KycDetails({ formData, updateStep }: any) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-    
+
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -89,7 +107,8 @@ export default function Step5KycDetails({ formData, updateStep }: any) {
   };
 
   const formatIdNumber = (value: string) => {
-    // Remove non-digits and limit to 8 characters
+    if (isEmployer) return value; // Allow alphanumeric for passport/Oman ID
+    // Remove non-digits and limit to 8 characters for Kenyan ID
     return value.replace(/\D/g, '').slice(0, 8);
   };
 
@@ -115,9 +134,8 @@ export default function Step5KycDetails({ formData, updateStep }: any) {
               type="text"
               value={form.fullName}
               onChange={(e) => handleChange('fullName', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200 ${
-                errors.fullName ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200 ${errors.fullName ? 'border-red-500' : 'border-gray-300'
+                }`}
               placeholder="Enter your full name as per ID"
             />
             {errors.fullName && (
@@ -133,9 +151,8 @@ export default function Step5KycDetails({ formData, updateStep }: any) {
             <select
               value={form.gender}
               onChange={(e) => handleChange('gender', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200 ${
-                errors.gender ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200 ${errors.gender ? 'border-red-500' : 'border-gray-300'
+                }`}
             >
               <option value="">Select Gender</option>
               <option value="male">Male</option>
@@ -156,9 +173,8 @@ export default function Step5KycDetails({ formData, updateStep }: any) {
               type="date"
               value={form.dateOfBirth}
               onChange={(e) => handleChange('dateOfBirth', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200 ${
-                errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200 ${errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'
+                }`}
               max={new Date().toISOString().split('T')[0]} // Prevent future dates
             />
             {errors.dateOfBirth ? (
@@ -175,38 +191,36 @@ export default function Step5KycDetails({ formData, updateStep }: any) {
           {/* ID Number */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              National ID Number *
+              {idLabel} *
             </label>
             <input
               type="text"
               value={form.idNumber}
               onChange={(e) => handleChange('idNumber', formatIdNumber(e.target.value))}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200 ${
-                errors.idNumber ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="e.g., 12345678"
-              maxLength={8}
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200 ${errors.idNumber ? 'border-red-500' : 'border-gray-300'
+                }`}
+              placeholder={isEmployer ? "e.g., 12345678 or A1234567" : "e.g., 12345678"}
+              maxLength={isEmployer ? 20 : 8}
             />
             {errors.idNumber && (
               <p className="mt-1 text-sm text-red-600">{errors.idNumber}</p>
             )}
           </div>
 
-          {/* County */}
+          {/* County / Region */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              County of Residence *
+              {regionLabel} *
             </label>
             <select
               value={form.county}
               onChange={(e) => handleChange('county', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200 ${
-                errors.county ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200 ${errors.county ? 'border-red-500' : 'border-gray-300'
+                }`}
             >
-              <option value="">Select County</option>
-              {COUNTIES.map(county => (
-                <option key={county} value={county}>{county}</option>
+              <option value="">Select {regionLabel}</option>
+              {regions.map(region => (
+                <option key={region} value={region}>{region}</option>
               ))}
             </select>
             {errors.county && (
@@ -223,9 +237,8 @@ export default function Step5KycDetails({ formData, updateStep }: any) {
               value={form.physicalAddress}
               onChange={(e) => handleChange('physicalAddress', e.target.value)}
               rows={3}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200 ${
-                errors.physicalAddress ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200 ${errors.physicalAddress ? 'border-red-500' : 'border-gray-300'
+                }`}
               placeholder="Enter your current physical address"
             />
             {errors.physicalAddress && (
@@ -244,7 +257,7 @@ export default function Step5KycDetails({ formData, updateStep }: any) {
           >
             Back
           </button>
-          
+
           <button
             type="submit"
             disabled={!isOver22 || isSubmitting}

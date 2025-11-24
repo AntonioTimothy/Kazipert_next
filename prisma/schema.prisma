@@ -171,6 +171,9 @@ model KycDetails {
   
   // Identity Details
   idNumber          String?
+  idDocumentFront   String?
+  idDocumentBack    String?
+  selfieUrl         String?
   
   // Verification Status
   idVerified        Boolean @default(false)

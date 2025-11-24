@@ -1,266 +1,218 @@
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Play, Clock, Users } from "lucide-react"
+import Image from "next/image"
+import { Play, Clock, Eye, ThumbsUp, Filter, Search } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 export default function VideosPage() {
-  const kenyaVideos = [
-    {
-      title: "Understanding Oman Culture",
-      description: "Learn about Omani customs, traditions, and cultural expectations",
-      duration: "15:30",
-      views: "12.5K",
-      thumbnail: "/oman-culture-traditional.jpg",
-      category: "Culture",
-    },
-    {
-      title: "Your Rights as a Domestic Worker",
-      description: "Know your legal rights and protections under Oman labor law",
-      duration: "12:45",
-      views: "18.2K",
-      thumbnail: "/legal-rights-document.jpg",
-      category: "Legal",
-    },
-    {
-      title: "Arabic Language Basics",
-      description: "Essential Arabic phrases for daily communication",
-      duration: "20:15",
-      views: "25.8K",
-      thumbnail: "/arabic-language-learning.jpg",
-      category: "Language",
-    },
-    {
-      title: "Safety and Emergency Procedures",
-      description: "What to do in emergencies and how to stay safe",
-      duration: "10:20",
-      views: "15.3K",
-      thumbnail: "/emergency-safety-procedures.jpg",
-      category: "Safety",
-    },
-    {
-      title: "Professional Housekeeping Standards",
-      description: "Best practices for cleaning, cooking, and household management",
-      duration: "18:40",
-      views: "22.1K",
-      thumbnail: "/professional-housekeeping.jpg",
-      category: "Skills",
-    },
-    {
-      title: "Managing Homesickness",
-      description: "Mental wellness tips for living abroad",
-      duration: "14:25",
-      views: "9.7K",
-      thumbnail: "/mental-wellness-support.jpg",
-      category: "Wellness",
-    },
-    {
-      title: "Financial Management & M-Pesa",
-      description: "How to send money home and manage your salary",
-      duration: "11:30",
-      views: "20.4K",
-      thumbnail: "/mobile-money-transfer.jpg",
-      category: "Finance",
-    },
-    {
-      title: "Contract Understanding",
-      description: "What to look for in your employment contract",
-      duration: "13:15",
-      views: "16.8K",
-      thumbnail: "/employment-contract-signing.jpg",
-      category: "Legal",
-    },
+  const categories = [
+    { name: "All Videos", count: 150, active: true },
+    { name: "Training", count: 45 },
+    { name: "Success Stories", count: 30 },
+    { name: "Safety Tips", count: 25 },
+    { name: "Language", count: 20 },
+    { name: "Cultural", count: 30 }
   ]
 
-  const omanVideos = [
+  const videos = [
     {
-      title: "Understanding Kenyan Culture",
-      description: "Learn about Kenyan customs, communication styles, and cultural values",
-      duration: "16:20",
-      views: "8.3K",
-      thumbnail: "/kenya-culture-traditional.jpg",
-      category: "Culture",
-    },
-    {
-      title: "Employer Responsibilities in Oman",
-      description: "Your legal obligations as an employer under Oman labor law",
-      duration: "14:50",
-      views: "11.2K",
-      thumbnail: "/employer-responsibilities-legal.jpg",
-      category: "Legal",
-    },
-    {
-      title: "Effective Communication with Domestic Workers",
-      description: "Best practices for clear, respectful communication",
-      duration: "12:35",
-      views: "9.8K",
-      thumbnail: "/effective-communication-workplace.png",
-      category: "Communication",
-    },
-    {
-      title: "Creating a Safe Work Environment",
-      description: "How to ensure safety and comfort for your domestic worker",
-      duration: "10:45",
-      views: "7.5K",
-      thumbnail: "/safe-work-environment-home.jpg",
-      category: "Safety",
-    },
-    {
-      title: "Fair Compensation Guidelines",
-      description: "Understanding fair wages and benefits for domestic workers",
-      duration: "11:20",
-      views: "10.1K",
-      thumbnail: "/fair-wages-compensation.jpg",
-      category: "Finance",
-    },
-    {
-      title: "Conflict Resolution Strategies",
-      description: "How to address and resolve workplace issues professionally",
-      duration: "13:40",
-      views: "6.9K",
-      thumbnail: "/conflict-resolution-mediation.jpg",
-      category: "Management",
-    },
-    {
-      title: "Visa and Documentation Process",
-      description: "Step-by-step guide to visa applications and legal requirements",
+      title: "Professional Housekeeping Basics",
+      thumbnail: "/professional-housekeeping.jpg",
       duration: "15:30",
-      views: "12.4K",
-      thumbnail: "/visa-documentation-process.jpg",
-      category: "Legal",
+      views: "12.5K",
+      likes: "1.2K",
+      category: "Training"
     },
     {
-      title: "Building Trust and Respect",
-      description: "Creating a positive employer-worker relationship",
-      duration: "9:50",
-      views: "8.7K",
-      thumbnail: "/trust-respect-workplace.jpg",
-      category: "Relationship",
+      title: "Arabic Language for Beginners",
+      thumbnail: "/arabic-language-learning.jpg",
+      duration: "22:45",
+      views: "18.3K",
+      likes: "2.1K",
+      category: "Language"
     },
+    {
+      title: "Emergency Safety Procedures",
+      thumbnail: "/emergency-safety-procedures.jpg",
+      duration: "10:20",
+      views: "25.7K",
+      likes: "3.5K",
+      category: "Safety"
+    },
+    {
+      title: "Effective Workplace Communication",
+      thumbnail: "/effective-communication-workplace.png",
+      duration: "18:15",
+      views: "14.2K",
+      likes: "1.8K",
+      category: "Training"
+    },
+    {
+      title: "Understanding Oman Culture",
+      thumbnail: "/oman-culture-traditional.jpg",
+      duration: "20:30",
+      views: "16.8K",
+      likes: "2.3K",
+      category: "Cultural"
+    },
+    {
+      title: "Kenya Cultural Traditions",
+      thumbnail: "/kenya-culture-traditional.jpg",
+      duration: "17:45",
+      views: "13.4K",
+      likes: "1.9K",
+      category: "Cultural"
+    },
+    {
+      title: "Legal Rights & Documentation",
+      thumbnail: "/legal-rights-document.jpg",
+      duration: "25:10",
+      views: "22.1K",
+      likes: "3.2K",
+      category: "Legal"
+    },
+    {
+      title: "Mental Wellness Support",
+      thumbnail: "/mental-wellness-support.jpg",
+      duration: "16:40",
+      views: "19.5K",
+      likes: "2.7K",
+      category: "Wellness"
+    }
   ]
 
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
       <main className="flex-1">
-        <section className="border-b border-border bg-muted/30 py-12">
-          <div className="container">
-            <h1 className="text-balance text-4xl font-bold tracking-tight sm:text-5xl">Training Videos</h1>
-            <p className="mt-4 max-w-2xl text-pretty text-lg text-muted-foreground">
-              Comprehensive video training for both job seekers and employers. Learn about culture, rights,
-              responsibilities, and best practices.
-            </p>
+        {/* Hero Section */}
+        <section className="relative overflow-hidden bg-gradient-to-br from-[#117c82] via-[#0d9ea6] to-[#117c82] py-20 md:py-24">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-0 left-0 w-96 h-96 bg-[#FDB913]/10 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+          </div>
+
+          <div className="container relative px-6 lg:px-8">
+            <div className="max-w-4xl mx-auto text-center text-white">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 mb-6">
+                <Play className="h-4 w-4" />
+                <span className="text-sm font-bold">Video Library</span>
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 leading-tight">
+                Learn Through Video
+              </h1>
+              <p className="text-xl text-white/90 leading-relaxed mb-8">
+                Access our comprehensive library of training videos, success stories, and educational content.
+              </p>
+
+              {/* Search Bar */}
+              <div className="max-w-2xl mx-auto">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    placeholder="Search videos..."
+                    className="pl-12 pr-4 py-6 text-lg bg-white/95 backdrop-blur-sm border-2 border-white/50 focus:border-white"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        <section className="py-12">
-          <div className="container">
-            <Tabs defaultValue="kenya" className="w-full">
-              <TabsList className="grid w-full max-w-md grid-cols-2">
-                <TabsTrigger value="kenya">For Job Seekers (Kenya)</TabsTrigger>
-                <TabsTrigger value="oman">For Employers (Oman)</TabsTrigger>
-              </TabsList>
+        {/* Categories */}
+        <section className="py-8 bg-white border-b border-gray-200 sticky top-16 z-40">
+          <div className="container px-6 lg:px-8">
+            <div className="flex items-center gap-4 overflow-x-auto pb-2">
+              <Button variant="ghost" size="sm" className="flex items-center gap-2 flex-shrink-0">
+                <Filter className="h-4 w-4" />
+                Filter
+              </Button>
+              {categories.map((category, index) => (
+                <Button
+                  key={index}
+                  variant={category.active ? "default" : "outline"}
+                  size="sm"
+                  className={`flex-shrink-0 ${category.active ? "bg-[#117c82] hover:bg-[#117c82]/90" : "hover:bg-gray-100"}`}
+                >
+                  {category.name} ({category.count})
+                </Button>
+              ))}
+            </div>
+          </div>
+        </section>
 
-              <TabsContent value="kenya" className="mt-8">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold">Training for Kenyan Job Seekers</h2>
-                  <p className="mt-2 text-muted-foreground">
-                    Essential training videos to prepare you for working in Oman. Learn about culture, your rights, and
-                    professional skills.
-                  </p>
-                </div>
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {kenyaVideos.map((video, index) => (
-                    <Card key={index} className="group cursor-pointer transition-all hover:shadow-lg">
-                      <div className="relative overflow-hidden rounded-t-lg">
-                        <img
-                          src={video.thumbnail || "/placeholder.svg"}
-                          alt={video.title}
-                          className="h-48 w-full object-cover transition-transform group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary">
-                            <Play className="h-8 w-8 text-primary-foreground" fill="currentColor" />
-                          </div>
-                        </div>
-                        <div className="absolute bottom-2 right-2 rounded bg-black/80 px-2 py-1 text-xs text-white">
-                          {video.duration}
-                        </div>
+        {/* Video Grid */}
+        <section className="py-16 md:py-20 bg-gradient-to-b from-gray-50 to-white">
+          <div className="container px-6 lg:px-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
+              {videos.map((video, index) => (
+                <div key={index} className="group bg-white rounded-2xl border-2 border-gray-200 hover:border-[#117c82] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 cursor-pointer">
+                  <div className="relative aspect-video">
+                    <Image
+                      src={video.thumbnail}
+                      alt={video.title}
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                      <div className="h-16 w-16 rounded-full bg-white/95 flex items-center justify-center group-hover:scale-110 transition-transform shadow-xl">
+                        <Play className="h-7 w-7 text-[#117c82] fill-current ml-1" />
                       </div>
-                      <CardHeader>
-                        <div className="mb-2 inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                          {video.category}
-                        </div>
-                        <CardTitle className="line-clamp-2 text-base">{video.title}</CardTitle>
-                        <CardDescription className="line-clamp-2">{video.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Users className="h-4 w-4" />
-                            <span>{video.views}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{video.duration}</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </TabsContent>
+                    </div>
+                    <div className="absolute bottom-3 right-3 bg-black/80 text-white px-2 py-1 rounded text-xs font-bold">
+                      {video.duration}
+                    </div>
+                    <div className="absolute top-3 left-3 bg-[#FDB913] text-black px-3 py-1 rounded-full text-xs font-bold">
+                      {video.category}
+                    </div>
+                  </div>
 
-              <TabsContent value="oman" className="mt-8">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold">Training for Omani Employers</h2>
-                  <p className="mt-2 text-muted-foreground">
-                    Learn about Kenyan culture, your responsibilities as an employer, and how to create a positive work
-                    environment.
-                  </p>
-                </div>
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {omanVideos.map((video, index) => (
-                    <Card key={index} className="group cursor-pointer transition-all hover:shadow-lg">
-                      <div className="relative overflow-hidden rounded-t-lg">
-                        <img
-                          src={video.thumbnail || "/placeholder.svg"}
-                          alt={video.title}
-                          className="h-48 w-full object-cover transition-transform group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
-                            <Play className="h-8 w-8 text-secondary-foreground" fill="currentColor" />
-                          </div>
-                        </div>
-                        <div className="absolute bottom-2 right-2 rounded bg-black/80 px-2 py-1 text-xs text-white">
-                          {video.duration}
-                        </div>
+                  <div className="p-5 space-y-3">
+                    <h3 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-[#117c82] transition-colors">
+                      {video.title}
+                    </h3>
+
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <Eye className="h-4 w-4" />
+                        <span>{video.views}</span>
                       </div>
-                      <CardHeader>
-                        <div className="mb-2 inline-block rounded-full bg-secondary/10 px-3 py-1 text-xs font-medium text-secondary">
-                          {video.category}
-                        </div>
-                        <CardTitle className="line-clamp-2 text-base">{video.title}</CardTitle>
-                        <CardDescription className="line-clamp-2">{video.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Users className="h-4 w-4" />
-                            <span>{video.views}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{video.duration}</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                      <div className="flex items-center gap-1">
+                        <ThumbsUp className="h-4 w-4" />
+                        <span>{video.likes}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </TabsContent>
-            </Tabs>
+              ))}
+            </div>
+
+            {/* Load More */}
+            <div className="text-center mt-12">
+              <Button size="lg" variant="outline" className="border-2 border-[#117c82] text-[#117c82] hover:bg-[#117c82] hover:text-white font-bold">
+                Load More Videos
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Stats */}
+        <section className="py-16 md:py-20 bg-gradient-to-br from-[#117c82] to-[#0d9ea6]">
+          <div className="container px-6 lg:px-8">
+            <div className="grid md:grid-cols-4 gap-8 max-w-6xl mx-auto">
+              {[
+                { value: "150+", label: "Total Videos" },
+                { value: "500K+", label: "Total Views" },
+                { value: "50K+", label: "Subscribers" },
+                { value: "4.9", label: "Avg Rating" }
+              ].map((stat, index) => (
+                <div key={index} className="text-center text-white">
+                  <div className="text-5xl font-extrabold mb-2">{stat.value}</div>
+                  <div className="text-sm font-semibold text-white/90">{stat.label}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       </main>
