@@ -34,8 +34,8 @@ export function HeroSection() {
             <div className="flex flex-col items-center mb-8">
               <Image
                 src="/world-first-icon.png"
-                width={75}
-                height={75}
+                width={150}
+                height={150}
                 alt="World First"
               />
              
@@ -43,17 +43,17 @@ export function HeroSection() {
 
             {/* APPROVAL BOX */}
             <div className="bg-white border shadow-md rounded-2xl px-6 py-6 w-80 flex flex-col items-center">
-              <Image
+              {/* <Image
                 src="/kenya-seal.png"
                 width={70}
                 height={70}
                 alt="Kenya Seal"
-              />
+              /> */}
 
-              <p className="text-xs text-gray-600 mt-3 text-center leading-relaxed">
+              {/* <p className="text-xs text-gray-600 mt-3 text-center leading-relaxed">
                 EMBASSY OF THE REPUBLIC OF KENYA <br />
                 MUSCAT, SULTANATE OF OMAN
-              </p>
+              </p> */}
 
               <Image
                 src="/approved-stamp.png"

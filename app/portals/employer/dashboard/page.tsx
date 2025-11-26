@@ -111,7 +111,7 @@ export default function EmployerDashboard() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [profileComplete, setProfileComplete] = useState(false)
-  
+
   // Real data states
   const [jobs, setJobs] = useState<any[]>([])
   const [applications, setApplications] = useState<any[]>([])
@@ -133,7 +133,7 @@ export default function EmployerDashboard() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
-      
+
       const userData = sessionStorage.getItem("user")
       if (!userData) {
         router.push("/login")
@@ -147,7 +147,7 @@ export default function EmployerDashboard() {
       }
 
       setUser(parsedUser)
-      
+
       try {
         // Load all jobs for stats
         const [activeJobs, draftJobs, closedJobs, allApplications] = await Promise.all([
@@ -170,7 +170,7 @@ export default function EmployerDashboard() {
         const totalViews = allJobs.reduce((sum, job) => sum + (job._count?.views || 0), 0)
         const totalSpent = allJobs.reduce((sum, job) => sum + (job.salary || 0), 0)
         const avgSalary = allJobs.length > 0 ? totalSpent / allJobs.length : 0
-        
+
         const pendingApplications = allApplications.filter(app => app.status === 'PENDING').length
         const reviewedApplications = allApplications.filter(app => app.status === 'UNDER_REVIEW').length
         const acceptedApplications = allApplications.filter(app => app.status === 'ACCEPTED').length
@@ -415,8 +415,8 @@ export default function EmployerDashboard() {
       router.push(route)
       return
     }
-    
-    switch(action) {
+
+    switch (action) {
       case 'post-job':
         router.push('/employer/jobs/create')
         break
@@ -433,7 +433,7 @@ export default function EmployerDashboard() {
   }
 
   const getStatusColor = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'PENDING': return 'bg-blue-500/10 text-blue-600 border-blue-200'
       case 'UNDER_REVIEW': return 'bg-orange-500/10 text-orange-600 border-orange-200'
       case 'ACCEPTED': return 'bg-green-500/10 text-green-600 border-green-200'
@@ -444,7 +444,7 @@ export default function EmployerDashboard() {
   }
 
   const getStatusText = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'PENDING': return 'New'
       case 'UNDER_REVIEW': return 'Interview'
       case 'ACCEPTED': return 'Hired'
@@ -459,7 +459,7 @@ export default function EmployerDashboard() {
     const now = new Date()
     const diffTime = Math.abs(now.getTime() - date.getTime())
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    
+
     if (diffDays === 1) return 'Yesterday'
     if (diffDays < 7) return `${diffDays} days ago`
     if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
@@ -539,7 +539,7 @@ export default function EmployerDashboard() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12 border-2" style={{ borderColor: KAZIPERT_COLORS.primary }}>
-              <AvatarFallback 
+              <AvatarFallback
                 className="text-white font-semibold"
                 style={{ backgroundColor: KAZIPERT_COLORS.primary }}
               >
@@ -564,8 +564,8 @@ export default function EmployerDashboard() {
               </div>
             </div>
           </div>
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             onClick={() => router.push('/employer/jobs/create')}
             style={{
               backgroundColor: KAZIPERT_COLORS.primary,
@@ -578,9 +578,49 @@ export default function EmployerDashboard() {
           </Button>
         </div>
 
+        {/* Verification Banner - Show if user is not verified */}
+        {!user.verified && (
+          <Card
+            className="border-0 rounded-2xl overflow-hidden"
+            style={{
+              background: `linear-gradient(135deg, ${KAZIPERT_COLORS.primary} 0%, ${KAZIPERT_COLORS.accent} 100%)`,
+            }}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div
+                    className="p-3 rounded-xl bg-white/20 backdrop-blur-sm"
+                  >
+                    <ShieldCheck className="h-8 w-8 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-xl text-white mb-1">
+                      Verify Your Account
+                    </h3>
+                    <p className="text-white/90 text-sm">
+                      Complete verification to post jobs and access all employer features. Quick and secure process.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => router.push('/portals/employer/verification')}
+                  className="bg-white hover:bg-white/90 font-bold shadow-lg"
+                  style={{
+                    color: KAZIPERT_COLORS.primary
+                  }}
+                >
+                  <ShieldCheck className="h-4 w-4 mr-2" />
+                  Verify Now
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Profile Completion Banner */}
         {!profileComplete && (
-          <Card 
+          <Card
             className="border-0 rounded-2xl overflow-hidden"
             style={{
               background: `linear-gradient(135deg, ${KAZIPERT_COLORS.primary}15 0%, ${KAZIPERT_COLORS.accent}10 100%)`,
@@ -590,7 +630,7 @@ export default function EmployerDashboard() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div 
+                  <div
                     className="p-2 rounded-lg"
                     style={{ backgroundColor: KAZIPERT_COLORS.primary + '20' }}
                   >
@@ -605,7 +645,7 @@ export default function EmployerDashboard() {
                     </p>
                   </div>
                 </div>
-                <Button 
+                <Button
                   onClick={() => router.push('/portals/employer/verification')}
                   style={{
                     backgroundColor: KAZIPERT_COLORS.primary,
@@ -620,8 +660,8 @@ export default function EmployerDashboard() {
                   <span style={{ color: KAZIPERT_COLORS.textLight }}>Progress</span>
                   <span style={{ color: KAZIPERT_COLORS.primary }}>65%</span>
                 </div>
-                <Progress 
-                  value={65} 
+                <Progress
+                  value={65}
                   className="h-2 bg-white/50"
                 />
               </div>
@@ -632,23 +672,23 @@ export default function EmployerDashboard() {
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
           {quickStats.map((stat, index) => (
-            <div 
+            <div
               key={stat.title}
               className="bg-white rounded-2xl p-4 border border-gray-200 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg"
               onClick={() => handleQuickAction(stat.action, stat.route)}
             >
               <div className="flex items-start justify-between mb-3">
-                <div 
+                <div
                   className="p-2 rounded-xl"
                   style={{ backgroundColor: stat.bgColor }}
                 >
-                  <stat.icon 
-                    className="h-5 w-5" 
-                    style={{ color: stat.color }} 
+                  <stat.icon
+                    className="h-5 w-5"
+                    style={{ color: stat.color }}
                   />
                 </div>
-                <Badge 
-                  variant="secondary" 
+                <Badge
+                  variant="secondary"
                   className="text-xs border-0"
                   style={{
                     backgroundColor: stat.bgColor,
@@ -659,19 +699,19 @@ export default function EmployerDashboard() {
                 </Badge>
               </div>
               <div className="space-y-1">
-                <div 
+                <div
                   className="text-2xl font-bold"
                   style={{ color: KAZIPERT_COLORS.text }}
                 >
                   {stat.value}
                 </div>
-                <div 
+                <div
                   className="text-sm font-medium"
                   style={{ color: KAZIPERT_COLORS.text }}
                 >
                   {stat.title}
                 </div>
-                <div 
+                <div
                   className="text-xs"
                   style={{ color: KAZIPERT_COLORS.textLight }}
                 >
@@ -682,7 +722,7 @@ export default function EmployerDashboard() {
           ))}
         </div>
 
-       
+
 
         {/* Quick Actions */}
         <div>
@@ -690,8 +730,8 @@ export default function EmployerDashboard() {
             <h2 className="font-bold text-lg" style={{ color: KAZIPERT_COLORS.text }}>
               Quick Actions
             </h2>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               style={{ color: KAZIPERT_COLORS.primary }}
             >
@@ -706,23 +746,23 @@ export default function EmployerDashboard() {
                 onClick={() => handleQuickAction(action.action, action.route)}
                 className="bg-white rounded-2xl p-4 border border-gray-200 transition-all duration-300 hover:scale-105 hover:shadow-lg group text-left"
               >
-                <div 
+                <div
                   className="p-3 rounded-xl w-fit mb-3"
                   style={{ backgroundColor: action.bgColor }}
                 >
-                  <action.icon 
-                    className="h-6 w-6" 
-                    style={{ color: action.color }} 
+                  <action.icon
+                    className="h-6 w-6"
+                    style={{ color: action.color }}
                   />
                 </div>
                 <div className="space-y-1">
-                  <div 
+                  <div
                     className="font-semibold group-hover:underline transition-colors"
                     style={{ color: KAZIPERT_COLORS.text }}
                   >
                     {action.name}
                   </div>
-                  <div 
+                  <div
                     className="text-sm"
                     style={{ color: KAZIPERT_COLORS.textLight }}
                   >
@@ -755,7 +795,7 @@ export default function EmployerDashboard() {
                     <div key={employee.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
-                          <AvatarFallback 
+                          <AvatarFallback
                             className="text-white text-sm"
                             style={{ backgroundColor: KAZIPERT_COLORS.primary }}
                           >
@@ -783,8 +823,8 @@ export default function EmployerDashboard() {
                   ))}
                 </CardContent>
                 <CardFooter>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="w-full justify-between"
                     style={{ color: KAZIPERT_COLORS.primary }}
                     onClick={() => router.push('/employer/employees')}
@@ -810,14 +850,14 @@ export default function EmployerDashboard() {
               <CardContent className="space-y-3">
                 {recentApplications.length > 0 ? (
                   recentApplications.map((application) => (
-                    <div 
-                      key={application.id} 
+                    <div
+                      key={application.id}
                       className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
                       onClick={() => router.push(`/employer/applications`)}
                     >
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
-                          <AvatarFallback 
+                          <AvatarFallback
                             className="text-white text-xs"
                             style={{ backgroundColor: KAZIPERT_COLORS.accent }}
                           >
@@ -847,8 +887,8 @@ export default function EmployerDashboard() {
                   <div className="text-center py-8 text-gray-500">
                     <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
                     <p>No applications yet</p>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="mt-2"
                       onClick={() => router.push('/employer/jobs/create')}
                     >
@@ -859,8 +899,8 @@ export default function EmployerDashboard() {
               </CardContent>
               {recentApplications.length > 0 && (
                 <CardFooter>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="w-full justify-between"
                     style={{ color: KAZIPERT_COLORS.primary }}
                     onClick={() => router.push('/employer/applications')}
@@ -891,7 +931,7 @@ export default function EmployerDashboard() {
                   {upcomingInterviews.map((interview) => (
                     <div key={interview.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
                       <div className="flex items-center gap-3">
-                        <div 
+                        <div
                           className="p-2 rounded-lg"
                           style={{ backgroundColor: KAZIPERT_COLORS.accent + '15' }}
                         >
@@ -950,8 +990,8 @@ export default function EmployerDashboard() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   className="w-full justify-between"
                   style={{ color: KAZIPERT_COLORS.primary }}
                   onClick={() => router.push('/employer/jobs')}
@@ -977,7 +1017,7 @@ export default function EmployerDashboard() {
                 {kazipertServices.map((service, index) => (
                   <div key={service.name} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
                     <div className="flex items-center gap-3">
-                      <div 
+                      <div
                         className="p-2 rounded-lg"
                         style={{ backgroundColor: service.color + '15' }}
                       >
@@ -992,10 +1032,10 @@ export default function EmployerDashboard() {
                         </div>
                       </div>
                     </div>
-                    <Badge 
+                    <Badge
                       className={cn(
                         "text-xs",
-                        service.status === 'active' 
+                        service.status === 'active'
                           ? "bg-green-500/10 text-green-600 border-green-200"
                           : "bg-blue-500/10 text-blue-600 border-blue-200"
                       )}
@@ -1006,8 +1046,8 @@ export default function EmployerDashboard() {
                 ))}
               </CardContent>
               <CardFooter>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   className="w-full justify-between"
                   style={{ color: KAZIPERT_COLORS.primary }}
                   onClick={() => router.push('/employer/services')}
@@ -1020,7 +1060,7 @@ export default function EmployerDashboard() {
           </div>
         </div>
 
-        
+
       </div>
     </div>
   )
@@ -1029,6 +1069,6 @@ export default function EmployerDashboard() {
 // Missing icon component
 const Trees = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <path d="M8 17h12M8 21h12M8 13h12M4 17h.01M4 21h.01M4 13h.01M4 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2z"/>
+    <path d="M8 17h12M8 21h12M8 13h12M4 17h.01M4 21h.01M4 13h.01M4 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2z" />
   </svg>
 )

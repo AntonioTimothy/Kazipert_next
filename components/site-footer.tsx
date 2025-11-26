@@ -4,7 +4,7 @@ import { Facebook, Twitter, Linkedin, Instagram, Mail, Phone, MapPin } from "luc
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border bg-gradient-to-b from-white to-[#117c82]/5">
+    <footer className="border-t border-border bg-gradient-to-b from-white to-[#117c82]/5 px-4 md:px-8">
       <div className="container py-12 md:py-16">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Company Info */}

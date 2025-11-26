@@ -83,18 +83,7 @@ export default function FeaturesSection () {
 
       <div className="relative z-10 max-w-7xl mx-auto px-6">
 
-        {/* CENTER ROUND IMAGE */}
-        <div className="flex justify-center mb-16">
-          <div className="w-56 h-56 rounded-full overflow-hidden border-4 border-white/40 shadow-xl">
-            <Image
-              src="/employee5.jpg"
-              alt="Center"
-              width={400}
-              height={400}
-              className="object-cover"
-            />
-          </div>
-        </div>
+      
 
         {/* ---------------------------------------------------- */}
         {/* FOUR FEATURE / INSURANCE CARDS                       */}
@@ -130,6 +119,20 @@ export default function FeaturesSection () {
             </div>
           ))}
 
+        </div>
+
+
+          {/* CENTER ROUND IMAGE */}
+        <div className="flex justify-left-16 mt-16">
+          <div className="w-56 h-56 rounded-full overflow-hidden border-4 border-white/40 shadow-xl">
+            <Image
+              src="/employee5.jpg"
+              alt="Center"
+              width={350}
+              height={350}
+              className="object-cover"
+            />
+          </div>
         </div>
 
       </div>

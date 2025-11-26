@@ -40,7 +40,7 @@ export function SiteHeader() {
         onClick={onClick}
         className={cn(
           "group relative text-sm font-semibold transition-colors duration-200",
-          isActive ? "text-[#117c82]" : "text-gray-700 hover:text-[#117c82]"
+          isActive ? "text-[#117c82]" : "text-[#463189] hover:text-[#117c82]"
         )}
       >
         {children}
@@ -82,7 +82,7 @@ export function SiteHeader() {
             <NavLink href="/">Home</NavLink>
             <NavLink href="/about">About</NavLink>
             <NavLink href="/training">Training</NavLink>
-           
+
             <NavLink href="/videos">Videos</NavLink>
             <NavLink href="/resources">Resources</NavLink>
             <NavLink href="/contact">Contact Us</NavLink>
@@ -151,7 +151,7 @@ export function SiteHeader() {
                 <NavLink href="/" onClick={() => setMobileMenuOpen(false)}>Home</NavLink>
                 <NavLink href="/about" onClick={() => setMobileMenuOpen(false)}>About</NavLink>
                 <NavLink href="/training" onClick={() => setMobileMenuOpen(false)}>Training</NavLink>
-                
+
                 <NavLink href="/videos" onClick={() => setMobileMenuOpen(false)}>Videos</NavLink>
                 <NavLink href="/resources" onClick={() => setMobileMenuOpen(false)}>Resources</NavLink>
                 <NavLink href="/contact" onClick={() => setMobileMenuOpen(false)}>Contact Us</NavLink>

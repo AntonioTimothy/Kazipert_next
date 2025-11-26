@@ -6,8 +6,11 @@ import { Autoplay } from "swiper/modules"
 import "swiper/css"
 import "swiper/css/pagination"
 import { Shield, FileCheck, Plane, CreditCard, Users, Headphones } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 export function RegistrationSection() {
+  const router = useRouter()
+
   const images = [
     "/employee1.jpg",
     "/employee2.jpg",
@@ -60,41 +63,27 @@ export function RegistrationSection() {
   return (
     <section className="relative bg-white pt-8 md:pt-12 lg:pt-14 pb-12 md:pb-16 overflow-hidden">
 
-      {/* -------------------- */}
-      {/* NEW BEAUTIFUL BACKGROUND SHAPES */}
-      {/* -------------------- */}
-
-      {/* CENTRAL FLIPPED TRIANGLE (green) */}
+      {/* TRIANGLE BG */}
       <div className="pointer-events-none absolute left-1/2 top-40 -translate-x-1/2 w-[520px] h-[520px] md:w-[700px] md:h-[700px] opacity-15 -z-10">
         <svg viewBox="0 0 500 500" className="absolute w-full h-full rotate-180">
-          <polygon
-            points="250,0 500,500 0,500"
-            fill="#117c82"
-          />
+          <polygon points="250,0 500,500 0,500" fill="#117c82" />
         </svg>
       </div>
 
-      {/* TRAPEZIUM EXTENDING ALL THE WAY TO THE RIGHT */}
+      {/* TRAPEZIUM */}
       <div className="pointer-events-none absolute top-[420px] left-1/2 -translate-x-1/2 w-[1000px] h-[300px] md:w-[1500px] opacity-20 -z-10">
         <svg viewBox="0 0 1200 400" className="absolute w-full h-full">
-          <polygon
-            points="200,0 1000,0 1200,400 0,400"
-            fill="#0F8A8D"
-          />
+          <polygon points="200,0 1000,0 1200,400 0,400" fill="#0F8A8D" />
         </svg>
       </div>
 
-      {/* VERY LIGHT TEXTURE (optional) */}
+      {/* LIGHT TEXTURE */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('/icons-bg.svg')] bg-center bg-repeat" />
 
-      {/* -------------------- */}
-      {/* CONTENT WRAPPER */}
-      {/* -------------------- */}
+      {/* CONTENT */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
 
-        {/* ---------------------------- */}
         {/* IMAGE SLIDER */}
-        {/* ---------------------------- */}
         <div className="w-full rounded-xl overflow-hidden mb-8 md:mb-10">
           <Swiper
             modules={[Autoplay]}
@@ -117,11 +106,9 @@ export function RegistrationSection() {
           </Swiper>
         </div>
 
-        {/* ---------------------------- */}
-        {/* TITLE & PARAGRAPH */}
-        {/* ---------------------------- */}
+        {/* TEXT */}
         <div className="text-center max-w-3xl mx-auto mb-10 md:mb-12">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#463189] mb-3">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#625F8D] mb-3">
             Finally, it's here!
           </h2>
 
@@ -136,9 +123,7 @@ export function RegistrationSection() {
           </p>
         </div>
 
-        {/* ---------------------------- */}
         {/* FEATURES SLIDER */}
-        {/* ---------------------------- */}
         <div className="mb-6">
           <Swiper
             modules={[Autoplay]}
@@ -165,6 +150,7 @@ export function RegistrationSection() {
                         >
                           <Icon className="h-6 w-6" style={{ color: f.color }} />
                         </div>
+
                         <h3 className="text-lg font-extrabold text-gray-900">
                           {f.title}
                         </h3>
@@ -174,8 +160,10 @@ export function RegistrationSection() {
                         {f.description}
                       </p>
 
+                      {/* UPDATED BUTTON */}
                       <div className="mt-2">
                         <button
+                          onClick={() => router.push("/about-us")}
                           className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm shadow-sm"
                           style={{
                             background: f.color,
@@ -185,6 +173,7 @@ export function RegistrationSection() {
                           Learn more
                         </button>
                       </div>
+
                     </div>
                   </div>
                 </SwiperSlide>

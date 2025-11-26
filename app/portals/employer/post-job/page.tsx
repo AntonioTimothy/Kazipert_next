@@ -222,6 +222,13 @@ export default function EmployerJobsPage() {
     if (jobForm.hasPool) baseSalary += 12 // Reduced from 18
     
     // Duties complexity
+    //  Add medical care duty
+    // if (jobForm.duties.includes("Medical care")) {
+    //   baseSalary += 25
+    // }
+
+    // define duty values
+    
     jobForm.duties.forEach(duty => {
       const dutyValues: { [key: string]: number } = {
         "Childcare": 20, // Reduced
@@ -242,7 +249,7 @@ export default function EmployerJobsPage() {
     
     // Round to nearest 5 OMR and cap at reasonable maximum
     const finalSalary = Math.ceil(baseSalary / 5) * 5
-    return Math.min(finalSalary, 180) // Cap at 180 OMR
+    return Math.min(finalSalary, 160) // Cap at 180 OMR
   }
 
   // Enhanced duty options

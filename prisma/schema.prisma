@@ -182,8 +182,17 @@ model KycDetails {
   
   // Payment
   paymentStatus     String? @default("pending")
+  paymentMethod     String? // 'mpesa' or 'pesapal'
+  paymentCurrency   String? // 'KES', 'OMR', etc.
+  paymentAmount     Float?
+  
+  // M-Pesa Payment (for workers)
   mpesaNumber       String?
   transactionCode   String?
+  
+  // Pesapal Payment (for employers)
+  pesapalOrderTrackingId    String?
+  pesapalMerchantReference  String?
   
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
