@@ -88,8 +88,7 @@ export default function WorkerJobsPage() {
   const [showApplyModal, setShowApplyModal] = useState(false)
   const [selectedJobForApply, setSelectedJobForApply] = useState<any>(null)
   const [applicationForm, setApplicationForm] = useState({
-    coverLetter: "",
-    expectedSalary: 0
+    coverLetter: ""
   })
 
   const jobsPerPage = 6
@@ -193,10 +192,7 @@ export default function WorkerJobsPage() {
 
   const handleApply = (job: any) => {
     setSelectedJobForApply(job)
-    setApplicationForm({
-      coverLetter: "",
-      expectedSalary: job.salary
-    })
+    setApplicationForm({ coverLetter: "" })
     setShowApplyModal(true)
   }
 
@@ -204,17 +200,23 @@ export default function WorkerJobsPage() {
     if (!selectedJobForApply) return
 
     try {
-      await jobService.createApplication(
+      const response = await jobService.createApplication(
         selectedJobForApply.id,
         applicationForm.coverLetter,
-        applicationForm.expectedSalary,
         isDraft
       )
 
-      // Update local state
-      setJobs(prev => prev.map(job =>
-        job.id === selectedJobForApply.id ? { ...job, applied: !isDraft } : job
-      ))
+      // Update jobs list to reflect applied status
+      const updatedJobs = jobs.map((j: any) =>
+        j.id === selectedJobForApply.id ? { ...j, applied: !isDraft } : j
+      )
+      setJobs(updatedJobs)
+
+      // Update saved jobs list to reflect applied status
+      const updatedSavedJobs = savedJobsList.map((j: any) =>
+        j.id === selectedJobForApply.id ? { ...j, applied: !isDraft } : j
+      )
+      setSavedJobsList(updatedSavedJobs)
 
       // Refresh applications
       await refreshApplications()
@@ -227,7 +229,6 @@ export default function WorkerJobsPage() {
       } else {
         alert('Application submitted successfully!')
       }
-
     } catch (error) {
       console.error('Error applying to job:', error)
       alert('Failed to submit application. Please try again.')
@@ -1271,16 +1272,6 @@ export default function WorkerJobsPage() {
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="salary">Expected Salary (OMR)</Label>
-              <Input
-                id="salary"
-                type="number"
-                value={applicationForm.expectedSalary}
-                onChange={(e) => setApplicationForm(prev => ({ ...prev, expectedSalary: parseInt(e.target.value) }))}
-              />
-            </div>
-
             <div className="grid gap-2">
               <Label htmlFor="cover">Cover Message</Label>
               <Textarea

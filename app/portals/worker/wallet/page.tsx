@@ -37,8 +37,8 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTheme } from "@/contexts/ThemeContext"
 import { cn } from "@/lib/utils"
+import { walletService, transactionService } from "@/lib/services/apiServices"
 
-// Enhanced mock data for Oman domestic worker wallet
 const walletData = {
   balance: 0,
   currency: "OMR",
@@ -192,12 +192,13 @@ export default function WorkerWalletPage() {
   const [filterCategory, setFilterCategory] = useState("all")
   const [visibleTransactions, setVisibleTransactions] = useState(4)
   const [showAllTransactions, setShowAllTransactions] = useState(false)
+  const [wallet, setWallet] = useState<any>(null)
+  const [transactions, setTransactions] = useState<any[]>([])
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       const userData = sessionStorage.getItem("user")
       if (!userData) {
         router.push("/login")
@@ -211,7 +212,20 @@ export default function WorkerWalletPage() {
       }
 
       setUser(parsedUser)
-      setLoading(false)
+
+      try {
+        // Fetch wallet data
+        const walletData = await walletService.getWallet()
+        setWallet(walletData)
+
+        // Fetch transactions
+        const transactionData = await transactionService.getTransactions('all')
+        setTransactions(transactionData.transactions || [])
+      } catch (error) {
+        console.error('Error loading wallet data:', error)
+      } finally {
+        setLoading(false)
+      }
     }
 
     loadData()
@@ -280,12 +294,12 @@ export default function WorkerWalletPage() {
     }
   }
 
-  const filteredTransactions = walletData.transactions.filter(transaction => 
-    filterCategory === "all" || transaction.category === filterCategory
+  const filteredTransactions = transactions.filter(transaction =>
+    filterCategory === "all" || transaction.type === filterCategory
   )
 
-  const displayedTransactions = showAllTransactions 
-    ? filteredTransactions 
+  const displayedTransactions = showAllTransactions
+    ? filteredTransactions
     : filteredTransactions.slice(0, visibleTransactions)
 
   // Skeleton loading component
@@ -317,17 +331,17 @@ export default function WorkerWalletPage() {
             </div>
             <div className="h-10 bg-gray-200 rounded w-32"></div>
           </div>
-          
+
           {/* Balance Card Skeleton */}
           <div className="h-40 bg-gray-200 rounded-2xl animate-pulse"></div>
-          
+
           {/* Quick Actions Skeleton */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="h-20 bg-gray-200 rounded-xl animate-pulse"></div>
             ))}
           </div>
-          
+
           {/* Transactions Skeleton */}
           <div className="space-y-2">
             {[...Array(4)].map((_, i) => (
@@ -355,9 +369,9 @@ export default function WorkerWalletPage() {
             </h1>
             <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">Manage your salary and transactions</p>
           </div>
-          
+
           <div className="flex items-center gap-2">
-            <Badge 
+            <Badge
               variant="secondary"
               className="px-2 py-1 text-xs border-0"
               style={{
@@ -385,7 +399,7 @@ export default function WorkerWalletPage() {
         </div>
 
         {/* ATM-Style Balance Card */}
-        <Card 
+        <Card
           className="border-0 shadow-2xl relative overflow-hidden min-h-[180px] md:min-h-[200px]"
           style={{
             background: `linear-gradient(135deg, ${currentTheme.colors.primary}20 0%, ${currentTheme.colors.primary}10 50%, ${currentTheme.colors.card} 100%)`,
@@ -393,7 +407,7 @@ export default function WorkerWalletPage() {
           }}
         >
           <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
-          
+
           <CardContent className="relative z-10 p-6 md:p-8">
             <div className="flex flex-col h-full justify-between">
               <div className="flex justify-between items-start mb-6">
@@ -406,7 +420,7 @@ export default function WorkerWalletPage() {
                   <p className="text-xs text-muted-foreground">Current</p>
                 </div>
               </div>
-              
+
               <div className="text-center">
                 <div className="mb-2">
                   <p className="text-sm md:text-base text-muted-foreground font-medium">TOTAL BALANCE</p>
@@ -417,7 +431,7 @@ export default function WorkerWalletPage() {
                 )}>
                   {showBalance ? (
                     <span style={{ color: currentTheme.colors.text }}>
-                      {walletData.currency} {walletData.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {wallet?.currency || 'OMR'} {(wallet?.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   ) : (
                     <span className="tracking-widest">•••••••</span>
@@ -458,10 +472,10 @@ export default function WorkerWalletPage() {
 
         {/* Main Tabs - Mobile Optimized */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList 
+          <TabsList
             className="grid w-full grid-cols-3 p-1 rounded-lg md:rounded-xl bg-card/80 backdrop-blur-sm border text-xs md:text-sm"
           >
-            <TabsTrigger 
+            <TabsTrigger
               value="overview"
               className="rounded-md md:rounded-lg data-[state=active]:shadow-sm transition-all duration-300 py-2"
               style={{
@@ -472,7 +486,7 @@ export default function WorkerWalletPage() {
               <BarChart3 className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
               Overview
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="transfer"
               className="rounded-md md:rounded-lg data-[state=active]:shadow-sm transition-all duration-300 py-2"
               style={{
@@ -483,7 +497,7 @@ export default function WorkerWalletPage() {
               <Send className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
               Transfer
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="statement"
               className="rounded-md md:rounded-lg data-[state=active]:shadow-sm transition-all duration-300 py-2"
               style={{
@@ -509,15 +523,15 @@ export default function WorkerWalletPage() {
                   <CardDescription className="text-sm">Latest transactions</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 p-0">
-                  {walletData.transactions.slice(0, 4).map((transaction) => (
+                  {transactions.slice(0, 4).map((transaction) => (
                     <div key={transaction.id} className="flex items-center justify-between p-3 border-b border-border/30 last:border-b-0">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <div className={cn(
                           "flex h-6 w-6 md:h-8 md:w-8 items-center justify-center rounded flex-shrink-0",
                           transaction.type === 'credit' ? "bg-green-500/10" : "bg-red-500/10"
                         )}>
-                          {transaction.type === 'credit' ? 
-                            <ArrowDownLeft className="h-3 w-3 md:h-4 md:w-4 text-green-500" /> : 
+                          {transaction.type === 'credit' ?
+                            <ArrowDownLeft className="h-3 w-3 md:h-4 md:w-4 text-green-500" /> :
                             <ArrowUpRight className="h-3 w-3 md:h-4 md:w-4 text-red-500" />
                           }
                         </div>
@@ -531,12 +545,12 @@ export default function WorkerWalletPage() {
                       <div className="text-right flex-shrink-0 ml-2">
                         <p className={cn(
                           "font-semibold text-sm whitespace-nowrap",
-                          transaction.type === 'credit' ? "text-green-600" : "text-red-600"
+                          transaction.type === 'SALARY_PAYMENT' || transaction.type === 'BONUS' ? "text-green-600" : "text-red-600"
                         )}>
-                          {transaction.type === 'credit' ? '+' : '-'}{walletData.currency} {transaction.amount}
+                          {(transaction.type === 'SALARY_PAYMENT' || transaction.type === 'BONUS') ? '+' : '-'}{wallet?.currency || 'OMR'} {transaction.amount}
                         </p>
-                        <Badge 
-                          variant="outline" 
+                        <Badge
+                          variant="outline"
                           className={cn("text-xs border-0 px-1 py-0", getStatusColor(transaction.status))}
                         >
                           {transaction.status}
@@ -546,8 +560,8 @@ export default function WorkerWalletPage() {
                   ))}
                 </CardContent>
                 <CardFooter className="pt-3">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full border-primary/30 hover:bg-primary/10 text-sm py-2"
                     onClick={() => setActiveTab("statement")}
                   >
@@ -584,7 +598,7 @@ export default function WorkerWalletPage() {
                       <span className="font-semibold text-sm">OMR</span>
                     </div>
                   </div>
-                  
+
                   <div className="p-3 rounded border border-amber-200 bg-amber-50/50 text-xs">
                     <div className="flex items-start gap-2">
                       <AlertCircle className="h-3 w-3 md:h-4 md:w-4 text-amber-600 mt-0.5 flex-shrink-0" />
@@ -615,7 +629,7 @@ export default function WorkerWalletPage() {
                 <div className="space-y-3">
                   <div>
                     <label className="text-sm font-medium mb-2 block">Recipient Bank</label>
-                    <select 
+                    <select
                       className="w-full p-2 md:p-3 border border-border rounded-lg focus:border-primary/50 bg-background text-sm"
                       onChange={(e) => setRecipient("")}
                     >
@@ -660,7 +674,7 @@ export default function WorkerWalletPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button 
+                <Button
                   className="w-full text-sm py-2"
                   onClick={handleTransfer}
                   disabled={isProcessing}
@@ -686,7 +700,7 @@ export default function WorkerWalletPage() {
           </TabsContent>
 
           {/* Statement Tab - Excel-like Design */}
-          
+
           <TabsContent value="statement" className="space-y-4">
             <Card className="border-0 shadow-lg bg-card/80 backdrop-blur-sm">
               <CardHeader className="pb-3">
@@ -699,7 +713,7 @@ export default function WorkerWalletPage() {
                     <CardDescription className="text-sm">Transaction history</CardDescription>
                   </div>
                   <div className="flex gap-2">
-                    <select 
+                    <select
                       className="p-2 border border-border rounded bg-background text-xs"
                       value={filterCategory}
                       onChange={(e) => setFilterCategory(e.target.value)}
@@ -732,7 +746,7 @@ export default function WorkerWalletPage() {
                 {/* Excel-like Rows */}
                 <div className="max-h-96 overflow-y-auto">
                   {displayedTransactions.map((transaction, index) => (
-                    <div 
+                    <div
                       key={transaction.id}
                       className={cn(
                         "grid grid-cols-12 gap-2 p-3 border-b border-border/30 text-sm hover:bg-primary/5 transition-colors",
@@ -746,8 +760,8 @@ export default function WorkerWalletPage() {
                         </div>
                       </div>
                       <div className="col-span-2 flex items-center justify-center">
-                        <Badge 
-                          variant="outline" 
+                        <Badge
+                          variant="outline"
                           className={cn("text-xs border-0 capitalize", getCategoryColor(transaction.category))}
                         >
                           {transaction.category}
@@ -760,8 +774,8 @@ export default function WorkerWalletPage() {
                         {transaction.type === 'credit' ? '+' : '-'}{walletData.currency} {transaction.amount}
                       </div>
                       <div className="col-span-2 flex items-center justify-center">
-                        <Badge 
-                          variant="outline" 
+                        <Badge
+                          variant="outline"
                           className={cn("text-xs border-0", getStatusColor(transaction.status))}
                         >
                           {getStatusIcon(transaction.status)}
@@ -780,8 +794,8 @@ export default function WorkerWalletPage() {
               </CardContent>
               <CardFooter className="flex flex-col gap-3 pt-3">
                 {!showAllTransactions && filteredTransactions.length > visibleTransactions && (
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={loadMoreTransactions}
                     className="w-full border-primary/30 hover:bg-primary/10 text-sm py-2"
                   >
@@ -789,10 +803,10 @@ export default function WorkerWalletPage() {
                     Load More ({filteredTransactions.length - visibleTransactions} remaining)
                   </Button>
                 )}
-                
+
                 {filteredTransactions.length > 4 && (
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     onClick={() => setShowAllTransactions(!showAllTransactions)}
                     className="text-xs text-muted-foreground hover:text-foreground"
                   >

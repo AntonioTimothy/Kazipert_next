@@ -1,18 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { 
-  MessageSquare, 
-  Plus, 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  MessageSquare,
+  Plus,
   Send,
   Headphones,
   ShieldCheck
 } from "lucide-react"
 import { useTheme } from "@/contexts/ThemeContext"
+import { supportService } from "@/lib/services/apiServices"
 
 export default function WorkerSupportPage() {
   const { currentTheme } = useTheme()
@@ -20,104 +22,76 @@ export default function WorkerSupportPage() {
   const [newMessage, setNewMessage] = useState("")
   const [ticketSubject, setTicketSubject] = useState("")
   const [ticketDescription, setTicketDescription] = useState("")
+  const [ticketCategory, setTicketCategory] = useState("GENERAL")
+  const [ticketPriority, setTicketPriority] = useState("MEDIUM")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [tickets, setTickets] = useState<any[]>([])
+  const [selectedTicket, setSelectedTicket] = useState<any>(null)
 
-  // Single test message
-  const [supportData] = useState({
-    tickets: [
-      {
-        id: "TKT001",
-        subject: "Test Support Ticket",
-        description: "This is a test message from support",
-        status: "open",
-        createdAt: new Date().toISOString().split('T')[0],
-        lastMessage: "Welcome to Kazipert Support! How can we help you today?",
-        responses: [
-          {
-            id: "RES001",
-            message: "Welcome to Kazipert Support! How can we help you today?",
-            sender: "Support Agent",
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            isAgent: true,
-          }
-        ]
+  useEffect(() => {
+    fetchTickets()
+  }, [])
+
+  const fetchTickets = async () => {
+    try {
+      setLoading(true)
+      const data = await supportService.getTickets()
+      setTickets(data.tickets || [])
+      if (data.tickets && data.tickets.length > 0) {
+        setSelectedTicket(data.tickets[0])
       }
-    ]
-  })
-
-  const [selectedTicket, setSelectedTicket] = useState(supportData.tickets[0])
-
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return
-
-    const newResponse = {
-      id: `RES${Date.now()}`,
-      message: newMessage,
-      sender: "You",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isAgent: false,
+    } catch (error) {
+      console.error('Error fetching tickets:', error)
+    } finally {
+      setLoading(false)
     }
-
-    const updatedTicket = {
-      ...selectedTicket,
-      responses: [...selectedTicket.responses, newResponse],
-      lastMessage: newMessage,
-      updatedAt: new Date().toISOString().split('T')[0],
-    }
-    
-    setSelectedTicket(updatedTicket)
-    setNewMessage("")
-
-    // Simulate agent response
-    setTimeout(() => {
-      const agentResponse = {
-        id: `RES${Date.now() + 1}`,
-        message: "Thank you for your message. We'll respond to your inquiry shortly.",
-        sender: "Support Agent",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isAgent: true,
-      }
-
-      const finalUpdatedTicket = {
-        ...updatedTicket,
-        responses: [...updatedTicket.responses, agentResponse],
-        lastMessage: agentResponse.message,
-      }
-      
-      setSelectedTicket(finalUpdatedTicket)
-    }, 1000)
   }
 
-  const handleCreateTicket = () => {
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedTicket) return
+
+    try {
+      await supportService.addMessage({
+        ticketId: selectedTicket.id,
+        message: newMessage
+      })
+
+      setNewMessage("")
+      await fetchTickets()
+    } catch (error) {
+      console.error('Error sending message:', error)
+      alert('Failed to send message. Please try again.')
+    }
+  }
+
+  const handleCreateTicket = async () => {
     if (!ticketSubject.trim() || !ticketDescription.trim()) return
 
     setIsSubmitting(true)
 
-    setTimeout(() => {
-      const newTicket = {
-        id: `TKT${Date.now()}`,
+    try {
+      const newTicket = await supportService.createTicket({
         subject: ticketSubject,
         description: ticketDescription,
-        status: "open",
-        createdAt: new Date().toISOString().split('T')[0],
-        lastMessage: "Thank you for creating a new ticket. We'll assist you shortly.",
-        responses: [
-          {
-            id: "RES001",
-            message: "Thank you for creating a new ticket. We'll assist you shortly.",
-            sender: "Support Agent",
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            isAgent: true,
-          }
-        ]
-      }
+        category: ticketCategory,
+        priority: ticketPriority
+      })
 
-      setSelectedTicket(newTicket)
       setTicketSubject("")
       setTicketDescription("")
+      setTicketCategory("GENERAL")
+      setTicketPriority("MEDIUM")
       setIsSubmitting(false)
       setActiveTab("support-chat")
-    }, 1000)
+
+      await fetchTickets()
+      setSelectedTicket(newTicket)
+    } catch (error) {
+      console.error('Error creating ticket:', error)
+      alert('Failed to create ticket. Please try again.')
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -134,8 +108,8 @@ export default function WorkerSupportPage() {
               Get help with your questions and issues
             </p>
           </div>
-          <Button 
-            variant="secondary" 
+          <Button
+            variant="secondary"
             className="px-3 py-1 text-xs w-fit"
             onClick={() => setActiveTab("new-ticket")}
           >
@@ -149,11 +123,10 @@ export default function WorkerSupportPage() {
           <CardContent className="p-0">
             <div className="flex border-b">
               <button
-                className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === "support-chat" 
-                    ? "border-primary text-primary" 
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
+                className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "support-chat"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
                 onClick={() => setActiveTab("support-chat")}
                 style={{
                   borderBottomColor: activeTab === "support-chat" ? currentTheme.colors.primary : 'transparent'
@@ -163,11 +136,10 @@ export default function WorkerSupportPage() {
                 Support Chat
               </button>
               <button
-                className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === "new-ticket" 
-                    ? "border-primary text-primary" 
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
+                className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "new-ticket"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
                 onClick={() => setActiveTab("new-ticket")}
                 style={{
                   borderBottomColor: activeTab === "new-ticket" ? currentTheme.colors.primary : 'transparent'
@@ -191,33 +163,36 @@ export default function WorkerSupportPage() {
 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {selectedTicket.responses.map((response) => (
+                  {loading ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                    </div>
+                  ) : selectedTicket?.messages?.map((msg: any) => (
                     <div
-                      key={response.id}
-                      className={`flex ${response.isAgent ? 'justify-start' : 'justify-end'}`}
+                      key={msg.id}
+                      className={`flex ${msg.sender.role === 'ADMIN' || msg.sender.role === 'SUPER_ADMIN' ? 'justify-start' : 'justify-end'}`}
                     >
                       <div
-                        className={`max-w-[70%] rounded-lg p-3 ${
-                          response.isAgent
-                            ? 'bg-muted rounded-tl-none'
-                            : 'rounded-tr-none text-white'
-                        }`}
+                        className={`max-w-[70%] rounded-lg p-3 ${msg.sender.role === 'ADMIN' || msg.sender.role === 'SUPER_ADMIN'
+                          ? 'bg-muted rounded-tl-none'
+                          : 'rounded-tr-none text-white'
+                          }`}
                         style={{
-                          backgroundColor: response.isAgent 
-                            ? currentTheme.colors.backgroundLight 
+                          backgroundColor: (msg.sender.role === 'ADMIN' || msg.sender.role === 'SUPER_ADMIN')
+                            ? currentTheme.colors.backgroundLight
                             : currentTheme.colors.primary,
-                          color: response.isAgent ? currentTheme.colors.text : currentTheme.colors.text
+                          color: (msg.sender.role === 'ADMIN' || msg.sender.role === 'SUPER_ADMIN') ? currentTheme.colors.text : currentTheme.colors.text
                         }}
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xs font-medium">
-                            {response.sender}
+                            {msg.sender.firstName} {msg.sender.lastName}
                           </span>
                           <span className="text-xs opacity-70">
-                            {response.timestamp}
+                            {new Date(msg.createdAt).toLocaleTimeString()}
                           </span>
                         </div>
-                        <p className="text-sm">{response.message}</p>
+                        <p className="text-sm">{msg.message}</p>
                       </div>
                     </div>
                   ))}
@@ -235,10 +210,10 @@ export default function WorkerSupportPage() {
                         className="border-0 bg-background focus-visible:ring-1"
                       />
                     </div>
-                    <Button 
+                    <Button
                       onClick={handleSendMessage}
                       disabled={!newMessage.trim()}
-                      style={{ 
+                      style={{
                         backgroundColor: currentTheme.colors.primary,
                         color: currentTheme.colors.text
                       }}
@@ -273,7 +248,39 @@ export default function WorkerSupportPage() {
                         onChange={(e) => setTicketSubject(e.target.value)}
                       />
                     </div>
-                    
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Category</label>
+                      <Select value={ticketCategory} onValueChange={setTicketCategory}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="GENERAL">General</SelectItem>
+                          <SelectItem value="PAYMENT">Payment</SelectItem>
+                          <SelectItem value="CONTRACT">Contract</SelectItem>
+                          <SelectItem value="TECHNICAL">Technical</SelectItem>
+                          <SelectItem value="ABUSE">Abuse</SelectItem>
+                          <SelectItem value="EMERGENCY">Emergency</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Priority</label>
+                      <Select value={ticketPriority} onValueChange={setTicketPriority}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="LOW">Low</SelectItem>
+                          <SelectItem value="MEDIUM">Medium</SelectItem>
+                          <SelectItem value="HIGH">High</SelectItem>
+                          <SelectItem value="URGENT">Urgent</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Description</label>
                       <Textarea

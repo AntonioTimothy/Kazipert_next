@@ -181,7 +181,7 @@ export const jobService = {
         return handleResponse(response)
     },
 
-    async createApplication(jobId: string, coverLetter?: string, expectedSalary?: number, isDraft: boolean = false) {
+    async createApplication(jobId: string, coverLetter?: string, isDraft: boolean = false) {
         const response = await fetch(`${API_BASE}/applications`, {
             method: 'POST',
             credentials: 'include',
@@ -191,7 +191,6 @@ export const jobService = {
             body: JSON.stringify({
                 jobId,
                 coverLetter,
-                expectedSalary,
                 isDraft
             })
         })

@@ -22,12 +22,14 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import type { WorkerProfile } from "@/lib/mock-data"
-import { mockSalaryPayments, mockMpesaTransactions } from "@/lib/mock-data"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { transactionService } from "@/lib/services/apiServices"
 
 export default function WorkerPaymentHistory() {
   const router = useRouter()
   const [user, setUser] = useState<WorkerProfile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [transactions, setTransactions] = useState<any[]>([])
 
   useEffect(() => {
     const userData = sessionStorage.getItem("user")
@@ -37,54 +39,55 @@ export default function WorkerPaymentHistory() {
     }
 
     const parsedUser = JSON.parse(userData)
-    if (parsedUser.role !== "worker") {
+    if (parsedUser.role !== "worker" && parsedUser.role !== "EMPLOYEE") {
       router.push("/login")
       return
     }
 
     setUser(parsedUser)
+    fetchTransactions()
   }, [router])
+
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true)
+      const data = await transactionService.getTransactions('all')
+      setTransactions(data.transactions || [])
+    } catch (error) {
+      console.error('Error fetching transactions:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (!user) {
     return <div>Loading...</div>
   }
 
-  const navigationdsds = [
-    { name: "Dashboard", href: "/worker/dashboard", icon: Home },
-    { name: "My Profile", href: "/worker/profile", icon: User },
-    { name: "Find Jobs", href: "/worker/jobs", icon: Briefcase },
-    { name: "My Contracts", href: "/worker/contracts", icon: FileText },
-    { name: "Payments", href: "/worker/payments", icon: CreditCard },
-    { name: "Payment History", href: "/worker/payment-history", icon: Clock },
-    { name: "Services", href: "/worker/services", icon: Shield },
-    { name: "Training", href: "/worker/training", icon: Video },
-    { name: "Support", href: "/worker/support", icon: MessageSquare },
-  ]
-
   const navigation = [
     { name: "Dashboard", href: "/worker/dashboard", icon: Home },
-    
     { name: "Find Jobs", href: "/worker/jobs", icon: Briefcase },
     { name: "My Applications", href: "/worker/contracts", icon: FileText },
     { name: "Wallet", href: "/worker/payments", icon: CreditCard },
     { name: "Services", href: "/worker/services", icon: Shield },
     { name: "Training", href: "/worker/training", icon: Video },
     { name: "Reviews", href: "/worker/reviews", icon: Star },
-
     { name: "Support", href: "/worker/support", icon: MessageSquare },
   ]
 
-
-  const userSalaryPayments = mockSalaryPayments.filter((p) => p.workerId === user.id)
-  const userMpesaTransactions = mockMpesaTransactions.filter((t) => t.workerId === user.id)
+  const salaryPayments = transactions.filter(t => t.type === 'SALARY_PAYMENT')
+  const otherTransactions = transactions.filter(t => t.type !== 'SALARY_PAYMENT')
 
   const getStatusIcon = (status: string) => {
     switch (status) {
+      case "COMPLETED":
       case "paid":
       case "completed":
         return <CheckCircle className="h-4 w-4 text-green-500" />
+      case "PENDING":
       case "pending":
         return <Clock className="h-4 w-4 text-yellow-500" />
+      case "FAILED":
       case "failed":
         return <XCircle className="h-4 w-4 text-red-500" />
       default:
@@ -112,7 +115,7 @@ export default function WorkerPaymentHistory() {
         <Tabs defaultValue="salary" className="space-y-6">
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="salary">Salary Payments</TabsTrigger>
-            <TabsTrigger value="mpesa">M-Pesa Transfers</TabsTrigger>
+            <TabsTrigger value="mpesa">Other Transactions</TabsTrigger>
           </TabsList>
 
           <TabsContent value="salary" className="space-y-4">
@@ -122,7 +125,15 @@ export default function WorkerPaymentHistory() {
                 <CardDescription>All salary payments from your employer</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {userSalaryPayments.map((payment) => (
+                {loading ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                  </div>
+                ) : salaryPayments.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No salary payments yet
+                  </div>
+                ) : salaryPayments.map((payment) => (
                   <div
                     key={payment.id}
                     className="flex items-center justify-between rounded-lg border border-border p-4 hover:bg-muted/50 transition-colors"
@@ -132,10 +143,12 @@ export default function WorkerPaymentHistory() {
                         <ArrowDownRight className="h-6 w-6 text-green-500" />
                       </div>
                       <div>
-                        <div className="font-semibold">Salary Payment - {payment.month}</div>
-                        <div className="text-sm text-muted-foreground">From {payment.employerName}</div>
+                        <div className="font-semibold">Salary Payment</div>
+                        <div className="text-sm text-muted-foreground">
+                          {payment.description || 'Monthly Salary'}
+                        </div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          {payment.paidDate || "Pending"} • {payment.method.replace("_", " ")}
+                          {new Date(payment.createdAt).toLocaleDateString()}
                         </div>
                       </div>
                     </div>
@@ -144,13 +157,7 @@ export default function WorkerPaymentHistory() {
                         +{payment.currency} {payment.amount}
                       </div>
                       <Badge
-                        variant={
-                          payment.status === "paid"
-                            ? "default"
-                            : payment.status === "pending"
-                              ? "secondary"
-                              : "destructive"
-                        }
+                        variant={payment.status === "COMPLETED" ? "default" : "secondary"}
                         className="mt-1"
                       >
                         {getStatusIcon(payment.status)}
@@ -166,11 +173,19 @@ export default function WorkerPaymentHistory() {
           <TabsContent value="mpesa" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>M-Pesa Transfer History</CardTitle>
-                <CardDescription>Money sent home to family and friends</CardDescription>
+                <CardTitle>Other Transactions</CardTitle>
+                <CardDescription>Withdrawals, fees, and other payments</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {userMpesaTransactions.map((transaction) => (
+                {loading ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                  </div>
+                ) : otherTransactions.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No other transactions yet
+                  </div>
+                ) : otherTransactions.map((transaction) => (
                   <div
                     key={transaction.id}
                     className="flex items-center justify-between rounded-lg border border-border p-4 hover:bg-muted/50 transition-colors"
@@ -180,22 +195,21 @@ export default function WorkerPaymentHistory() {
                         <ArrowUpRight className="h-6 w-6 text-red-500" />
                       </div>
                       <div>
-                        <div className="font-semibold">Sent to {transaction.recipient}</div>
-                        <div className="text-sm text-muted-foreground">{transaction.recipientPhone}</div>
-                        <div className="text-xs text-muted-foreground mt-1">{transaction.transactionDate}</div>
+                        <div className="font-semibold">{transaction.type.replace('_', ' ')}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {transaction.description || 'Transaction'}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {new Date(transaction.createdAt).toLocaleDateString()}
+                        </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-bold text-red-600">-${transaction.amount}</div>
-                      <div className="text-xs text-muted-foreground">Fee: ${transaction.fee}</div>
+                      <div className="text-lg font-bold text-red-600">
+                        -{transaction.currency} {transaction.amount}
+                      </div>
                       <Badge
-                        variant={
-                          transaction.status === "completed"
-                            ? "default"
-                            : transaction.status === "pending"
-                              ? "secondary"
-                              : "destructive"
-                        }
+                        variant={transaction.status === "COMPLETED" ? "default" : "secondary"}
                         className="mt-1"
                       >
                         {getStatusIcon(transaction.status)}

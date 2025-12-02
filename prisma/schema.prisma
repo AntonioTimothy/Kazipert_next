@@ -64,6 +64,20 @@ model User {
   // Notifications
   notifications     Notification[]
   
+  // Wallet & Transactions
+  wallet            Wallet?
+  sentTransactions  Transaction[]   @relation("SenderTransactions")
+  receivedTransactions Transaction[] @relation("ReceiverTransactions")
+  
+  // Support Tickets
+  supportTickets    SupportTicket[] @relation("TicketCreator")
+  assignedTickets   SupportTicket[] @relation("TicketAssignee")
+  ticketMessages    TicketMessage[]
+  
+  // Training Progress
+  classProgress     ClassProgress[]
+  testAttempts      TestAttempt[]
+  
   @@map("users")
 }
 
@@ -80,6 +94,8 @@ model Profile {
   address     String?
   idNumber    String?
   education   String?
+  passportPhotoUrl String?
+  studioPhotoUrl   String?
   notifications Json?  // Store notification preferences as JSON
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -252,19 +268,19 @@ model Job {
   
   // Basic Information
   title             String
-  type              JobType
+  type              JobType  @default(FULL_TIME) // Added default value
   description       String
   status            JobStatus @default(DRAFT)
   category          JobCategory?
   agreeToTruth      Boolean  @default(false)
   agreeToTerms      Boolean  @default(false)
   availableFromType AvailableFromType?
-
+  
   // Household Details
   residenceType     ResidenceType
-  bedrooms          Int
+  bedrooms          Int @default(1)
   bathrooms         Int
-  totalFloors       Int
+  totalFloors       Int @default(1)
   hasGarden         Boolean @default(false)
   hasPool           Boolean @default(false)
   squareMeters      Int?
@@ -332,7 +348,6 @@ model JobApplication {
   // Application Details
   status      ApplicationStatus @default(PENDING)
   coverLetter String?
-  expectedSalary Float?
   isDraft     Boolean     @default(false)
   
   // Enhanced workflow fields with progress tracking
@@ -618,9 +633,212 @@ enum NotificationType {
   INFO
   SUCCESS
   WARNING
-  ERROR
   JOB_ALERT
   APPLICATION_UPDATE
   CONTRACT_UPDATE
+  PAYMENT_RECEIVED
+  SUPPORT_TICKET
+  TRAINING_COMPLETE
+  SHORTLISTED
+  CONTRACT_GENERATED
+  FLIGHT_TICKET_UPLOADED
   SYSTEM
+}
+
+// Wallet & Payment Models
+model Wallet {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance     Float     @default(0)
+  currency    String    @default("OMR")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@map("wallets")
+}
+
+model Transaction {
+  id              String          @id @default(cuid())
+  amount          Float
+  currency        String          @default("OMR")
+  type            TransactionType
+  status          TransactionStatus @default(PENDING)
+  description     String?
+  reference       String?         @unique
+  
+  senderId        String?
+  sender          User?           @relation("SenderTransactions", fields: [senderId], references: [id])
+  receiverId      String?
+  receiver        User?           @relation("ReceiverTransactions", fields: [receiverId], references: [id])
+  
+  metadata        Json?           // Store additional payment details
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@map("transactions")
+}
+
+enum TransactionType {
+  VERIFICATION_FEE
+  SALARY_PAYMENT
+  WITHDRAWAL
+  REFUND
+  PENALTY
+  BONUS
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// Support Ticket Models
+model SupportTicket {
+  id              String        @id @default(cuid())
+  ticketNumber    String        @unique
+  subject         String
+  description     String        @db.Text
+  status          TicketStatus  @default(OPEN)
+  priority        TicketPriority @default(MEDIUM)
+  category        TicketCategory
+  escalationLevel EscalationLevel @default(SUPPORT)
+  
+  creatorId       String
+  creator         User          @relation("TicketCreator", fields: [creatorId], references: [id])
+  
+  assigneeId      String?
+  assignee        User?         @relation("TicketAssignee", fields: [assigneeId], references: [id])
+  
+  messages        TicketMessage[]
+  attachments     Json?         // Store file URLs
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  closedAt        DateTime?
+  
+  @@map("support_tickets")
+}
+
+model TicketMessage {
+  id          String        @id @default(cuid())
+  ticketId    String
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  senderId    String
+  sender      User          @relation(fields: [senderId], references: [id])
+  
+  message     String        @db.Text
+  attachments Json?         // Store file URLs
+  isInternal  Boolean       @default(false) // Admin-only notes
+  
+  createdAt   DateTime      @default(now())
+  
+  @@map("ticket_messages")
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_RESPONSE
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+  CRITICAL
+}
+
+enum TicketCategory {
+  GENERAL
+  PAYMENT
+  CONTRACT
+  TECHNICAL
+  ABUSE
+  EMERGENCY
+  LEGAL
+}
+
+enum EscalationLevel {
+  SUPPORT
+  MANAGER
+  LEGAL
+  EMERGENCY
+  COURT
+}
+
+// Training & Classes Models
+model TrainingClass {
+  id              String          @id @default(cuid())
+  title           String
+  description     String          @db.Text
+  videoUrl        String
+  thumbnailUrl    String?
+  duration        Int             // in seconds
+  order           Int             // Display order
+  isPublished     Boolean         @default(false)
+  
+  questions       TestQuestion[]
+  progress        ClassProgress[]
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@map("training_classes")
+}
+
+model ClassProgress {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  classId         String
+  class           TrainingClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  
+  watchedDuration Int           @default(0) // in seconds
+  completed       Boolean       @default(false)
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@unique([userId, classId])
+  @@map("class_progress")
+}
+
+model TestQuestion {
+  id              String        @id @default(cuid())
+  classId         String
+  class           TrainingClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  
+  question        String        @db.Text
+  options         Json          // Array of options
+  correctAnswer   Int           // Index of correct option
+  explanation     String?       @db.Text
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@map("test_questions")
+}
+
+model TestAttempt {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  classId         String
+  
+  answers         Json          // User's answers
+  score           Float         // Percentage score
+  passed          Boolean       // true if score >= 90%
+  
+  createdAt       DateTime      @default(now())
+  
+  @@map("test_attempts")
 }

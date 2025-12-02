@@ -208,13 +208,21 @@ export async function POST(request: NextRequest) {
         const job = await prisma.job.create({
             data: {
                 ...jobData,
+                type: jobData.type || 'FULL_TIME',
                 employerId: user.id,
+                totalFloors: jobData.totalFloors || 1,
                 postedAt: jobData.status === 'ACTIVE' ? new Date() : null,
-                // Ensure arrays are properly handled
+                familyMembers: jobData.familyMembers || 1,
+                accommodation: jobData.accommodation || 'APARTMENT',
+                meals: jobData.meals || 'BREAKFAST',
+                experienceRequired: jobData.experienceRequired || 'ONE_TO_TWO_YEARS',
+                languageRequirements: jobData.languageRequirements || [],
+                workingHours: jobData.workingHours || '10.5 hours/day',
+                employmentType: jobData.employmentType || 'FULL_TIME',
+                status: jobData.status || 'OPEN',
                 childrenAges: jobData.childrenAges || [],
                 pets: jobData.pets || [],
                 duties: jobData.duties || [],
-                languageRequirements: jobData.languageRequirements || [],
                 benefits: jobData.benefits || [],
                 certifications: jobData.certifications || [],
                 skills: jobData.skills || []

@@ -16,7 +16,9 @@ import {
   MessageSquare,
   Clock
 } from "lucide-react"
-import { useRouter } from "next/router"
+// import { useRouter } from "next/router"
+import { useRouter } from "next/navigation"
+
 
 const KAZIPERT_COLORS = {
   primary: '#117c82',
