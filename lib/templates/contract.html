@@ -329,6 +329,39 @@
             font-weight: 500;
         }
 
+        /* Photo placeholders */
+        .photo-placeholder {
+            width: 120px;
+            height: 150px;
+            background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+            border: 2px solid #2FA3A0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+            margin: 0 auto 10px;
+        }
+
+        .photo-section {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        /* Full width panels */
+        .full-panel {
+            width: 100%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.95));
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(47, 163, 160, 0.1);
+            margin-bottom: 20px;
+        }
+        }
+
         /* Stamp */
         .stamp {
             position: absolute;
@@ -585,6 +618,9 @@
             <div class="info">
                 <div class="panel">
                     <h2>Employer Details</h2>
+                    <div class="photo-section">
+                        <div class="photo-placeholder">{{EMPLOYER_PHOTO}}<br>EMPLOYER<br>PHOTO</div>
+                    </div>
                     <table>
                         <tr>
                             <td class="label">Name/Agency:</td>
@@ -614,11 +650,18 @@
                             <td class="label">Email:</td>
                             <td class="value">{{EMPLOYER_EMAIL}}</td>
                         </tr>
+                        <tr>
+                            <td class="label">Legal Rep:</td>
+                            <td class="value">{{EMPLOYER_LEGAL_REP}}</td>
+                        </tr>
                     </table>
                 </div>
 
                 <div class="panel">
                     <h2>Employee Details</h2>
+                    <div class="photo-section">
+                        <div class="photo-placeholder">{{EMPLOYEE_PHOTO}}<br>EMPLOYEE<br>PHOTO</div>
+                    </div>
                     <table>
                         <tr>
                             <td class="label">Full Name:</td>
@@ -658,11 +701,15 @@
                     <table>
                         <tr>
                             <td class="label">Primary Contact:</td>
-                            <td class="value">{{NEXT_OF_KIN_NAME}}<br>{{NEXT_OF_KIN_PHONE}}</td>
+                            <td class="value">{{NEXT_OF_KIN_NAME}}<br>{{NEXT_OF_KIN_PHONE}}<br>{{NEXT_OF_KIN_ADDRESS}}</td>
                         </tr>
                         <tr>
                             <td class="label">Secondary Contact:</td>
-                            <td class="value">{{NEXT_OF_KIN_2_NAME}}<br>{{NEXT_OF_KIN_2_PHONE}}</td>
+                            <td class="value">{{NEXT_OF_KIN_2_NAME}}<br>{{NEXT_OF_KIN_2_PHONE}}<br>{{NEXT_OF_KIN_2_ADDRESS}}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Relationship:</td>
+                            <td class="value">{{NEXT_OF_KIN_RELATIONSHIP}}</td>
                         </tr>
                     </table>
                 </div>
@@ -680,7 +727,11 @@
                         </tr>
                         <tr>
                             <td class="label">Monthly Salary:</td>
-                            <td class="value">{{MONTHLY_SALARY}}</td>
+                            <td class="value">{{MONTHLY_SALARY}} OMR</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Salary Due Date:</td>
+                            <td class="value">{{SALARY_DUE_DATE}}</td>
                         </tr>
                         <tr>
                             <td class="label">Working Hours:</td>
@@ -689,6 +740,88 @@
                         <tr>
                             <td class="label">Weekly Rest:</td>
                             <td class="value">1 day per week</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="full-panel">
+                <h2>Job Description & Benefits</h2>
+                <table style="width: 100%;">
+                    <tr>
+                        <td class="label" style="width: 25%;">Job Title:</td>
+                        <td class="value" style="width: 25%;">{{JOB_TITLE}}</td>
+                        <td class="label" style="width: 25%;">Job Category:</td>
+                        <td class="value" style="width: 25%;">{{JOB_CATEGORY}}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Job Description:</td>
+                        <td class="value" colspan="3">{{JOB_DESCRIPTION}}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Medical Insurance:</td>
+                        <td class="value">{{MEDICAL_INSURANCE}}</td>
+                        <td class="label">Annual Leave:</td>
+                        <td class="value">{{ANNUAL_LEAVE}} days</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Air Ticket:</td>
+                        <td class="value">{{AIR_TICKET_PROVISION}}</td>
+                        <td class="label">Internet Allowance:</td>
+                        <td class="value">{{INTERNET_ALLOWANCE}}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Food Provision:</td>
+                        <td class="value">{{FOOD_PROVISION}}</td>
+                        <td class="label">Accommodation:</td>
+                        <td class="value">{{ACCOMMODATION}}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Off Days:</td>
+                        <td class="value">{{OFF_DAYS}}</td>
+                        <td class="label">Bank Account:</td>
+                        <td class="value">{{BANK_ACCOUNT_SETUP}}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Penalties:</td>
+                        <td class="value" colspan="3">{{PENALTIES_CLAUSE}}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="info">
+                <div class="panel">
+                    <h2>Legal Representatives</h2>
+                    <table>
+                        <tr>
+                            <td class="label">Embassy Rep:</td>
+                            <td class="value">{{EMBASSY_REP_NAME}}<br>{{EMBASSY_REP_CONTACT}}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Insurance Provider:</td>
+                            <td class="value">{{INSURANCE_PROVIDER}}<br>{{INSURANCE_POLICY_NO}}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="panel">
+                    <h2>Document Copies</h2>
+                    <table>
+                        <tr>
+                            <td class="label">Embassy Copy:</td>
+                            <td class="value">Original retained</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Employer Copy:</td>
+                            <td class="value">Certified copy</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Employee Copy:</td>
+                            <td class="value">Certified copy</td>
+                        </tr>
+                        <tr>
+                            <td class="label">System Copy:</td>
+                            <td class="value">Digital archive</td>
                         </tr>
                     </table>
                 </div>
