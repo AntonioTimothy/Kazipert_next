@@ -315,13 +315,14 @@ export const jobService = {
         return handleResponse(response)
     },
 
-    async generateContract(applicationId: string) {
-        const response = await fetch(`${API_BASE}/applications/${applicationId}/contract`, {
+    async generateContract(applicationId: string, jobId: string, employerId: string, employeeId: string) {
+        const response = await fetch(`${API_BASE}/contracts/generate`, {
             method: 'POST',
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-            }
+            },
+            body: JSON.stringify({ applicationId, jobId, employerId, employeeId })
         })
 
         return handleResponse(response)
@@ -386,7 +387,16 @@ export const jobService = {
     },
 
     async shortlistApplication(applicationId: string) {
-        return this.updateApplicationStep(applicationId, 'SHORTLISTED')
+        const response = await fetch(`${API_BASE}/applications/shortlist`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ applicationId, status: 'SHORTLISTED' })
+        })
+
+        return handleResponse(response)
     },
 
     async scheduleInterview(applicationId: string, interviewDate: string, notes?: string) {

@@ -195,14 +195,7 @@ export default function AdminJobsPage() {
       }
     } catch (error) {
       console.error('Error fetching jobs:', error)
-      // For demo purposes, set mock data if API fails
-      setJobs(mockJobs)
-      setPagination({
-        page: 1,
-        limit: 20,
-        total: mockJobs.length,
-        pages: Math.ceil(mockJobs.length / 20)
-      })
+      // setJobs([]) // clear jobs on error
     } finally {
       setRefreshing(false)
     }
@@ -278,7 +271,7 @@ export default function AdminJobsPage() {
                 {safePagination.total}
               </div>
             </div>
-           
+
           </div>
         </div>
 
