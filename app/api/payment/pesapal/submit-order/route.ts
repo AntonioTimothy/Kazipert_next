@@ -1,6 +1,6 @@
 // app/api/payment/pesapal/submit-order/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { submitOrder, createOrderRequest } from '@/lib/pesapal';
+import { submitOrder, createOrderRequest, ensureIpnId } from '@/lib/pesapal';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -29,6 +29,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Ensure IPN ID is available
+        const ipnId = await ensureIpnId();
+        console.log('Using IPN ID:', ipnId);
+
         // Create order request
         const orderData = createOrderRequest(
             user.id,
@@ -36,7 +40,8 @@ export async function POST(request: NextRequest) {
             user.phone || '',
             user.fullName || user.email,
             amount,
-            currency || 'KES'
+            currency || 'KES',
+            ipnId
         );
 
         // Submit order to Pesapal

@@ -865,90 +865,92 @@ export default function AdminContractsPage() {
           )}
         </DialogContent>
       </Dialog>
-    </Dialog>
+      {/* </Dialog> */}
 
-      {/* Upload Ticket Dialog */ }
-  <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Upload Flight Ticket</DialogTitle>
-        <DialogDescription>
-          Upload flight ticket details for Contract #{selectedContract?.contractNumber}
-        </DialogDescription>
-      </DialogHeader>
+      {/* Upload Ticket Dialog */}
+      <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upload Flight Ticket</DialogTitle>
+            <DialogDescription>
+              Upload flight ticket details for Contract #{selectedContract?.contractNumber}
+            </DialogDescription>
+          </DialogHeader>
 
-      <div className="grid gap-4 py-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Airline</Label>
-            <Input
-              value={ticketData.airline}
-              onChange={(e) => setTicketData({ ...ticketData, airline: e.target.value })}
-              placeholder="e.g. Oman Air"
-            />
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Airline</Label>
+                <Input
+                  value={ticketData.airline}
+                  onChange={(e) => setTicketData({ ...ticketData, airline: e.target.value })}
+                  placeholder="e.g. Oman Air"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Flight Number</Label>
+                <Input
+                  value={ticketData.flightNumber}
+                  onChange={(e) => setTicketData({ ...ticketData, flightNumber: e.target.value })}
+                  placeholder="e.g. WY123"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Departure Date</Label>
+                <Input
+                  type="datetime-local"
+                  value={ticketData.departureDate}
+                  onChange={(e) => setTicketData({ ...ticketData, departureDate: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Arrival Date</Label>
+                <Input
+                  type="datetime-local"
+                  value={ticketData.arrivalDate}
+                  onChange={(e) => setTicketData({ ...ticketData, arrivalDate: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Ticket Price (OMR)</Label>
+              <Input
+                type="number"
+                value={ticketData.price}
+                onChange={(e) => setTicketData({ ...ticketData, price: e.target.value })}
+                placeholder="0.00"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Ticket File (PDF)</Label>
+              <Input type="file" accept=".pdf" />
+              <p className="text-xs text-muted-foreground">Upload the ticket PDF file</p>
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label>Flight Number</Label>
-            <Input
-              value={ticketData.flightNumber}
-              onChange={(e) => setTicketData({ ...ticketData, flightNumber: e.target.value })}
-              placeholder="e.g. WY123"
-            />
+
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleUploadTicket} disabled={uploading}>
+              {uploading ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload Ticket
+                </>
+              )}
+            </Button>
           </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Departure Date</Label>
-            <Input
-              type="datetime-local"
-              value={ticketData.departureDate}
-              onChange={(e) => setTicketData({ ...ticketData, departureDate: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Arrival Date</Label>
-            <Input
-              type="datetime-local"
-              value={ticketData.arrivalDate}
-              onChange={(e) => setTicketData({ ...ticketData, arrivalDate: e.target.value })}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Ticket Price (OMR)</Label>
-          <Input
-            type="number"
-            value={ticketData.price}
-            onChange={(e) => setTicketData({ ...ticketData, price: e.target.value })}
-            placeholder="0.00"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Ticket File (PDF)</Label>
-          <Input type="file" accept=".pdf" />
-          <p className="text-xs text-muted-foreground">Upload the ticket PDF file</p>
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-3">
-        <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>Cancel</Button>
-        <Button onClick={handleUploadTicket} disabled={uploading}>
-          {uploading ? (
-            <>
-              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-              Uploading...
-            </>
-          ) : (
-            <>
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Ticket
-            </>
-          )}
-        </Button>
-      </div>
-    </DialogContent>
-  </Dialog>
-    </div >
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}

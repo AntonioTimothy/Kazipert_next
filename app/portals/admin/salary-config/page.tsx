@@ -252,7 +252,7 @@ export default function SalaryConfigPage() {
                         </CardHeader>
                         <CardContent className="grid gap-6 md:grid-cols-2">
                             <div className="space-y-2">
-                                <Label>Large Family (>4 members)</Label>
+                                <Label>Large Family (4{'>'} members)</Label>
                                 <Input
                                     type="number"
                                     value={config.large_family_multiplier}

@@ -17,6 +17,7 @@ export default function Step6Payment({ formData, updateStep, role = 'EMPLOYEE', 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [processing, setProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'failed'>('idle');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(3);
   const [paymentWindow, setPaymentWindow] = useState<Window | null>(null);
 
@@ -118,6 +119,7 @@ export default function Step6Payment({ formData, updateStep, role = 'EMPLOYEE', 
   const handlePesapalPayment = async () => {
     setProcessing(true);
     setPaymentStatus('processing');
+    setErrorMessage(null);
 
     try {
       // Get user from session storage
@@ -135,7 +137,7 @@ export default function Step6Payment({ formData, updateStep, role = 'EMPLOYEE', 
         },
         body: JSON.stringify({
           userId: user.id,
-          amount: 15, // $15 USD
+          amount: 1, // $1.00 USD for testing
           currency: 'USD',
         }),
       });
@@ -176,7 +178,7 @@ export default function Step6Payment({ formData, updateStep, role = 'EMPLOYEE', 
 
     } catch (error: any) {
       console.error('Pesapal payment error:', error);
-      alert(error.message || 'Failed to initiate payment');
+      setErrorMessage(error.message || 'Failed to initiate payment');
       setPaymentStatus('failed');
       setProcessing(false);
     }
@@ -388,7 +390,7 @@ export default function Step6Payment({ formData, updateStep, role = 'EMPLOYEE', 
               <div>
                 <p className="text-red-800 font-medium">Payment failed</p>
                 <p className="text-red-700 text-sm mt-1">
-                  Please try again or contact support if the issue persists.
+                  {errorMessage || 'Please try again or contact support if the issue persists.'}
                 </p>
               </div>
             </div>

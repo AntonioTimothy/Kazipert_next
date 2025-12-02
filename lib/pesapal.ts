@@ -7,12 +7,12 @@
 
 // Environment configuration
 const PESAPAL_CONFIG = {
-  consumerKey: process.env.PESAPAL_CONSUMER_KEY || '',
-  consumerSecret: process.env.PESAPAL_CONSUMER_SECRET || '',
-  ipnId: process.env.PESAPAL_IPN_ID || '',
-  baseUrl: process.env.PESAPAL_SANDBOX_URL || 'https://cybqa.pesapal.com/pesapalv3',
-  callbackUrl: process.env.PESAPAL_CALLBACK_URL || '',
-  ipnUrl: process.env.PESAPAL_IPN_URL || '',
+  consumerKey: 'm8Sn4DxB87FduyNrlLb/4tbNE7pVz6rn',
+  consumerSecret: 'G7MuYmn6weGqArJYuEdVo2r1rGU=',
+  ipnId: '', // Force regeneration of IPN ID for Live environment
+  baseUrl: 'https://pay.pesapal.com/v3',
+  callbackUrl: process.env.PESAPAL_CALLBACK_URL || 'https://kazipert.com/api/payment/pesapal/callback',
+  ipnUrl: process.env.PESAPAL_IPN_URL || 'https://kazipert.com/api/payment/pesapal/ipn',
 };
 
 // Type definitions
@@ -268,6 +268,33 @@ export async function getRegisteredIPNs(): Promise<PesapalIPNResponse[]> {
 }
 
 /**
+ * Ensure IPN ID is available, registering if necessary
+ */
+export async function ensureIpnId(): Promise<string> {
+  if (PESAPAL_CONFIG.ipnId) {
+    return PESAPAL_CONFIG.ipnId;
+  }
+
+  console.log('⚠️ IPN ID not found in config, attempting to register...');
+
+  try {
+    const ipnResponse = await registerIPN({
+      url: PESAPAL_CONFIG.ipnUrl,
+      ipn_notification_type: 'POST'
+    });
+
+    // Update config in memory
+    PESAPAL_CONFIG.ipnId = ipnResponse.ipn_id;
+    console.log('✅ IPN registered successfully:', PESAPAL_CONFIG.ipnId);
+
+    return PESAPAL_CONFIG.ipnId;
+  } catch (error) {
+    console.error('❌ Failed to auto-register IPN:', error);
+    throw error;
+  }
+}
+
+/**
  * Helper function to create order request
  */
 export function createOrderRequest(
@@ -276,7 +303,8 @@ export function createOrderRequest(
   userPhone: string,
   userName: string,
   amount: number,
-  currency: string = 'KES'
+  currency: string = 'KES',
+  ipnId?: string
 ): PesapalOrderRequest {
   const merchantReference = `EMP-VER-${userId}-${Date.now()}`;
 
@@ -286,7 +314,7 @@ export function createOrderRequest(
     amount: amount,
     description: 'Kazipert Employer Verification Fee',
     callback_url: PESAPAL_CONFIG.callbackUrl,
-    notification_id: PESAPAL_CONFIG.ipnId,
+    notification_id: ipnId || PESAPAL_CONFIG.ipnId,
     branch: 'Kazipert Platform',
     billing_address: {
       email_address: userEmail,
