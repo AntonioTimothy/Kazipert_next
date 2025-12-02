@@ -736,7 +736,7 @@ export default function EmployerPostJobPage() {
               <h1 className="text-xl font-bold" style={{ color: COLORS.primary }}>Post a Job</h1>
               <p className="text-sm text-gray-600">Question {currentQuestion + 1} of {totalQuestions}</p>
             </div>
-            <Button variant="ghost" onClick={() => router.back()}>
+            <Button variant="ghost" onClick={() => router.push('/portals/employer/jobs')}>
               Cancel
             </Button>
           </div>

@@ -284,6 +284,7 @@ model Job {
   hasGarden         Boolean @default(false)
   hasPool           Boolean @default(false)
   squareMeters      Int?
+  houseFeatures     HouseFeature[]
   
   // Family Details
   familyMembers     Int
@@ -291,7 +292,11 @@ model Job {
   childrenAges      String[]
   elderlyCare       Boolean @default(false)
   specialNeeds      Boolean @default(false)
-  pets              String[]
+  familyDetails     Json?    // Store detailed family info (age, disability)
+  
+  // Pet Details
+  pets              String[] // Legacy, keep for now
+  petDetails        Json?    // Store detailed pet info (type, housing)
   
   // Job Requirements
   duties            String[]
@@ -323,6 +328,8 @@ model Job {
   // New Fields for Dynamic Job Posting
   questionnaire     Json?    // Stores family tree, disability, house info, etc.
   salaryBreakdown   Json?    // Stores the calculated salary components
+shortlistedEmployeeId String?   // ID of shortlisted employee
+additionalDuties Json?          // Free-form duties description
   
   // Timestamps
   createdAt         DateTime @default(now())
@@ -598,6 +605,7 @@ model Contract {
   adminSignature  String?
   
   status          ContractStatus @default(DRAFT)
+  flightTickets   FlightTicket[]
   
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -699,27 +707,24 @@ enum TransactionStatus {
 
 // Support Ticket Models
 model SupportTicket {
-  id              String        @id @default(cuid())
-  ticketNumber    String        @unique
-  subject         String
-  description     String        @db.Text
-  status          TicketStatus  @default(OPEN)
-  priority        TicketPriority @default(MEDIUM)
-  category        TicketCategory
-  escalationLevel EscalationLevel @default(SUPPORT)
+  id          String       @id @default(cuid())
+  ticketNumber String      @unique
+  subject     String
+  description String       @db.Text
+  status      TicketStatus @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+  category    TicketCategory
   
-  creatorId       String
-  creator         User          @relation("TicketCreator", fields: [creatorId], references: [id])
+  creatorId   String
+  creator     User         @relation("TicketCreator", fields: [creatorId], references: [id])
   
-  assigneeId      String?
-  assignee        User?         @relation("TicketAssignee", fields: [assigneeId], references: [id])
+  assignedToId String?
+  assignedTo  User?        @relation("TicketAssignee", fields: [assignedToId], references: [id])
   
-  messages        TicketMessage[]
-  attachments     Json?         // Store file URLs
+  messages    TicketMessage[]
   
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  closedAt        DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   
   @@map("support_tickets")
 }
@@ -733,7 +738,6 @@ model TicketMessage {
   sender      User          @relation(fields: [senderId], references: [id])
   
   message     String        @db.Text
-  attachments Json?         // Store file URLs
   isInternal  Boolean       @default(false) // Admin-only notes
   
   createdAt   DateTime      @default(now())
@@ -744,7 +748,7 @@ model TicketMessage {
 enum TicketStatus {
   OPEN
   IN_PROGRESS
-  WAITING_RESPONSE
+  WAITING_FOR_CUSTOMER
   RESOLVED
   CLOSED
 }
@@ -754,17 +758,15 @@ enum TicketPriority {
   MEDIUM
   HIGH
   URGENT
-  CRITICAL
 }
 
 enum TicketCategory {
-  GENERAL
-  PAYMENT
-  CONTRACT
   TECHNICAL
-  ABUSE
-  EMERGENCY
-  LEGAL
+  BILLING
+  ACCOUNT
+  VERIFICATION
+  JOB_DISPUTE
+  OTHER
 }
 
 enum EscalationLevel {
@@ -783,8 +785,8 @@ model TrainingClass {
   videoUrl        String
   thumbnailUrl    String?
   duration        Int             // in seconds
-  order           Int             // Display order
-  isPublished     Boolean         @default(false)
+  category        String
+  order           Int             @default(0)
   
   questions       TestQuestion[]
   progress        ClassProgress[]
@@ -841,4 +843,77 @@ model TestAttempt {
   createdAt       DateTime      @default(now())
   
   @@map("test_attempts")
+}
+
+model SalaryConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       Float
+  description String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("salary_configs")
+}
+
+model FlightTicket {
+  id            String   @id @default(cuid())
+  contractId    String
+  contract      Contract @relation(fields: [contractId], references: [id])
+  fileUrl       String
+  airline       String?
+  flightNumber  String?
+  departureDate DateTime?
+  arrivalDate   DateTime?
+  price         Float?
+  currency      String   @default("OMR")
+  createdAt     DateTime @default(now())
+
+  @@map("flight_tickets")
+}
+
+model PaymentTransaction {
+  id            String   @id @default(cuid())
+  amount        Float
+  currency      String   @default("OMR")
+  status        String
+  provider      String
+  reference     String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("payment_transactions")
+}
+
+enum PetType {
+  DOG
+  CAT
+  BIRD
+  REPTILE
+  FISH
+  OTHER
+}
+
+enum PetHousing {
+  CAGED
+  FREE
+  HYBRID
+}
+
+enum HouseFeature {
+  SMALL_COMPOUND
+  MEDIUM_COMPOUND
+  LARGE_COMPOUND
+  SWIMMING_POOL
+  VEGETABLE_GARDEN
+  FLOWER_GARDEN
+  GRASS_GARDEN
+  KIDS_PLAYGROUND
+}
+
+enum DisabilityLevel {
+  MILD
+  MODERATE
+  SEVERE
+  COMPLETE
 }

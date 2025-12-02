@@ -26,7 +26,9 @@ import {
   LogOut,
   Settings,
   ChevronDown,
-  Shield
+  Shield,
+  Upload,
+  Plane
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -70,12 +72,13 @@ interface Contract {
   duration: string
   benefits: string[]
   responsibilities: string[]
+  pdfUrl?: string
 }
 
 // Color constants
 const KAZIPERT_COLORS = {
   primary: '#117c82',
-  secondary: '#117c82', 
+  secondary: '#117c82',
   accent: '#6c71b5',
   background: '#f8fafc',
   text: '#1a202c',
@@ -133,6 +136,7 @@ const DurationBadge = ({ duration }: { duration: string }) => {
 
 export default function AdminContractsPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [contracts, setContracts] = useState<Contract[]>([])
@@ -149,6 +153,15 @@ export default function AdminContractsPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [ticketData, setTicketData] = useState({
+    airline: '',
+    flightNumber: '',
+    price: '',
+    departureDate: '',
+    arrivalDate: ''
+  })
 
   // Check authentication
   useEffect(() => {
@@ -177,51 +190,101 @@ export default function AdminContractsPage() {
     }
   }, [filters, loading])
 
-  const loadContracts = () => {
+  const loadContracts = async () => {
     setRefreshing(true)
-    
-    // Filter mock data based on current filters
-    let filteredContracts = mockContracts
-    
-    if (filters.status !== 'all') {
-      filteredContracts = filteredContracts.filter(contract => contract.status === filters.status)
-    }
-    
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase()
-      filteredContracts = filteredContracts.filter(contract =>
-        contract.contractNumber.toLowerCase().includes(searchLower) ||
-        contract.job.title.toLowerCase().includes(searchLower) ||
-        contract.job.employer.company.toLowerCase().includes(searchLower) ||
-        contract.employee.firstName.toLowerCase().includes(searchLower) ||
-        contract.employee.lastName.toLowerCase().includes(searchLower)
-      )
-    }
 
-    // Apply pagination
-    const startIndex = (pagination.page - 1) * pagination.limit
-    const endIndex = startIndex + pagination.limit
-    const paginatedContracts = filteredContracts.slice(startIndex, endIndex)
+    try {
+      const queryParams = new URLSearchParams({
+        page: pagination.page.toString(),
+        limit: pagination.limit.toString(),
+        status: filters.status === 'all' ? '' : filters.status,
+        search: filters.search
+      }).toString()
 
-    setContracts(paginatedContracts)
-    setPagination(prev => ({
-      ...prev,
-      total: filteredContracts.length,
-      pages: Math.ceil(filteredContracts.length / pagination.limit)
-    }))
-    
-    setRefreshing(false)
+      const response = await fetch(`/api/admin/contracts?${queryParams}`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const data = await response.json()
+
+      setContracts(data.contracts)
+      setPagination(prev => ({
+        ...prev,
+        total: data.pagination.total,
+        pages: data.pagination.pages
+      }))
+    } catch (error) {
+      console.error('Error fetching contracts:', error)
+      // setContracts([]) // Optionally clear contracts on error
+    } finally {
+      setRefreshing(false)
+    }
   }
 
   const handlePageChange = (newPage: number) => {
     setPagination(prev => ({ ...prev, page: newPage }))
-    setTimeout(() => {
-      loadContracts()
-    }, 0)
+    // useEffect will trigger loadContracts
   }
 
   const handleExportData = () => {
     alert("Exporting contracts data...")
+  }
+
+  const handleDownloadPDF = (contract: Contract) => {
+    const url = contract.pdfUrl;
+    if (url) {
+      window.open(url, '_blank');
+    } else {
+      alert("PDF not available for this contract.");
+    }
+  }
+
+  const handleUploadTicket = async () => {
+    if (!selectedContract) return
+
+    setUploading(true)
+    try {
+      // In a real app, we would upload the file to storage here
+      // For MVP, we'll simulate a file URL
+      const mockFileUrl = `https://example.com/tickets/${selectedContract.id}.pdf`
+
+      const response = await fetch('/api/flight-tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contractId: selectedContract.id,
+          fileUrl: mockFileUrl,
+          ...ticketData
+        })
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Flight ticket uploaded successfully",
+        })
+        setIsUploadDialogOpen(false)
+        // Reset form
+        setTicketData({
+          airline: '',
+          flightNumber: '',
+          price: '',
+          departureDate: '',
+          arrivalDate: ''
+        })
+      } else {
+        throw new Error('Failed to upload ticket')
+      }
+    } catch (error) {
+      console.error('Error uploading ticket:', error)
+      toast({
+        title: "Error",
+        description: "Failed to upload flight ticket",
+        variant: "destructive"
+      })
+    } finally {
+      setUploading(false)
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -322,7 +385,7 @@ export default function AdminContractsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-2xl font-bold text-green-600">
-                    {mockContracts.filter(c => c.status === 'ACTIVE').length}
+                    {contracts.filter(c => c.status === 'ACTIVE').length}
                   </div>
                   <div className="text-sm text-muted-foreground">Active Contracts</div>
                 </div>
@@ -338,7 +401,7 @@ export default function AdminContractsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-2xl font-bold text-yellow-600">
-                    {mockContracts.filter(c => c.status === 'PENDING_SIGNATURE').length}
+                    {contracts.filter(c => c.status === 'PENDING_SIGNATURE').length}
                   </div>
                   <div className="text-sm text-muted-foreground">Pending Signature</div>
                 </div>
@@ -354,7 +417,7 @@ export default function AdminContractsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-2xl font-bold text-blue-600">
-                    {mockContracts.filter(c => c.status === 'COMPLETED').length}
+                    {contracts.filter(c => c.status === 'COMPLETED').length}
                   </div>
                   <div className="text-sm text-muted-foreground">Completed</div>
                 </div>
@@ -370,7 +433,7 @@ export default function AdminContractsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-2xl font-bold text-red-600">
-                    {mockContracts.filter(c => c.status === 'TERMINATED').length}
+                    {contracts.filter(c => c.status === 'TERMINATED').length}
                   </div>
                   <div className="text-sm text-muted-foreground">Terminated</div>
                 </div>
@@ -531,8 +594,8 @@ export default function AdminContractsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="outline"
                             onClick={() => {
                               setSelectedContract(contract)
@@ -552,7 +615,7 @@ export default function AdminContractsPage() {
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit Contract
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDownloadPDF(contract)}>
                                 <FileText className="h-4 w-4 mr-2" />
                                 Download PDF
                               </DropdownMenuItem>
@@ -567,10 +630,19 @@ export default function AdminContractsPage() {
                                 </DropdownMenuItem>
                               )}
                               {contract.status === 'ACTIVE' && (
-                                <DropdownMenuItem className="text-red-600">
-                                  <XCircle className="h-4 w-4 mr-2" />
-                                  Terminate Contract
-                                </DropdownMenuItem>
+                                <>
+                                  <DropdownMenuItem onClick={() => {
+                                    setSelectedContract(contract)
+                                    setIsUploadDialogOpen(true)
+                                  }}>
+                                    <Plane className="h-4 w-4 mr-2" />
+                                    Upload Ticket
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="text-red-600">
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Terminate Contract
+                                  </DropdownMenuItem>
+                                </>
                               )}
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -588,8 +660,8 @@ export default function AdminContractsPage() {
                 <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-muted-foreground">No contracts found</h3>
                 <p className="text-muted-foreground mt-2">
-                  {filters.search || filters.status !== 'all' 
-                    ? 'Try adjusting your filters to see more results.' 
+                  {filters.search || filters.status !== 'all'
+                    ? 'Try adjusting your filters to see more results.'
                     : 'No contracts have been created yet.'}
                 </p>
               </div>
@@ -637,12 +709,12 @@ export default function AdminContractsPage() {
               Comprehensive view of employment contract information
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedContract && (
             <div className="space-y-6">
               {/* Contract Header */}
               <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
-                <div 
+                <div
                   className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl"
                   style={{ backgroundColor: KAZIPERT_COLORS.primary }}
                 >
@@ -766,7 +838,7 @@ export default function AdminContractsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-3">
-                    <Button className="w-full">
+                    <Button className="w-full" onClick={() => handleDownloadPDF(selectedContract)}>
                       <FileText className="h-4 w-4 mr-2" />
                       Download PDF
                     </Button>
@@ -793,170 +865,90 @@ export default function AdminContractsPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
-  )
-}
+    </Dialog>
 
-// Mock data for contracts
-const mockContracts: Contract[] = [
-  {
-    id: "CONT001",
-    contractNumber: "KZ-CON-2025-001",
-    job: {
-      id: "JOB001",
-      title: "Live-in House Manager",
-      employer: {
-        id: "E001",
-        firstName: "Ahmed",
-        lastName: "Al-Rashid",
-        company: "Al-Rashid Family"
-      }
-    },
-    employee: {
-      id: "EMP001",
-      firstName: "Jane",
-      lastName: "Wanjiku",
-      email: "jane.wanjiku@email.com",
-      phone: "+968 1234 5678"
-    },
-    status: "ACTIVE",
-    startDate: "2025-02-01",
-    endDate: "2026-02-01",
-    salary: 120,
-    salaryCurrency: "OMR",
-    location: "Muscat, Oman",
-    createdAt: "2025-01-25",
-    signedAt: "2025-01-28",
-    duration: "24 months",
-    benefits: ["Accommodation", "Medical Insurance", "Flight Ticket", "30 Days Vacation"],
-    responsibilities: ["House Management", "Staff Supervision", "Budget Management"]
-  },
-  {
-    id: "CONT002",
-    contractNumber: "KZ-CON-2025-002",
-    job: {
-      id: "JOB002",
-      title: "Elderly Care Specialist",
-      employer: {
-        id: "E002",
-        firstName: "Fatima",
-        lastName: "Al-Balushi",
-        company: "Al-Balushi Residence"
-      }
-    },
-    employee: {
-      id: "EMP002",
-      firstName: "Mary",
-      lastName: "Akinyi",
-      email: "mary.akinyi@email.com",
-      phone: "+968 2345 6789"
-    },
-    status: "PENDING_SIGNATURE",
-    startDate: "2025-03-01",
-    endDate: "2025-09-01",
-    salary: 500,
-    salaryCurrency: "OMR",
-    location: "Muscat, Oman",
-    createdAt: "2025-02-10",
-    signedAt: null,
-    duration: "6 months",
-    benefits: ["Transportation", "Medical Insurance"],
-    responsibilities: ["Elderly Care", "Medication Management", "Companionship"]
-  },
-  {
-    id: "CONT003",
-    contractNumber: "KZ-CON-2025-003",
-    job: {
-      id: "JOB003",
-      title: "Child Care Expert",
-      employer: {
-        id: "E003",
-        firstName: "Khalid",
-        lastName: "Al-Hinai",
-        company: "Al-Hinai Family"
-      }
-    },
-    employee: {
-      id: "EMP003",
-      firstName: "Grace",
-      lastName: "Njeri",
-      email: "grace.njeri@email.com",
-      phone: "+968 3456 7890"
-    },
-    status: "DRAFT",
-    startDate: "2025-03-15",
-    endDate: "2026-03-15",
-    salary: 95,
-    salaryCurrency: "OMR",
-    location: "Muscat, Oman",
-    createdAt: "2025-02-15",
-    signedAt: null,
-    duration: "12 months",
-    benefits: ["Shared Accommodation", "Transportation"],
-    responsibilities: ["Child Care", "Educational Activities", "School Pickup"]
-  },
-  {
-    id: "CONT004",
-    contractNumber: "KZ-CON-2024-045",
-    job: {
-      id: "JOB004",
-      title: "Professional Cook",
-      employer: {
-        id: "E004",
-        firstName: "Maryam",
-        lastName: "Al-Lawati",
-        company: "Al-Lawati Household"
-      }
-    },
-    employee: {
-      id: "EMP004",
-      firstName: "Lucy",
-      lastName: "Muthoni",
-      email: "lucy.muthoni@email.com",
-      phone: "+968 4567 8901"
-    },
-    status: "COMPLETED",
-    startDate: "2024-02-01",
-    endDate: "2025-02-01",
-    salary: 100,
-    salaryCurrency: "OMR",
-    location: "Muscat, Oman",
-    createdAt: "2024-01-20",
-    signedAt: "2024-01-25",
-    duration: "12 months",
-    benefits: ["Accommodation", "Medical Insurance", "Flight Ticket"],
-    responsibilities: ["Meal Preparation", "Menu Planning", "Kitchen Management"]
-  },
-  {
-    id: "CONT005",
-    contractNumber: "KZ-CON-2024-038",
-    job: {
-      id: "JOB005",
-      title: "General House Help",
-      employer: {
-        id: "E005",
-        firstName: "Omar",
-        lastName: "Al-Kindi",
-        company: "Al-Kindi Family"
-      }
-    },
-    employee: {
-      id: "EMP005",
-      firstName: "Sarah",
-      lastName: "Wambui",
-      email: "sarah.wambui@email.com",
-      phone: "+968 5678 9012"
-    },
-    status: "TERMINATED",
-    startDate: "2024-03-01",
-    endDate: "2025-03-01",
-    salary: 90,
-    salaryCurrency: "OMR",
-    location: "Muscat, Oman",
-    createdAt: "2024-02-15",
-    signedAt: "2024-02-20",
-    duration: "12 months",
-    benefits: ["Transportation"],
-    responsibilities: ["Cleaning", "Laundry", "Grocery Shopping"]
-  }
-]
+      {/* Upload Ticket Dialog */ }
+  <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Upload Flight Ticket</DialogTitle>
+        <DialogDescription>
+          Upload flight ticket details for Contract #{selectedContract?.contractNumber}
+        </DialogDescription>
+      </DialogHeader>
+
+      <div className="grid gap-4 py-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Airline</Label>
+            <Input
+              value={ticketData.airline}
+              onChange={(e) => setTicketData({ ...ticketData, airline: e.target.value })}
+              placeholder="e.g. Oman Air"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Flight Number</Label>
+            <Input
+              value={ticketData.flightNumber}
+              onChange={(e) => setTicketData({ ...ticketData, flightNumber: e.target.value })}
+              placeholder="e.g. WY123"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Departure Date</Label>
+            <Input
+              type="datetime-local"
+              value={ticketData.departureDate}
+              onChange={(e) => setTicketData({ ...ticketData, departureDate: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Arrival Date</Label>
+            <Input
+              type="datetime-local"
+              value={ticketData.arrivalDate}
+              onChange={(e) => setTicketData({ ...ticketData, arrivalDate: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Ticket Price (OMR)</Label>
+          <Input
+            type="number"
+            value={ticketData.price}
+            onChange={(e) => setTicketData({ ...ticketData, price: e.target.value })}
+            placeholder="0.00"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Ticket File (PDF)</Label>
+          <Input type="file" accept=".pdf" />
+          <p className="text-xs text-muted-foreground">Upload the ticket PDF file</p>
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-3">
+        <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>Cancel</Button>
+        <Button onClick={handleUploadTicket} disabled={uploading}>
+          {uploading ? (
+            <>
+              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+              Uploading...
+            </>
+          ) : (
+            <>
+              <Upload className="mr-2 h-4 w-4" />
+              Upload Ticket
+            </>
+          )}
+        </Button>
+      </div>
+    </DialogContent>
+  </Dialog>
+    </div >
