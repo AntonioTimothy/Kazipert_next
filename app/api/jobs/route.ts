@@ -202,32 +202,66 @@ export async function POST(request: NextRequest) {
             salary: body.salary
         })
 
-        // Remove fields that don't exist in the Job model
-        const { agreeToTerms, ...jobData } = body
+        // Remove fields that don't exist in the Job model (whitelist known keys)
+        const { agreeToTerms, ...rawJobData } = body
 
-        const job = await prisma.job.create({
-            data: {
-                ...jobData,
-                type: jobData.type || 'FULL_TIME',
-                employerId: user.id,
-                totalFloors: jobData.totalFloors || 1,
-                postedAt: jobData.status === 'ACTIVE' ? new Date() : null,
-                familyMembers: jobData.familyMembers || 1,
-                accommodation: jobData.accommodation || 'APARTMENT',
-                meals: jobData.meals || 'BREAKFAST',
-                experienceRequired: jobData.experienceRequired || 'ONE_TO_TWO_YEARS',
-                languageRequirements: jobData.languageRequirements || [],
-                workingHours: jobData.workingHours || '10.5 hours/day',
-                employmentType: jobData.employmentType || 'FULL_TIME',
-                status: jobData.status || 'OPEN',
-                childrenAges: jobData.childrenAges || [],
-                pets: jobData.pets || [],
-                duties: jobData.duties || [],
-                benefits: jobData.benefits || [],
-                certifications: jobData.certifications || [],
-                skills: jobData.skills || []
+        const allowedKeys = new Set([
+            'title', 'type', 'description', 'status', 'category', 'agreeToTruth',
+            'availableFromType', 'residenceType', 'bedrooms', 'bathrooms', 'totalFloors',
+            'hasGarden', 'hasPool', 'squareMeters', 'familyMembers', 'childrenCount',
+            'childrenAges', 'elderlyCare', 'specialNeeds', 'pets', 'duties',
+            'experienceRequired', 'languageRequirements', 'workingHours', 'overtimeRequired',
+            'accommodation', 'meals', 'vacationDays', 'benefits', 'certifications', 'skills',
+            'salary', 'salaryCurrency', 'location', 'city', 'availableFrom', 'interviewRequired',
+            'emergencySupport', 'autoSalaryCalculation', 'postedAt', 'closedAt'
+        ])
+
+        const sanitizedData: Record<string, any> = {}
+        for (const key of Object.keys(rawJobData)) {
+            if (allowedKeys.has(key)) sanitizedData[key] = rawJobData[key]
+        }
+
+        // Log any ignored/unknown fields so we can detect unexpected client payloads
+        const ignoredKeys = Object.keys(rawJobData).filter(k => !allowedKeys.has(k))
+        if (ignoredKeys.length > 0) {
+            try {
+                if (process.env.NODE_ENV === 'production') {
+                    console.info('JOBS API - Ignored job fields (production):', ignoredKeys)
+                } else {
+                    const ignoredValues: Record<string, any> = {}
+                    for (const k of ignoredKeys) ignoredValues[k] = rawJobData[k]
+                    console.warn('JOBS API - Ignored job fields:', ignoredKeys)
+                    console.debug('JOBS API - Ignored field values:', ignoredValues)
+                }
+            } catch (logErr) {
+                // Ensure logging never crashes the API
+                console.error('JOBS API - Error while logging ignored fields:', logErr)
             }
-        })
+        }
+
+        // Apply safe defaults aligned with the Prisma schema/enums
+        const jobCreateData = {
+            ...sanitizedData,
+            type: sanitizedData.type || 'FULL_TIME',
+            employerId: user.id,
+            totalFloors: sanitizedData.totalFloors ?? 1,
+            postedAt: (sanitizedData.status === 'ACTIVE') ? new Date() : null,
+            familyMembers: sanitizedData.familyMembers ?? 1,
+            accommodation: sanitizedData.accommodation || 'PROVIDED',
+            meals: sanitizedData.meals || 'INCLUDED',
+            experienceRequired: sanitizedData.experienceRequired || 'ONE_TO_TWO_YEARS',
+            languageRequirements: sanitizedData.languageRequirements || [],
+            workingHours: sanitizedData.workingHours || '10.5 hours/day',
+            status: sanitizedData.status || 'DRAFT',
+            childrenAges: sanitizedData.childrenAges || [],
+            pets: sanitizedData.pets || [],
+            duties: sanitizedData.duties || [],
+            benefits: sanitizedData.benefits || [],
+            certifications: sanitizedData.certifications || [],
+            skills: sanitizedData.skills || []
+        }
+
+        const job = await prisma.job.create({ data: jobCreateData })
 
         console.log('✅ JOBS API - Job created successfully:', job.id)
         return NextResponse.json(job)

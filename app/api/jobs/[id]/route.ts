@@ -35,7 +35,7 @@ async function getUserFromRequest(request: NextRequest) {
 // GET /api/jobs/[id] - Get specific job
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const user = await getUserFromRequest(request)
@@ -43,8 +43,9 @@ export async function GET(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
+        const { id } = await params
         const job = await prisma.job.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: {
                 employer: {
                     select: {
@@ -89,7 +90,7 @@ export async function GET(
         if (user.role === 'EMPLOYEE') {
             await prisma.jobView.create({
                 data: {
-                    jobId: params.id,
+                    jobId: id,
                     viewerId: user.id
                 }
             })
@@ -108,7 +109,7 @@ export async function GET(
 // PUT /api/jobs/[id] - Update job
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const user = await getUserFromRequest(request)
@@ -117,11 +118,12 @@ export async function PUT(
         }
 
         const body = await request.json()
+        const { id } = await params
 
         // Verify job belongs to employer
         const existingJob = await prisma.job.findFirst({
             where: {
-                id: params.id,
+                id,
                 employerId: user.id
             }
         })
@@ -131,7 +133,7 @@ export async function PUT(
         }
 
         const job = await prisma.job.update({
-            where: { id: params.id },
+            where: { id },
             data: {
                 ...body,
                 postedAt: body.status === 'ACTIVE' && existingJob.status !== 'ACTIVE' ? new Date() : existingJob.postedAt
@@ -151,7 +153,7 @@ export async function PUT(
 // DELETE /api/jobs/[id] - Delete job
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const user = await getUserFromRequest(request)
@@ -159,10 +161,12 @@ export async function DELETE(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
+        const { id } = await params
+
         // Verify job belongs to employer
         const existingJob = await prisma.job.findFirst({
             where: {
-                id: params.id,
+                id,
                 employerId: user.id
             }
         })
@@ -172,7 +176,7 @@ export async function DELETE(
         }
 
         await prisma.job.delete({
-            where: { id: params.id }
+            where: { id }
         })
 
         return NextResponse.json({ message: 'Job deleted successfully' })

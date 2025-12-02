@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Progress } from "@/components/ui/progress"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useTheme } from "@/contexts/ThemeContext"
 import { cn } from "@/lib/utils"
 import { jobService } from "@/lib/services/jobService"
@@ -100,6 +101,10 @@ export default function EmployerPostJobPage() {
   const [loading, setLoading] = useState(true)
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showFamilyModal, setShowFamilyModal] = useState(false)
+  const [newMemberType, setNewMemberType] = useState('')
+  const [newMemberAge, setNewMemberAge] = useState('')
+  const [newMemberDisability, setNewMemberDisability] = useState('NORMAL')
 
   const [state, setState] = useState<QuestionnaireState>({
     jobTitle: "",
@@ -152,6 +157,31 @@ export default function EmployerPostJobPage() {
   // Calculate salary in real-time
   const salaryBreakdown = calculateSalary(state.familyMembers, state.selectedDuties)
   const workHoursValidation = validateWorkHours(state.familyMembers, state.selectedDuties)
+
+  // Family member modal functions
+  const getAgeRangesByType = (type: string) => {
+    return Object.entries(AGE_RANGES).filter(([_, range]) => {
+      if (type === 'child') return range.category === 'infant' || range.category === 'child' || range.category === 'teen'
+      if (type === 'elderly') return range.category === 'elderly'
+      return false
+    })
+  }
+
+  const addFamilyMember = () => {
+    if (!newMemberType || !newMemberAge) return
+    
+    const newMember: FamilyMember = {
+      id: `${newMemberType}-${Date.now()}`,
+      ageRange: newMemberAge as keyof typeof AGE_RANGES,
+      disabilityLevel: newMemberDisability as keyof typeof DISABILITY_LEVELS
+    }
+    
+    setState({ ...state, familyMembers: [...state.familyMembers, newMember] })
+    setShowFamilyModal(false)
+    setNewMemberType('')
+    setNewMemberAge('')
+    setNewMemberDisability('NORMAL')
+  }
 
   // Dynamic question flow based on answers
   const questions = [
@@ -273,49 +303,13 @@ export default function EmployerPostJobPage() {
       isValid: () => true
     },
     {
-      id: 'has-children',
-      title: "Do you have children?",
-      subtitle: "This determines childcare requirements",
-      component: (
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            onClick={() => setState({ ...state, hasChildren: true })}
-            className={cn(
-              "p-8 rounded-xl border-2 transition-all",
-              state.hasChildren ? "border-primary bg-primary/10" : "border-gray-200"
-            )}
-            style={{ borderColor: state.hasChildren ? COLORS.primary : undefined }}
-          >
-            <Baby className="h-12 w-12 mx-auto mb-4" style={{ color: state.hasChildren ? COLORS.primary : undefined }} />
-            <div className="text-lg font-semibold">Yes</div>
-          </button>
-
-          <button
-            onClick={() => setState({ ...state, hasChildren: false, hasInfants: false, familyMembers: state.familyMembers.filter(m => AGE_RANGES[m.ageRange].category !== 'infant' && AGE_RANGES[m.ageRange].category !== 'child') })}
-            className={cn(
-              "p-8 rounded-xl border-2 transition-all",
-              !state.hasChildren ? "border-primary bg-primary/10" : "border-gray-200"
-            )}
-            style={{ borderColor: !state.hasChildren ? COLORS.primary : undefined }}
-          >
-            <Users className="h-12 w-12 mx-auto mb-4" style={{ color: !state.hasChildren ? COLORS.primary : undefined }} />
-            <div className="text-lg font-semibold">No</div>
-          </button>
-        </div>
-      ),
-      isValid: () => true
-    },
-    ...(state.hasChildren ? [{
-      id: 'children-details',
-      title: "Tell us about your children",
-      subtitle: "Add each child with their age and any special needs",
+      id: 'family-members',
+      title: "Define family members",
+      subtitle: "Add children, elderly, or anyone requiring special care",
       component: (
         <div className="space-y-4">
           <div className="space-y-3">
-            {state.familyMembers.filter(m => {
-              const cat = AGE_RANGES[m.ageRange].category
-              return cat === 'infant' || cat === 'child' || cat === 'teen'
-            }).map((member, idx) => (
+            {state.familyMembers.map((member) => (
               <div key={member.id} className="p-4 bg-gray-50 rounded-lg flex items-center justify-between">
                 <div className="flex-1 grid grid-cols-2 gap-3">
                   <Select
@@ -331,9 +325,7 @@ export default function EmployerPostJobPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(AGE_RANGES).filter(([_, range]) =>
-                        range.category === 'infant' || range.category === 'child' || range.category === 'teen'
-                      ).map(([key, range]) => (
+                      {Object.entries(AGE_RANGES).map(([key, range]) => (
                         <SelectItem key={key} value={key}>{range.label}</SelectItem>
                       ))}
                     </SelectContent>
@@ -375,143 +367,27 @@ export default function EmployerPostJobPage() {
           </div>
 
           <Button
-            onClick={() => {
-              const newMember: FamilyMember = {
-                id: `child-${Date.now()}`,
-                ageRange: 'AGE_3_8',
-                disabilityLevel: 'NORMAL'
-              }
-              setState({ ...state, familyMembers: [...state.familyMembers, newMember] })
-            }}
+            onClick={() => setShowFamilyModal(true)}
             variant="outline"
             className="w-full"
             style={{ borderColor: COLORS.primary, color: COLORS.primary }}
           >
-            + Add Child
+            + Add Family Member
           </Button>
-        </div>
-      ),
-      isValid: () => state.familyMembers.some(m => {
-        const cat = AGE_RANGES[m.ageRange].category
-        return cat === 'infant' || cat === 'child' || cat === 'teen'
-      })
-    }] : []),
-    {
-      id: 'has-elderly',
-      title: "Do you have elderly family members?",
-      subtitle: "Age 70 or above requiring care",
-      component: (
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            onClick={() => setState({ ...state, hasElderly: true })}
-            className={cn(
-              "p-8 rounded-xl border-2 transition-all",
-              state.hasElderly ? "border-primary bg-primary/10" : "border-gray-200"
-            )}
-            style={{ borderColor: state.hasElderly ? COLORS.primary : undefined }}
-          >
-            <UserCheck className="h-12 w-12 mx-auto mb-4" style={{ color: state.hasElderly ? COLORS.primary : undefined }} />
-            <div className="text-lg font-semibold">Yes</div>
-          </button>
-
-          <button
-            onClick={() => setState({ ...state, hasElderly: false, familyMembers: state.familyMembers.filter(m => AGE_RANGES[m.ageRange].category !== 'elderly') })}
-            className={cn(
-              "p-8 rounded-xl border-2 transition-all",
-              !state.hasElderly ? "border-primary bg-primary/10" : "border-gray-200"
-            )}
-            style={{ borderColor: !state.hasElderly ? COLORS.primary : undefined }}
-          >
-            <Users className="h-12 w-12 mx-auto mb-4" style={{ color: !state.hasElderly ? COLORS.primary : undefined }} />
-            <div className="text-lg font-semibold">No</div>
-          </button>
+          
+          {state.familyMembers.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p>No family members added yet</p>
+              <p className="text-sm">Click "Add Family Member" to get started</p>
+            </div>
+          )}
         </div>
       ),
       isValid: () => true
     },
-    ...(state.hasElderly ? [{
-      id: 'elderly-details',
-      title: "Tell us about elderly care needs",
-      subtitle: "Add each elderly person with their condition",
-      component: (
-        <div className="space-y-4">
-          <div className="space-y-3">
-            {state.familyMembers.filter(m => AGE_RANGES[m.ageRange].category === 'elderly').map((member) => (
-              <div key={member.id} className="p-4 bg-gray-50 rounded-lg flex items-center justify-between">
-                <div className="flex-1 grid grid-cols-2 gap-3">
-                  <Select
-                    value={member.ageRange}
-                    onValueChange={(v) => {
-                      const updated = [...state.familyMembers]
-                      const index = updated.findIndex(m => m.id === member.id)
-                      updated[index] = { ...updated[index], ageRange: v as keyof typeof AGE_RANGES }
-                      setState({ ...state, familyMembers: updated })
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(AGE_RANGES).filter(([_, range]) => range.category === 'elderly').map(([key, range]) => (
-                        <SelectItem key={key} value={key}>{range.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
 
-                  <Select
-                    value={member.disabilityLevel}
-                    onValueChange={(v) => {
-                      const updated = [...state.familyMembers]
-                      const index = updated.findIndex(m => m.id === member.id)
-                      updated[index] = { ...updated[index], disabilityLevel: v as keyof typeof DISABILITY_LEVELS }
-                      setState({ ...state, familyMembers: updated })
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(DISABILITY_LEVELS).map(([key, level]) => (
-                        <SelectItem key={key} value={key}>{level.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setState({
-                    ...state,
-                    familyMembers: state.familyMembers.filter(m => m.id !== member.id)
-                  })}
-                  className="ml-2"
-                >
-                  ✕
-                </Button>
-              </div>
-            ))}
-          </div>
-
-          <Button
-            onClick={() => {
-              const newMember: FamilyMember = {
-                id: `elderly-${Date.now()}`,
-                ageRange: 'AGE_70_80',
-                disabilityLevel: 'NORMAL'
-              }
-              setState({ ...state, familyMembers: [...state.familyMembers, newMember] })
-            }}
-            variant="outline"
-            className="w-full"
-            style={{ borderColor: COLORS.primary, color: COLORS.primary }}
-          >
-            + Add Elderly Person
-          </Button>
-        </div>
-      ),
-      isValid: () => state.familyMembers.some(m => AGE_RANGES[m.ageRange].category === 'elderly')
-    }] : []),
     {
       id: 'cooking',
       title: "Do you need cooking services?",
@@ -779,8 +655,79 @@ export default function EmployerPostJobPage() {
 
   const currentQ = questions[currentQuestion]
 
+  const FamilyMemberModal = () => (
+    <Dialog open={showFamilyModal} onOpenChange={setShowFamilyModal}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add Family Member</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div>
+            <label className="text-sm font-medium mb-2 block">Member Type</label>
+            <Select value={newMemberType} onValueChange={(v) => { setNewMemberType(v); setNewMemberAge('') }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select member type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="child">Child/Teen</SelectItem>
+                <SelectItem value="elderly">Elderly Person</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {newMemberType && (
+            <div>
+              <label className="text-sm font-medium mb-2 block">Age Range</label>
+              <Select value={newMemberAge} onValueChange={setNewMemberAge}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select age range" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getAgeRangesByType(newMemberType).map(([key, range]) => (
+                    <SelectItem key={key} value={key}>{range.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          
+          {newMemberAge && (
+            <div>
+              <label className="text-sm font-medium mb-2 block">Care Level</label>
+              <Select value={newMemberDisability} onValueChange={setNewMemberDisability}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(DISABILITY_LEVELS).map(([key, level]) => (
+                    <SelectItem key={key} value={key}>{level.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          
+          <div className="flex gap-2 pt-4">
+            <Button variant="outline" onClick={() => setShowFamilyModal(false)} className="flex-1">
+              Cancel
+            </Button>
+            <Button 
+              onClick={addFamilyMember} 
+              disabled={!newMemberType || !newMemberAge}
+              className="flex-1"
+              style={{ backgroundColor: COLORS.primary, color: 'white' }}
+            >
+              Add Member
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <FamilyMemberModal />
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">

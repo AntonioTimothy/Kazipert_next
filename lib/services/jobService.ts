@@ -4,6 +4,7 @@ export interface JobFormData {
     // Basic Information
     title: string
     type: string
+    category: string
     description: string
     status: string
 
@@ -141,13 +142,34 @@ export const jobService = {
     },
 
     async updateJob(id: string, data: Partial<JobFormData>) {
+        // Filter and map data to match Prisma schema
+        const updateData: any = {}
+        
+        if (data.title) updateData.title = data.title
+        if (data.description) updateData.description = data.description
+        if (data.location) updateData.location = data.location
+        if (data.city) updateData.city = data.city
+        if (data.salary) updateData.salary = data.salary
+        if (data.salaryCurrency) updateData.salaryCurrency = data.salaryCurrency
+        if (data.category) updateData.category = data.category
+        
+        // Map status values to match JobStatus enum
+        if (data.status) {
+            const statusMap: { [key: string]: string } = {
+                'OPEN': 'ACTIVE',
+                'CLOSED': 'CLOSED',
+                'PAUSED': 'PAUSED'
+            }
+            updateData.status = statusMap[data.status] || data.status
+        }
+
         const response = await fetch(`${API_BASE}/jobs/${id}`, {
             method: 'PUT',
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify(updateData)
         })
 
         return handleResponse(response)
@@ -404,5 +426,14 @@ export const jobService = {
         return this.updateApplicationStep(applicationId, 'CONTRACT_SENT', {
             contractUrl
         })
+    },
+
+    // Get jobs posted by employer
+    async getEmployerJobs(employerId: string) {
+        const response = await fetch(`${API_BASE}/jobs/employer/${employerId}`,
+            getAuthConfig('GET')
+        )
+
+        return handleResponse(response)
     }
 }
