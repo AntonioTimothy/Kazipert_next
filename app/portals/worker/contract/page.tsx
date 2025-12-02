@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { jobService } from "@/lib/services/jobService"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -44,78 +46,117 @@ export default function EmployeeContractPage() {
   const [signature, setSignature] = useState("")
   const [isSigning, setIsSigning] = useState(false)
 
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
+
   useEffect(() => {
-    // Simulate loading contract data
     const loadContractData = async () => {
       setLoading(true)
-      await new Promise(resolve => setTimeout(resolve, 1500))
       
-      const contractData = {
-        id: "CT-2024-001",
-        status: "pending_signature",
-        title: "Domestic Worker Employment Contract",
-        employer: {
-          name: "Al Harthy Family",
-          address: "Al Khuwair, Muscat, Oman",
-          phone: "+968 1234 5678",
-          email: "ahmed@alharthy-family.com"
-        },
-        employee: {
-          name: "Sarah Johnson",
-          position: "Housekeeper",
-          nationality: "Filipino",
-          idNumber: "P123456789"
-        },
-        terms: {
-          startDate: "2024-03-01",
-          duration: "24 months",
-          workingHours: "8 hours/day, 6 days/week",
-          salary: "OMR 250 per month",
-          accommodation: "Provided",
-          transportation: "Provided",
-          probationPeriod: "3 months",
-          noticePeriod: "1 month"
-        },
-        responsibilities: [
-          "General house cleaning and maintenance",
-          "Laundry and ironing",
-          "Cooking and meal preparation",
-          "Grocery shopping",
-          "Pet care (if applicable)"
-        ],
-        benefits: [
-          "Medical insurance",
-          "Annual return ticket",
-          "30 days paid annual leave",
-          "Public holidays as per Omani law",
-          "End-of-service benefits"
-        ],
-        createdDate: "2024-01-15",
-        expiryDate: "2026-03-01",
-        signed: {
-          employer: true,
-          employee: false,
-          employerSignedAt: "2024-01-18",
-          employeeSignedAt: null
+      try {
+        // Get user from session
+        const userData = sessionStorage.getItem("user")
+        if (!userData) {
+          router.push("/login")
+          return
         }
+
+        const parsedUser = JSON.parse(userData)
+        if (parsedUser.role !== "EMPLOYEE") {
+          router.push("/login")
+          return
+        }
+
+        setUser(parsedUser)
+
+        // Get user's applications to find contract
+        const applications = await jobService.getApplications({ role: 'employee' })
+        
+        // Find application with contract (status CONTRACT_PENDING or COMPLETED)
+        const contractApplication = applications.find((app: any) => 
+          app.status === 'CONTRACT_PENDING' || app.status === 'COMPLETED' || app.contractUrl
+        )
+
+        if (!contractApplication) {
+          setContract(null)
+          setLoading(false)
+          return
+        }
+
+        // Transform application data to contract format
+        const contractData = {
+          id: `CT-${contractApplication.id.slice(-8).toUpperCase()}`,
+          status: contractApplication.status === 'CONTRACT_PENDING' ? 'pending_signature' : 'active',
+          title: "Domestic Worker Employment Contract",
+          employer: {
+            name: `${contractApplication.job?.employer?.firstName || ''} ${contractApplication.job?.employer?.lastName || ''}`.trim() || 'Unknown Employer',
+            address: contractApplication.job?.employer?.profile?.address || `${contractApplication.job?.city || 'Unknown City'}, Oman`,
+            phone: contractApplication.job?.employer?.phone || 'N/A',
+            email: contractApplication.job?.employer?.email || 'N/A'
+          },
+          employee: {
+            name: `${contractApplication.employee?.firstName || ''} ${contractApplication.employee?.lastName || ''}`.trim() || 'Unknown Employee',
+            position: contractApplication.job?.title || 'Domestic Worker',
+            nationality: contractApplication.employee?.profile?.nationality || 'N/A',
+            idNumber: contractApplication.employee?.profile?.idNumber || 'N/A'
+          },
+          terms: {
+            startDate: new Date().toISOString().split('T')[0],
+            duration: "24 months",
+            workingHours: contractApplication.job.workingHours || "8 hours/day, 6 days/week",
+            salary: `${contractApplication.job.salary} ${contractApplication.job.salaryCurrency}`,
+            accommodation: contractApplication.job.accommodation === 'PROVIDED' ? 'Provided' : 'Not Provided',
+            transportation: 'As per agreement',
+            probationPeriod: "3 months",
+            noticePeriod: "1 month"
+          },
+          responsibilities: contractApplication.job.duties || [
+            "General house cleaning and maintenance",
+            "Laundry and ironing",
+            "Cooking and meal preparation"
+          ],
+          benefits: contractApplication.job.benefits || [
+            "Medical insurance",
+            "Annual return ticket",
+            "30 days paid annual leave",
+            "Public holidays as per Omani law"
+          ],
+          createdDate: contractApplication.createdAt.split('T')[0],
+          expiryDate: new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          signed: {
+            employer: true,
+            employee: contractApplication.status === 'COMPLETED',
+            employerSignedAt: contractApplication.createdAt.split('T')[0],
+            employeeSignedAt: contractApplication.status === 'COMPLETED' ? new Date().toISOString().split('T')[0] : null
+          },
+          applicationId: contractApplication.id
+        }
+        
+        setContract(contractData)
+      } catch (error) {
+        console.error('Error loading contract:', error)
+        setContract(null)
+      } finally {
+        setLoading(false)
       }
-      
-      setContract(contractData)
-      setLoading(false)
     }
 
     loadContractData()
-  }, [])
+  }, [router])
 
-  const handleSignContract = () => {
+  const handleSignContract = async () => {
     if (!signature.trim()) {
       alert("Please provide your signature")
       return
     }
 
     setIsSigning(true)
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Update application step to CONTRACT_SIGNED
+      await jobService.updateApplicationStep(contract.applicationId, 'CONTRACT_SIGNED', {
+        signature: signature
+      })
+
       setContract({
         ...contract,
         status: "active",
@@ -125,9 +166,13 @@ export default function EmployeeContractPage() {
           employeeSignedAt: new Date().toISOString().split('T')[0]
         }
       })
-      setIsSigning(false)
       setSignature("")
-    }, 2000)
+    } catch (error) {
+      console.error('Error signing contract:', error)
+      alert('Failed to sign contract. Please try again.')
+    } finally {
+      setIsSigning(false)
+    }
   }
 
   const handleDownloadContract = () => {
@@ -162,6 +207,23 @@ export default function EmployeeContractPage() {
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="text-gray-600">Loading contract details...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!contract) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <FileText className="h-16 w-16 text-gray-400 mx-auto" />
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">No Contract Available</h2>
+            <p className="text-gray-600 mt-2">You don't have any active contracts at the moment.</p>
+          </div>
+          <Button onClick={() => router.push('/portals/worker/jobs')}>
+            Browse Jobs
+          </Button>
         </div>
       </div>
     )

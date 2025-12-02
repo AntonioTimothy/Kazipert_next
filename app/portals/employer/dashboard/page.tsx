@@ -171,9 +171,9 @@ export default function EmployerDashboard() {
         const totalSpent = allJobs.reduce((sum, job) => sum + (job.salary || 0), 0)
         const avgSalary = allJobs.length > 0 ? totalSpent / allJobs.length : 0
 
-        const pendingApplications = allApplications.filter(app => app.status === 'PENDING').length
-        const reviewedApplications = allApplications.filter(app => app.status === 'UNDER_REVIEW').length
-        const acceptedApplications = allApplications.filter(app => app.status === 'ACCEPTED').length
+        const pendingApplications = allApplications.filter((app: any) => app.status === 'PENDING').length
+        const reviewedApplications = allApplications.filter((app: any) => app.status === 'UNDER_REVIEW').length
+        const acceptedApplications = allApplications.filter((app: any) => app.status === 'ACCEPTED').length
         const interviewRate = allApplications.length > 0 ? (reviewedApplications / allApplications.length) * 100 : 0
 
         setStats({
@@ -212,10 +212,10 @@ export default function EmployerDashboard() {
   const recentApplications = applications.slice(0, 5)
 
   // Get active employees (accepted applications)
-  const activeEmployees = applications.filter(app => app.status === 'ACCEPTED')
+  const activeEmployees = applications.filter((app: any) => app.status === 'ACCEPTED')
 
   // Get upcoming interviews (applications under review)
-  const upcomingInterviews = applications.filter(app => app.status === 'UNDER_REVIEW').slice(0, 3)
+  const upcomingInterviews = applications.filter((app: any) => app.status === 'UNDER_REVIEW').slice(0, 3)
 
   // Quick stats for dashboard
   const quickStats = [
@@ -227,7 +227,7 @@ export default function EmployerDashboard() {
       color: KAZIPERT_COLORS.primary,
       bgColor: `${KAZIPERT_COLORS.primary}15`,
       trend: stats.activeJobs > 0 ? "+" + Math.floor(stats.activeJobs * 0.5) : "0",
-      route: "/employer/jobs?tab=posted"
+      route: "/portals/employer/jobs"
     },
     {
       title: "Applications",
@@ -237,7 +237,7 @@ export default function EmployerDashboard() {
       color: KAZIPERT_COLORS.accent,
       bgColor: `${KAZIPERT_COLORS.accent}15`,
       trend: stats.totalApplications > 0 ? "+" + Math.floor(stats.totalApplications * 0.3) : "0",
-      route: "/employer/applications"
+      route: "/portals/employer/applications"
     },
     {
       title: "Interviews",
@@ -247,7 +247,7 @@ export default function EmployerDashboard() {
       color: KAZIPERT_COLORS.primary,
       bgColor: `${KAZIPERT_COLORS.primary}15`,
       trend: stats.reviewedApplications > 0 ? "+" + Math.floor(stats.reviewedApplications * 0.4) : "0",
-      route: "/employer/applications"
+      route: "/portals/employer/applications"
     },
     {
       title: "Active Staff",
@@ -257,7 +257,7 @@ export default function EmployerDashboard() {
       color: KAZIPERT_COLORS.accent,
       bgColor: `${KAZIPERT_COLORS.accent}15`,
       trend: activeEmployees.length > 0 ? "+" + activeEmployees.length : "0",
-      route: "/employer/employees"
+      route: "/portals/employer/employees"
     }
   ]
 
@@ -305,7 +305,7 @@ export default function EmployerDashboard() {
       action: "post-job",
       color: KAZIPERT_COLORS.primary,
       bgColor: `${KAZIPERT_COLORS.primary}15`,
-      route: "/employer/jobs/create"
+      route: "/portals/employer/post-job"
     },
     {
       name: "View Applications",
@@ -314,7 +314,7 @@ export default function EmployerDashboard() {
       action: "view-applications",
       color: KAZIPERT_COLORS.accent,
       bgColor: `${KAZIPERT_COLORS.accent}15`,
-      route: "/employer/applications"
+      route: "/portals/employer/applications"
     },
     {
       name: "Employee Management",
@@ -323,7 +323,7 @@ export default function EmployerDashboard() {
       action: "manage-employees",
       color: KAZIPERT_COLORS.primary,
       bgColor: `${KAZIPERT_COLORS.primary}15`,
-      route: "/employer/employees"
+      route: "/portals/employer/employees"
     },
     {
       name: "Payment History",
@@ -332,7 +332,7 @@ export default function EmployerDashboard() {
       action: "payments",
       color: KAZIPERT_COLORS.accent,
       bgColor: `${KAZIPERT_COLORS.accent}15`,
-      route: "/employer/payments"
+      route: "/portals/employer/payments"
     }
   ]
 
@@ -418,16 +418,16 @@ export default function EmployerDashboard() {
 
     switch (action) {
       case 'post-job':
-        router.push('/employer/jobs/create')
+        router.push('/portals/employer/post-job')
         break
       case 'view-applications':
-        router.push('/employer/applications')
+        router.push('/portals/employer/applications')
         break
       case 'manage-employees':
-        router.push('/employer/employees')
+        router.push('/portals/employer/employees')
         break
       case 'payments':
-        router.push('/employer/payments')
+        router.push('/portals/employer/payments')
         break
     }
   }
@@ -566,7 +566,7 @@ export default function EmployerDashboard() {
           </div>
           <Button
             size="sm"
-            onClick={() => router.push('/employer/jobs/create')}
+            onClick={() => router.push('/portals/employer/post-job')}
             style={{
               backgroundColor: KAZIPERT_COLORS.primary,
               color: 'white'
@@ -827,7 +827,7 @@ export default function EmployerDashboard() {
                     variant="ghost"
                     className="w-full justify-between"
                     style={{ color: KAZIPERT_COLORS.primary }}
-                    onClick={() => router.push('/employer/employees')}
+                    onClick={() => router.push('/portals/employer/employees')}
                   >
                     <span>Manage All Employees</span>
                     <ArrowUpRight className="h-4 w-4" />
@@ -853,7 +853,7 @@ export default function EmployerDashboard() {
                     <div
                       key={application.id}
                       className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-                      onClick={() => router.push(`/employer/applications`)}
+                      onClick={() => router.push(`/portals/employer/applications`)}
                     >
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
@@ -890,7 +890,7 @@ export default function EmployerDashboard() {
                     <Button
                       variant="outline"
                       className="mt-2"
-                      onClick={() => router.push('/employer/jobs/create')}
+                      onClick={() => router.push('/portals/employer/post-job')}
                     >
                       Post Your First Job
                     </Button>
@@ -903,7 +903,7 @@ export default function EmployerDashboard() {
                     variant="ghost"
                     className="w-full justify-between"
                     style={{ color: KAZIPERT_COLORS.primary }}
-                    onClick={() => router.push('/employer/applications')}
+                    onClick={() => router.push('/portals/employer/applications')}
                   >
                     <span>View All Applications</span>
                     <ArrowUpRight className="h-4 w-4" />
@@ -994,7 +994,7 @@ export default function EmployerDashboard() {
                   variant="ghost"
                   className="w-full justify-between"
                   style={{ color: KAZIPERT_COLORS.primary }}
-                  onClick={() => router.push('/employer/jobs')}
+                  onClick={() => router.push('/portals/employer/jobs')}
                 >
                   <span>Manage All Jobs</span>
                   <ArrowUpRight className="h-4 w-4" />
@@ -1050,7 +1050,7 @@ export default function EmployerDashboard() {
                   variant="ghost"
                   className="w-full justify-between"
                   style={{ color: KAZIPERT_COLORS.primary }}
-                  onClick={() => router.push('/employer/services')}
+                  onClick={() => router.push('/portals/employer/services')}
                 >
                   <span>Explore All Services</span>
                   <ArrowUpRight className="h-4 w-4" />

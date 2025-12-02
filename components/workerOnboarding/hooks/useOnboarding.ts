@@ -146,19 +146,22 @@ export function useOnboarding(initialUser: any, initialProgress: any) {
             const response = await fetch('/api/onboarding/progress', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     userId: user.id,
-                    currentStep: step,
+                    step: step,
                     data: data || onboardingData
                 })
             })
 
             if (!response.ok) {
-                throw new Error('Failed to save progress')
+                const errorText = await response.text()
+                console.error('Save progress failed:', response.status, errorText)
+                throw new Error(`Failed to save progress: ${response.status}`)
             }
         } catch (error) {
             console.error('Failed to save progress:', error)
-            toast.error("Failed to save your progress. Please try again.")
+            // Don't show toast for auto-save failures to avoid spam
         } finally {
             setSaving(false)
         }

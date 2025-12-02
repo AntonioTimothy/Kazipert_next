@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { jobService } from "@/lib/services/jobService"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -31,45 +32,78 @@ const KAZIPERT_COLORS = {
 }
 
 export default function EmployerContractsPage() {
-    const router = useRouter()
-  
+  const router = useRouter()
   const [profileComplete, setProfileComplete] = useState(false)
   const [activeTab, setActiveTab] = useState("all")
+  const [contracts, setContracts] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<any>(null)
 
-  // Mock data - replace with real data later
-  const contracts = [
-    {
-      id: "1",
-      employeeName: "Sarah Johnson",
-      jobTitle: "General House Help",
-      status: "SIGNED",
-      signedDate: "2024-01-15",
-      startDate: "2024-02-01",
-      salary: "320 OMR",
-      location: "Muscat",
-      duration: "24 months"
-    },
-    {
-      id: "2",
-      employeeName: "Maria Santos",
-      jobTitle: "Elderly Care Specialist",
-      status: "PENDING",
-      sentDate: "2024-01-10",
-      salary: "350 OMR",
-      location: "Salalah",
-      duration: "24 months"
-    },
-    {
-      id: "3",
-      employeeName: "Aisha Mohammed",
-      jobTitle: "Child Care / Nanny",
-      status: "DRAFT",
-      createdDate: "2024-01-08",
-      salary: "300 OMR",
-      location: "Muscat",
-      duration: "24 months"
+  useEffect(() => {
+    const loadContracts = async () => {
+      setLoading(true)
+      
+      try {
+        // Get user from session
+        const userData = sessionStorage.getItem("user")
+        if (!userData) {
+          router.push("/login")
+          return
+        }
+
+        const parsedUser = JSON.parse(userData)
+        if (parsedUser.role !== "EMPLOYER") {
+          router.push("/login")
+          return
+        }
+
+        setUser(parsedUser)
+
+        // Get employer's applications that have contracts
+        const applications = await jobService.getApplications({ role: 'employer' })
+        
+        // Filter applications that have contracts (CONTRACT_PENDING, COMPLETED, or contractUrl)
+        const contractApplications = applications.filter((app: any) => 
+          app.status === 'CONTRACT_PENDING' || 
+          app.status === 'COMPLETED' || 
+          app.contractUrl ||
+          app.contract
+        )
+
+        // Transform applications to contract format
+        const contractsData = contractApplications.map((app: any) => {
+          let status = 'DRAFT'
+          if (app.status === 'CONTRACT_PENDING') status = 'PENDING'
+          if (app.status === 'COMPLETED' || app.contract?.employeeSigned) status = 'SIGNED'
+
+          return {
+            id: app.id,
+            employeeName: `${app.employee.firstName || ''} ${app.employee.lastName || ''}`.trim() || 'Unknown Employee',
+            jobTitle: app.job.title,
+            status: status,
+            signedDate: app.contract?.employeeSignedAt ? new Date(app.contract.employeeSignedAt).toLocaleDateString() : null,
+            sentDate: app.contractSentAt ? new Date(app.contractSentAt).toLocaleDateString() : null,
+            createdDate: new Date(app.createdAt).toLocaleDateString(),
+            startDate: new Date().toLocaleDateString(),
+            salary: `${app.job.salary} ${app.job.salaryCurrency}`,
+            location: app.job.city,
+            duration: "24 months",
+            contractUrl: app.contractUrl || app.contract?.pdfUrl,
+            applicationId: app.id
+          }
+        })
+        
+        setContracts(contractsData)
+      } catch (error) {
+        console.error('Error loading contracts:', error)
+        setContracts([])
+      } finally {
+        setLoading(false)
+      }
     }
-  ]
+
+    loadContracts()
+  }, [router])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -164,7 +198,7 @@ export default function EmployerContractsPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-600">Signed Contracts</p>
-                  <p className="text-2xl font-bold text-gray-900">1</p>
+                  <p className="text-2xl font-bold text-gray-900">{contracts.filter(c => c.status === 'SIGNED').length}</p>
                 </div>
               </div>
             </CardContent>
@@ -178,7 +212,7 @@ export default function EmployerContractsPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-600">Pending Signature</p>
-                  <p className="text-2xl font-bold text-gray-900">1</p>
+                  <p className="text-2xl font-bold text-gray-900">{contracts.filter(c => c.status === 'PENDING').length}</p>
                 </div>
               </div>
             </CardContent>
@@ -192,7 +226,7 @@ export default function EmployerContractsPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-600">Drafts</p>
-                  <p className="text-2xl font-bold text-gray-900">1</p>
+                  <p className="text-2xl font-bold text-gray-900">{contracts.filter(c => c.status === 'DRAFT').length}</p>
                 </div>
               </div>
             </CardContent>
@@ -220,7 +254,12 @@ export default function EmployerContractsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {filteredContracts.length > 0 ? (
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading contracts...</p>
+              </div>
+            ) : filteredContracts.length > 0 ? (
               <div className="space-y-4">
                 {filteredContracts.map((contract) => (
                   <div
@@ -275,16 +314,41 @@ export default function EmployerContractsPage() {
                     </div>
 
                     <div className="flex gap-2 mt-4 lg:mt-0 lg:ml-4">
-                      <Button variant="outline" size="sm" className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex items-center gap-2"
+                        onClick={() => router.push(`/portals/employer/applications/${contract.applicationId}`)}
+                      >
                         <Eye className="h-4 w-4" />
                         View
                       </Button>
-                      <Button variant="outline" size="sm" className="flex items-center gap-2">
-                        <Download className="h-4 w-4" />
-                        Download
-                      </Button>
+                      {contract.contractUrl && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex items-center gap-2"
+                          onClick={() => window.open(contract.contractUrl, '_blank')}
+                        >
+                          <Download className="h-4 w-4" />
+                          Download
+                        </Button>
+                      )}
                       {contract.status === "DRAFT" && (
-                        <Button size="sm" className="flex items-center gap-2" style={{ backgroundColor: KAZIPERT_COLORS.primary, color: 'white' }}>
+                        <Button 
+                          size="sm" 
+                          className="flex items-center gap-2" 
+                          style={{ backgroundColor: KAZIPERT_COLORS.primary, color: 'white' }}
+                          onClick={async () => {
+                            try {
+                              await jobService.sendContract(contract.applicationId, '')
+                              // Reload contracts
+                              window.location.reload()
+                            } catch (error) {
+                              console.error('Error sending contract:', error)
+                            }
+                          }}
+                        >
                           <Send className="h-4 w-4" />
                           Send
                         </Button>

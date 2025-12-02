@@ -41,7 +41,7 @@ async function getUserFromRequest(request: NextRequest) {
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         console.log('🔄 APPLICATION STEP API - PUT request received')
@@ -51,7 +51,7 @@ export async function PUT(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { id: applicationId } = params
+        const { id: applicationId } = await params
         const body = await request.json()
         const { step, interviewDate, interviewNotes, contractUrl, signature } = body
 
