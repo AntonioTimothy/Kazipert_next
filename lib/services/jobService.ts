@@ -50,6 +50,10 @@ export interface JobFormData {
     // Additional Settings
     emergencySupport: boolean
     autoSalaryCalculation: boolean
+
+    // Dynamic Data
+    questionnaire?: any
+    salaryBreakdown?: any
 }
 
 // Helper function to get auth config
@@ -177,7 +181,7 @@ export const jobService = {
         return handleResponse(response)
     },
 
-    async createApplication(jobId: string, coverLetter?: string, expectedSalary?: number) {
+    async createApplication(jobId: string, coverLetter?: string, expectedSalary?: number, isDraft: boolean = false) {
         const response = await fetch(`${API_BASE}/applications`, {
             method: 'POST',
             credentials: 'include',
@@ -187,7 +191,8 @@ export const jobService = {
             body: JSON.stringify({
                 jobId,
                 coverLetter,
-                expectedSalary
+                expectedSalary,
+                isDraft
             })
         })
 

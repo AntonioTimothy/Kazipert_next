@@ -38,7 +38,7 @@ export function HeroSection() {
                 height={150}
                 alt="World First"
               />
-             
+
             </div>
 
             {/* APPROVAL BOX */}
@@ -66,7 +66,8 @@ export function HeroSection() {
           </div>
 
           {/* RIGHT COLUMN */}
-          <div className="bg-[#f3efff] backdrop-blur-md shadow-xl rounded-3xl p-10 border border-gray-200">
+          {/* make it responsive and margin top on mobile */}
+          <div className="bg-[#f3efff] backdrop-blur-md shadow-xl rounded-3xl p-10 border border-gray-200 mt-10 md:mt-0">
 
             {/* Title */}
             <h2 className="text-4xl font-extrabold text-[#463189] mb-3 text-center">

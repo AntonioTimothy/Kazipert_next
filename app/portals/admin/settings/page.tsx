@@ -214,7 +214,7 @@ export default function SettingsPage() {
       const params = new URLSearchParams()
       if (searchTerm) params.append('search', searchTerm)
       if (selectedRole !== 'all') params.append('role', selectedRole)
-      
+
       const response = await fetch(`/api/admins?${params}`)
       if (response.ok) {
         const data = await response.json()
@@ -244,15 +244,15 @@ export default function SettingsPage() {
         },
         body: JSON.stringify(newAdmin),
       })
-  
+
       const result = await response.json()
-  
+
       if (response.ok) {
         toast({
           title: "Success",
           description: result.message,
         })
-        
+
         // Reset form and close dialog
         setNewAdmin({
           step: 1,
@@ -265,7 +265,7 @@ export default function SettingsPage() {
           customPermissions: []
         })
         setDialogOpen(false)
-        
+
         // Refresh admin list
         fetchAdmins()
       } else {
@@ -285,7 +285,7 @@ export default function SettingsPage() {
 
   const deleteAdmin = async (adminId: string) => {
     if (!confirm('Are you sure you want to delete this admin?')) return
-    
+
     try {
       const response = await fetch(`/api/admin/${adminId}`, {
         method: 'DELETE',
@@ -315,7 +315,7 @@ export default function SettingsPage() {
   const getRoleBadge = (role: string) => {
     const roleConfig = userRoles.find(r => r.value === role)
     if (!roleConfig) return null
-    
+
     const Icon = roleConfig.icon
     return (
       <Badge className={cn("flex items-center gap-1", roleConfig.color)}>
@@ -356,7 +356,7 @@ export default function SettingsPage() {
             const StepIcon = step.icon
             const isCompleted = newAdmin.step > step.number
             const isCurrent = newAdmin.step === step.number
-            
+
             return (
               <div key={step.number} className="flex items-center flex-1 min-w-0">
                 <div className="flex flex-col items-center text-center min-w-[100px]">
@@ -447,34 +447,41 @@ export default function SettingsPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 p-1 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border">
-            <TabsTrigger 
-              value="access" 
+          <TabsList className="grid w-full grid-cols-5 p-1 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border">
+            <TabsTrigger
+              value="access"
               className="flex items-center gap-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg py-3 transition-all"
             >
               <Shield className="h-4 w-4" />
               <span className="hidden sm:inline">Access</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="profile" 
+            <TabsTrigger
+              value="profile"
               className="flex items-center gap-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg py-3 transition-all"
             >
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Profile</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="security" 
+            <TabsTrigger
+              value="security"
               className="flex items-center gap-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg py-3 transition-all"
             >
               <Lock className="h-4 w-4" />
               <span className="hidden sm:inline">Security</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="system" 
+            <TabsTrigger
+              value="system"
               className="flex items-center gap-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg py-3 transition-all"
             >
               <Settings className="h-4 w-4" />
               <span className="hidden sm:inline">System</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="salary"
+              className="flex items-center gap-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg py-3 transition-all"
+            >
+              <DollarSign className="h-4 w-4" />
+              <span className="hidden sm:inline">Salary Config</span>
             </TabsTrigger>
           </TabsList>
 
@@ -677,7 +684,7 @@ export default function SettingsPage() {
                               </div>
                             </CardContent>
                           </Card>
-                          
+
                           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
                             <div className="flex items-start gap-3">
                               <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
@@ -801,9 +808,9 @@ export default function SettingsPage() {
                           <Button variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             className="border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                             onClick={() => deleteAdmin(admin.id)}
                           >
@@ -856,6 +863,106 @@ export default function SettingsPage() {
               <CardContent>
                 <div className="text-center py-8 text-muted-foreground">
                   System settings content would go here
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          {/* Salary Config Tab */}
+          <TabsContent value="salary" className="space-y-6">
+            <Card className="bg-white dark:bg-gray-800 shadow-lg border-0">
+              <CardHeader className="bg-gradient-to-r from-green-50 to-green-100/30 dark:from-green-950/20 dark:to-green-900/10 border-b rounded-t-xl">
+                <CardTitle className="text-green-900 dark:text-green-100 flex items-center gap-2">
+                  <DollarSign className="h-6 w-6" />
+                  Salary Configuration
+                </CardTitle>
+                <CardDescription className="text-green-700 dark:text-green-300">
+                  Configure base salary and dynamic calculation variables
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Base Rates</Badge>
+                    </h3>
+                    <div className="space-y-3">
+                      <Label>Base Monthly Salary (OMR)</Label>
+                      <Input type="number" defaultValue={90} className="max-w-[200px]" />
+                      <p className="text-xs text-muted-foreground">Minimum salary for basic house cleaning (9 hours/day)</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">Care Add-ons (Per Person)</Badge>
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Infant (0-3 yrs)</Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">+</span>
+                          <Input type="number" defaultValue={42} className="pl-8" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Child (3-12 yrs)</Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">+</span>
+                          <Input type="number" defaultValue={24} className="pl-8" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Elderly (70+ yrs)</Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">+</span>
+                          <Input type="number" defaultValue={21} className="pl-8" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Disabled/Sick</Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">+</span>
+                          <Input type="number" defaultValue={52} className="pl-8" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Task Add-ons</Badge>
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <Label>Cooking (Large Family)</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">+</span>
+                        <Input type="number" defaultValue={28} className="pl-8" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Laundry (Large Family)</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">+</span>
+                        <Input type="number" defaultValue={14} className="pl-8" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Extra Bathroom (&gt;2)</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">+</span>
+                        <Input type="number" defaultValue={10} className="pl-8" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <Button className="bg-green-600 hover:bg-green-700 text-white">
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Save Configuration
+                  </Button>
                 </div>
               </CardContent>
             </Card>

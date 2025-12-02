@@ -73,7 +73,8 @@ const APPLICATION_STEPS: ApplicationStep[] = [
     label: 'Contract Sent',
     description: 'Employment contract has been sent for signing',
     icon: FileText,
-    employerAction: 'Send Contract'
+    employerAction: 'Send Contract',
+    employeeAction: 'Sign Contract'
   },
   {
     key: 'CONTRACT_SIGNED',
@@ -117,7 +118,7 @@ const APPLICATION_STEPS: ApplicationStep[] = [
 
 export function ApplicationStepper({ currentStep, application, role, onAction }: ApplicationStepperProps) {
   const currentStepIndex = APPLICATION_STEPS.findIndex(step => step.key === currentStep)
-  
+
   const getStepStatus = (stepIndex: number) => {
     if (stepIndex < currentStepIndex) return 'completed'
     if (stepIndex === currentStepIndex) return 'current'
@@ -155,48 +156,45 @@ export function ApplicationStepper({ currentStep, application, role, onAction }:
         const status = getStepStatus(index)
         const isCompleted = status === 'completed'
         const isCurrent = status === 'current'
-        
+
         return (
           <div key={step.key} className="flex items-start space-x-4">
             {/* Step Connector */}
             {index > 0 && (
-              <div className={`w-0.5 h-8 ml-5 -my-4 ${
-                isCompleted ? 'bg-green-500' : 'bg-gray-200'
-              }`} />
+              <div className={`w-0.5 h-8 ml-5 -my-4 ${isCompleted ? 'bg-green-500' : 'bg-gray-200'
+                }`} />
             )}
-            
+
             <div className="flex items-start space-x-4 flex-1">
               {/* Step Icon */}
-              <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                isCompleted ? 'bg-green-100' : 
-                isCurrent ? 'bg-blue-100' : 'bg-gray-100'
-              }`}>
+              <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${isCompleted ? 'bg-green-100' :
+                  isCurrent ? 'bg-blue-100' : 'bg-gray-100'
+                }`}>
                 {getStepIcon(step, status)}
               </div>
 
               {/* Step Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <h4 className={`text-sm font-medium ${
-                    isCompleted ? 'text-green-900' :
-                    isCurrent ? 'text-blue-900' : 'text-gray-500'
-                  }`}>
+                  <h4 className={`text-sm font-medium ${isCompleted ? 'text-green-900' :
+                      isCurrent ? 'text-blue-900' : 'text-gray-500'
+                    }`}>
                     {step.label}
                   </h4>
-                  
+
                   {isCurrent && (
                     <Badge variant={role === 'employer' ? 'default' : 'secondary'} className="text-xs">
                       {role === 'employer' ? 'Action Required' : 'Pending'}
                     </Badge>
                   )}
-                  
+
                   {isCompleted && (
                     <Badge variant="outline" className="bg-green-50 text-green-700 text-xs">
                       Completed
                     </Badge>
                   )}
                 </div>
-                
+
                 <p className="text-sm text-gray-600 mt-1">
                   {step.description}
                 </p>
@@ -210,8 +208,8 @@ export function ApplicationStepper({ currentStep, application, role, onAction }:
 
                 {/* Action Button */}
                 {canPerformAction(step, status) && onAction && (
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     className="mt-2"
                     onClick={() => handleAction(step)}
                   >

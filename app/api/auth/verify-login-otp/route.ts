@@ -131,7 +131,8 @@ export async function POST(request: NextRequest) {
             avatar: user.profile?.avatar,
             permissions: userPermissions,
             isSuperAdmin: user.role === 'SUPER_ADMIN',
-            onboardingCompleted: user.onboardingProgress?.completed || false,
+            verified: user.verified || false,
+            onboardingCompleted: user.onboardingCompleted || false,
             kycVerified: user.kycDetails?.profileVerified || false,
         };
 

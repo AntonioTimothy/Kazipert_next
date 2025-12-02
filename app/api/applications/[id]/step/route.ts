@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyAccessToken } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { cookies } from 'next/headers'
+import { contractService } from '@/lib/services/contractService'
 
 async function getUserFromRequest(request: NextRequest) {
     try {
@@ -52,7 +53,7 @@ export async function PUT(
 
         const { id: applicationId } = params
         const body = await request.json()
-        const { step, interviewDate, interviewNotes, contractUrl } = body
+        const { step, interviewDate, interviewNotes, contractUrl, signature } = body
 
         if (!step) {
             console.log('❌ APPLICATION STEP API - Step is required')
@@ -65,7 +66,21 @@ export async function PUT(
         const application = await prisma.jobApplication.findUnique({
             where: { id: applicationId },
             include: {
-                job: true
+                job: {
+                    include: {
+                        employer: {
+                            include: {
+                                profile: true
+                            }
+                        }
+                    }
+                },
+                employee: {
+                    include: {
+                        profile: true,
+                        kycDetails: true
+                    }
+                }
             }
         })
 
@@ -109,10 +124,39 @@ export async function PUT(
 
             case 'CONTRACT_SENT':
                 if (!contractUrl) {
-                    console.log('❌ APPLICATION STEP API - Contract URL is required')
-                    return NextResponse.json({ error: 'Contract URL is required' }, { status: 400 })
+                    console.log('🔄 APPLICATION STEP API - Generating contract...')
+                    try {
+                        const contractUrl = await contractService.generateContract({
+                            employerName: `${application.job.employer.firstName} ${application.job.employer.lastName}`,
+                            employerId: application.job.employer.profile?.idNumber || 'N/A',
+                            employerContact: `${application.job.employer.firstName} ${application.job.employer.lastName}`,
+                            employerPhone: application.job.employer.phone || 'N/A',
+                            employerAddress: application.job.employer.profile?.address || 'N/A',
+                            employerEmail: application.job.employer.email,
+                            employeeName: `${application.employee.firstName} ${application.employee.lastName}`,
+                            employeePassport: application.employee.kycDetails?.passportNumber || 'N/A',
+                            employeePassportExpiry: application.employee.kycDetails?.passportExpiry ? new Date(application.employee.kycDetails.passportExpiry).toLocaleDateString() : 'N/A',
+                            employeeDob: application.employee.profile?.dateOfBirth ? new Date(application.employee.profile.dateOfBirth).toLocaleDateString() : 'N/A',
+                            employeeArrival: new Date().toLocaleDateString(), // Assuming arrival is now/soon
+                            employeeEducation: application.employee.profile?.education || 'N/A',
+                            employeeAddress: application.employee.profile?.address || 'N/A',
+                            nextOfKinName: application.employee.kycDetails?.nextOfKinName || 'N/A',
+                            nextOfKinPhone: application.employee.kycDetails?.nextOfKinPhone || 'N/A',
+                            contractDuration: '2 Years',
+                            contractStartDate: new Date().toLocaleDateString(),
+                            monthlySalary: `${application.job.salary} ${application.job.salaryCurrency}`,
+                            documentId: `KZ-EMP-${application.id.slice(-5).toUpperCase()}`,
+                            issueDate: new Date().toLocaleDateString()
+                        })
+                        updateData.contractUrl = contractUrl
+                        console.log('✅ APPLICATION STEP API - Contract generated:', contractUrl)
+                    } catch (error) {
+                        console.error('❌ APPLICATION STEP API - Error generating contract:', error)
+                        return NextResponse.json({ error: 'Failed to generate contract' }, { status: 500 })
+                    }
+                } else {
+                    updateData.contractUrl = contractUrl
                 }
-                updateData.contractUrl = contractUrl
                 updateData.status = 'CONTRACT_PENDING'
                 break
 
@@ -127,7 +171,69 @@ export async function PUT(
                 break
 
             case 'CONTRACT_SIGNED':
-                updateData.contractSigned = true
+                if (!signature) {
+                    return NextResponse.json({ error: 'Signature is required' }, { status: 400 })
+                }
+
+                // Update contract with signature
+                // First check if contract exists, if not create it (should exist from SENT step)
+                // But for now we just regenerate the PDF and update URL
+
+                try {
+                    // Regenerate contract with signature
+                    const signedContractUrl = await contractService.generateContract({
+                        employerName: `${application.job.employer.firstName} ${application.job.employer.lastName}`,
+                        employerId: application.job.employer.profile?.idNumber || 'N/A',
+                        employerContact: `${application.job.employer.firstName} ${application.job.employer.lastName}`,
+                        employerPhone: application.job.employer.phone || 'N/A',
+                        employerAddress: application.job.employer.profile?.address || 'N/A',
+                        employerEmail: application.job.employer.email,
+                        employeeName: `${application.employee.firstName} ${application.employee.lastName}`,
+                        employeePassport: application.employee.kycDetails?.passportNumber || 'N/A',
+                        employeePassportExpiry: application.employee.kycDetails?.passportExpiry ? new Date(application.employee.kycDetails.passportExpiry).toLocaleDateString() : 'N/A',
+                        employeeDob: application.employee.profile?.dateOfBirth ? new Date(application.employee.profile.dateOfBirth).toLocaleDateString() : 'N/A',
+                        employeeArrival: new Date().toLocaleDateString(),
+                        employeeEducation: application.employee.profile?.education || 'N/A',
+                        employeeAddress: application.employee.profile?.address || 'N/A',
+                        nextOfKinName: application.employee.kycDetails?.nextOfKinName || 'N/A',
+                        nextOfKinPhone: application.employee.kycDetails?.nextOfKinPhone || 'N/A',
+                        contractDuration: '2 Years',
+                        contractStartDate: new Date().toLocaleDateString(),
+                        monthlySalary: `${application.job.salary} ${application.job.salaryCurrency}`,
+                        documentId: `KZ-EMP-${application.id.slice(-5).toUpperCase()}`,
+                        issueDate: new Date().toLocaleDateString(),
+                        employeeSignature: signature
+                    })
+
+                    updateData.contractUrl = signedContractUrl
+                    updateData.contractSigned = true
+
+                    // Also update/create Contract record
+                    await prisma.contract.upsert({
+                        where: { applicationId: applicationId },
+                        create: {
+                            applicationId: applicationId,
+                            employerId: application.job.employerId,
+                            employeeId: application.employeeId,
+                            content: 'HTML Content', // We could store HTML here
+                            pdfUrl: signedContractUrl,
+                            employeeSigned: true,
+                            employeeSignedAt: new Date(),
+                            employeeSignature: signature,
+                            status: 'PENDING_SIGNATURES' // Still needs employer/admin
+                        },
+                        update: {
+                            pdfUrl: signedContractUrl,
+                            employeeSigned: true,
+                            employeeSignedAt: new Date(),
+                            employeeSignature: signature
+                        }
+                    })
+
+                } catch (error) {
+                    console.error('❌ APPLICATION STEP API - Error signing contract:', error)
+                    return NextResponse.json({ error: 'Failed to sign contract' }, { status: 500 })
+                }
                 break
 
             case 'VISA_APPROVED':

@@ -3,7 +3,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Webcam from 'react-webcam';
-import { uploadIdFront } from '@/lib/verification';
+import { uploadIdFront, uploadVerificationFile } from '@/lib/verification';
 import { cropImage } from '@/lib/imageUtils';
 
 const FaceBox = ({ faceLocation, imageSize }: any) => {
@@ -30,7 +30,7 @@ const FaceBox = ({ faceLocation, imageSize }: any) => {
   );
 };
 
-export default function Step2IdFront({ formData, updateStep, sessionId }: any) {
+export default function Step2IdFront({ formData, updateStep, sessionId, user }: any) {
   const webcamRef = useRef<Webcam>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -202,8 +202,25 @@ export default function Step2IdFront({ formData, updateStep, sessionId }: any) {
 
       if (result.faceDetected && result.ocrText) {
         console.log('✅ ID front verification successful');
+
+        // Upload file to local backend for persistence
+        let filePath = null;
+        if (user?.id) {
+          try {
+            console.log('💾 Saving ID Front locally...');
+            const uploadResult = await uploadVerificationFile(fileToUpload, 'idFront', user.id);
+            if (uploadResult.success) {
+              filePath = uploadResult.fileUrl;
+              console.log('✅ ID Front saved locally:', filePath);
+            }
+          } catch (uploadError) {
+            console.error('⚠️ Failed to save ID Front locally:', uploadError);
+          }
+        }
+
         updateStep(3, {
           idFront: fileToUpload,
+          idFrontPath: filePath,
           ocrData: {
             ...formData.ocrData,
             front: {

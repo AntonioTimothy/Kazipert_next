@@ -3,10 +3,10 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Webcam from 'react-webcam';
-import { uploadIdBack } from '@/lib/verification';
+import { uploadIdBack, uploadVerificationFile } from '@/lib/verification';
 import { cropImage } from '@/lib/imageUtils';
 
-export default function Step3IdBack({ formData, updateStep, sessionId }: any) {
+export default function Step3IdBack({ formData, updateStep, sessionId, user }: any) {
   const webcamRef = useRef<Webcam>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -172,8 +172,25 @@ export default function Step3IdBack({ formData, updateStep, sessionId }: any) {
 
       if (result.ocrText || result.ocr) {
         console.log('✅ ID back verification successful');
+
+        // Upload file to local backend for persistence
+        let filePath = null;
+        if (user?.id) {
+          try {
+            console.log('💾 Saving ID Back locally...');
+            const uploadResult = await uploadVerificationFile(fileToUpload, 'idBack', user.id);
+            if (uploadResult.success) {
+              filePath = uploadResult.fileUrl;
+              console.log('✅ ID Back saved locally:', filePath);
+            }
+          } catch (uploadError) {
+            console.error('⚠️ Failed to save ID Back locally:', uploadError);
+          }
+        }
+
         updateStep(4, {
           idBack: fileToUpload,
+          idBackPath: filePath,
           ocrData: {
             ...formData.ocrData,
             back: {

@@ -35,26 +35,61 @@ async function getUserFromRequest(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
+        console.log('📥 Upload API called')
+
         const user = await getUserFromRequest(request)
         if (!user) {
+            console.log('❌ No user found')
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const formData = await request.formData()
+        console.log('✅ User authenticated:', user.email)
+
+        // WORKAROUND: Clone the request to avoid body lock issues
+        // This is necessary because proxy.ts may have touched the original request
+        let formData;
+        try {
+            // Try to read formData from cloned request
+            const clonedRequest = request.clone()
+            formData = await clonedRequest.formData()
+            console.log('✅ FormData parsed from cloned request')
+        } catch (cloneError) {
+            console.log('⚠️ Clone failed, trying original request')
+            try {
+                formData = await request.formData()
+                console.log('✅ FormData parsed from original request')
+            } catch (originalError: any) {
+                console.error('❌ Both attempts failed:', originalError.message)
+                return NextResponse.json({
+                    error: 'Failed to parse form data',
+                    details: originalError.message
+                }, { status: 500 })
+            }
+        }
+
         const file = formData.get('file') as File
         const fileType = formData.get('fileType') as string
 
+        console.log('📄 File info:', {
+            hasFile: !!file,
+            fileType,
+            fileName: file?.name,
+            fileSize: file?.size
+        })
+
         if (!file) {
+            console.log('❌ No file in form data')
             return NextResponse.json({ error: 'No file provided' }, { status: 400 })
         }
 
         // Create uploads directory if it doesn't exist
         const uploadsDir = join(process.cwd(), 'public', 'uploads', 'verification', user.id)
-        console.log('📂 Creating upload directory:', uploadsDir)
+        console.log('📂 Upload directory:', uploadsDir)
 
         try {
             if (!existsSync(uploadsDir)) {
                 await mkdir(uploadsDir, { recursive: true })
+                console.log('✅ Directory created')
             }
         } catch (mkdirError) {
             console.error('❌ Error creating directory:', mkdirError)
@@ -66,14 +101,14 @@ export async function POST(request: NextRequest) {
         const fileExtension = file.name.split('.').pop()
         const fileName = `${fileType}_${timestamp}.${fileExtension}`
         const filePath = join(uploadsDir, fileName)
-        console.log('📝 Writing file to:', filePath)
+        console.log('📝 Saving to:', filePath)
 
         // Convert file to buffer and save
         try {
             const bytes = await file.arrayBuffer()
             const buffer = Buffer.from(bytes)
             await writeFile(filePath, buffer)
-            console.log('✅ File written successfully')
+            console.log('✅ File saved successfully')
         } catch (writeError) {
             console.error('❌ Error writing file:', writeError)
             return NextResponse.json({ error: 'Failed to write file' }, { status: 500 })
@@ -81,8 +116,8 @@ export async function POST(request: NextRequest) {
 
         // Return relative file URL
         const fileUrl = `/uploads/verification/${user.id}/${fileName}`
+        console.log('✅ File URL:', fileUrl)
 
-        // Update KYC details with file URL
         // Update KYC details with file URL
         if (fileType === 'idFront') {
             await prisma.kycDetails.upsert({
@@ -91,7 +126,6 @@ export async function POST(request: NextRequest) {
                 create: { userId: user.id, idDocumentFront: fileUrl }
             })
 
-            // Also update onboarding progress data for session resumption
             const progress = await prisma.onboardingProgress.findUnique({ where: { userId: user.id } })
             const currentData = (progress?.data as any) || {}
             await prisma.onboardingProgress.upsert({
@@ -111,7 +145,6 @@ export async function POST(request: NextRequest) {
                 create: { userId: user.id, idDocumentBack: fileUrl }
             })
 
-            // Also update onboarding progress data for session resumption
             const progress = await prisma.onboardingProgress.findUnique({ where: { userId: user.id } })
             const currentData = (progress?.data as any) || {}
             await prisma.onboardingProgress.upsert({
@@ -131,7 +164,6 @@ export async function POST(request: NextRequest) {
                 create: { userId: user.id, selfieUrl: fileUrl }
             })
 
-            // Also update onboarding progress data for session resumption
             const progress = await prisma.onboardingProgress.findUnique({ where: { userId: user.id } })
             const currentData = (progress?.data as any) || {}
             await prisma.onboardingProgress.upsert({
@@ -146,15 +178,17 @@ export async function POST(request: NextRequest) {
             })
         }
 
+        console.log('✅ Upload complete')
         return NextResponse.json({
             success: true,
             fileUrl,
             message: 'File uploaded successfully'
         })
-    } catch (error) {
-        console.error('Error uploading file:', error)
+    } catch (error: any) {
+        console.error('❌ Upload error:', error)
+        console.error('Stack:', error.stack)
         return NextResponse.json(
-            { error: 'Failed to upload file' },
+            { error: 'Failed to upload file', details: error.message },
             { status: 500 }
         )
     }

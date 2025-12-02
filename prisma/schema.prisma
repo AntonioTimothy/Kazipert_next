@@ -57,6 +57,13 @@ model User {
   jobViews          JobView[]       @relation("JobViewers")
   savedJobs         SavedJob[]      @relation("SavedJobEmployees")
   
+  // Contract relations
+  employerContracts Contract[]      @relation("EmployerContracts")
+  employeeContracts Contract[]      @relation("EmployeeContracts")
+  
+  // Notifications
+  notifications     Notification[]
+  
   @@map("users")
 }
 
@@ -70,6 +77,9 @@ model Profile {
   language    String?  @default("en")
   currency    String?  @default("USD")
   theme       String?  @default("light")
+  address     String?
+  idNumber    String?
+  education   String?
   notifications Json?  // Store notification preferences as JSON
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -174,6 +184,10 @@ model KycDetails {
   idDocumentFront   String?
   idDocumentBack    String?
   selfieUrl         String?
+  passportNumber    String?
+  passportExpiry    DateTime?
+  nextOfKinName     String?
+  nextOfKinPhone    String?
   
   // Verification Status
   idVerified        Boolean @default(false)
@@ -290,6 +304,10 @@ model Job {
   emergencySupport  Boolean @default(true)
   autoSalaryCalculation Boolean @default(true)
   
+  // New Fields for Dynamic Job Posting
+  questionnaire     Json?    // Stores family tree, disability, house info, etc.
+  salaryBreakdown   Json?    // Stores the calculated salary components
+  
   // Timestamps
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -315,6 +333,7 @@ model JobApplication {
   status      ApplicationStatus @default(PENDING)
   coverLetter String?
   expectedSalary Float?
+  isDraft     Boolean     @default(false)
   
   // Enhanced workflow fields with progress tracking
   currentStep ApplicationStep @default(APPLICATION_SUBMITTED)
@@ -359,6 +378,7 @@ model JobApplication {
   // Contract details
   contractUrl         String?
   contractDetails     Json?    // Store contract terms
+  contract            Contract?
   
   // Timestamps
   createdAt   DateTime    @default(now())
@@ -535,4 +555,72 @@ enum ApplicationStatus {
   COMPLETED
   REJECTED
   WITHDRAWN
+}
+
+model Contract {
+  id              String    @id @default(cuid())
+  applicationId   String    @unique
+  application     JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  employerId      String
+  employer        User      @relation("EmployerContracts", fields: [employerId], references: [id])
+  employeeId      String
+  employee        User      @relation("EmployeeContracts", fields: [employeeId], references: [id])
+  
+  content         String    @db.Text // HTML content
+  pdfUrl          String?
+  
+  // Signatures
+  employerSigned  Boolean   @default(false)
+  employerSignedAt DateTime?
+  employerSignature String? // Digital signature hash/image
+  
+  employeeSigned  Boolean   @default(false)
+  employeeSignedAt DateTime?
+  employeeSignature String?
+  
+  adminSigned     Boolean   @default(false)
+  adminSignedAt   DateTime?
+  adminSignature  String?
+  
+  status          ContractStatus @default(DRAFT)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("contracts")
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  message     String
+  type        NotificationType
+  read        Boolean   @default(false)
+  actionUrl   String?
+  metadata    Json?
+  
+  createdAt   DateTime  @default(now())
+  
+  @@map("notifications")
+}
+
+enum ContractStatus {
+  DRAFT
+  PENDING_SIGNATURES
+  SIGNED
+  TERMINATED
+  EXPIRED
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  JOB_ALERT
+  APPLICATION_UPDATE
+  CONTRACT_UPDATE
+  SYSTEM
 }

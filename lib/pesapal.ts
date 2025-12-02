@@ -127,8 +127,14 @@ export async function getAuthToken(): Promise<string> {
 
   const data: PesapalAuthResponse = await response.json();
 
+  console.log('🔐 Pesapal Auth Response:', JSON.stringify(data, null, 2));
+
   if (data.error || data.status !== '200') {
-    throw new Error(`Pesapal auth error: ${data.error || data.message}`);
+    const errorMessage = typeof data.error === 'object'
+      ? JSON.stringify(data.error)
+      : (data.error || data.message);
+    console.error('❌ Pesapal Auth Error:', errorMessage);
+    throw new Error(`Pesapal auth error: ${errorMessage}`);
   }
 
   // Cache the token
@@ -166,8 +172,14 @@ export async function submitOrder(
 
   const data: PesapalOrderResponse = await response.json();
 
+  console.log('📦 Pesapal Order Response:', JSON.stringify(data, null, 2));
+
   if (data.error || data.status !== '200') {
-    throw new Error(`Pesapal order error: ${data.error || 'Unknown error'}`);
+    const errorMessage = typeof data.error === 'object'
+      ? JSON.stringify(data.error)
+      : (data.error || 'Unknown error');
+    console.error('❌ Pesapal Order Error:', errorMessage);
+    throw new Error(`Pesapal order error: ${errorMessage}`);
   }
 
   return data;
@@ -268,7 +280,7 @@ export function createOrderRequest(
 ): PesapalOrderRequest {
   const merchantReference = `EMP-VER-${userId}-${Date.now()}`;
 
-  return {
+  const orderRequest: PesapalOrderRequest = {
     id: merchantReference,
     currency: currency,
     amount: amount,
@@ -284,6 +296,10 @@ export function createOrderRequest(
       last_name: userName.split(' ').slice(1).join(' ') || '',
     },
   };
+
+  console.log('📝 Creating Pesapal Order Request:', JSON.stringify(orderRequest, null, 2));
+
+  return orderRequest;
 }
 
 /**

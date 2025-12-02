@@ -1,5 +1,6 @@
 Terminal Tab 1: Live Production (PM2)
 bash
+6061
 # One-time setup
 npm install pm2 -g  # or use local: npm install
 

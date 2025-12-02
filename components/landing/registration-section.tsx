@@ -78,7 +78,7 @@ export function RegistrationSection() {
       </div>
 
       {/* LIGHT TEXTURE */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('/icons-bg.svg')] bg-center bg-repeat" />
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('/bg-icons.avif')] bg-center bg-repeat" />
 
       {/* CONTENT */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">

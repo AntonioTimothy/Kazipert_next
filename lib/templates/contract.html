@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Kenya Simbas Employment Contract | Kazipert System</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Georgia", "Times New Roman", serif;
+            color: #333;
+            line-height: 1.5;
+            background: #f5f7fa;
+        }
+
+        /* Print-specific styles */
+        @media print {
+            @page {
+                size: A4;
+                margin: 15mm 20mm;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                background: white !important;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .paper {
+                width: 100% !important;
+                height: 100% !important;
+                margin: 0 !important;
+                padding: 15mm 20mm !important;
+                box-shadow: none !important;
+                page-break-after: always;
+                position: relative;
+                background: white !important;
+            }
+
+            .bg-pattern {
+                display: block !important;
+                opacity: 0.08 !important;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+
+            .micro-watermark {
+                display: block !important;
+                opacity: 0.03 !important;
+            }
+
+            .stamp {
+                opacity: 0.7 !important;
+            }
+
+            .header,
+            .content,
+            .footer {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+
+            .panel,
+            .sig,
+            .qr {
+                background: white !important;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        /* Screen styles */
+        @media screen {
+            .paper {
+                width: 210mm;
+                min-height: 297mm;
+                margin: 20px auto;
+                background: #fff;
+                position: relative;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+                padding: 20mm 25mm;
+                overflow: hidden;
+            }
+        }
+
+        /* Common styles for both screen and print */
+        .paper {
+            page-break-after: always;
+        }
+
+        /* NEW APPROACH: Simple but reliable background pattern */
+        .bg-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.05;
+            background-image:
+                linear-gradient(30deg, #2FA3A0 12%, transparent 12.5%, transparent 87%, #2FA3A0 87.5%, #2FA3A0),
+                linear-gradient(150deg, #2FA3A0 12%, transparent 12.5%, transparent 87%, #2FA3A0 87.5%, #2FA3A0),
+                linear-gradient(30deg, #2FA3A0 12%, transparent 12.5%, transparent 87%, #2FA3A0 87.5%, #2FA3A0),
+                linear-gradient(150deg, #2FA3A0 12%, transparent 12.5%, transparent 87%, #2FA3A0 87.5%, #2FA3A0),
+                linear-gradient(60deg, #7A6CCF77 25%, transparent 25.5%, transparent 75%, #7A6CCF77 75%, #7A6CCF77),
+                linear-gradient(60deg, #7A6CCF77 25%, transparent 25.5%, transparent 75%, #7A6CCF77 75%, #7A6CCF77);
+            background-size: 80px 140px;
+            background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px;
+        }
+
+        /* Header with logo and title */
+        .header {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #2FA3A0;
+            padding-bottom: 15px;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .logo {
+            height: 80px;
+            width: auto;
+            display: block;
+        }
+
+        .logo-placeholder {
+            width: 120px;
+            height: 80px;
+            background: linear-gradient(135deg, #2FA3A0, #7A6CCF);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            text-align: center;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-text {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2FA3A0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .doc-title {
+            flex: 2;
+            text-align: center;
+        }
+
+        .doc-title h1 {
+            margin: 0;
+            font-size: 22px;
+            color: #2FA3A0;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+        }
+
+        .doc-subtitle {
+            font-size: 14px;
+            color: #7A6CCF;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .doc-meta {
+            font-size: 12px;
+            color: #555;
+            margin-top: 6px;
+        }
+
+        .doc-ref {
+            text-align: right;
+            font-size: 12px;
+            color: #666;
+            flex: 1;
+        }
+
+        /* Content area */
+        .content {
+            position: relative;
+            z-index: 2;
+        }
+
+        h2 {
+            color: #7A6CCF;
+            font-size: 18px;
+            margin: 20px 0 10px;
+            border-bottom: 1px solid rgba(47, 163, 160, 0.2);
+            padding-bottom: 6px;
+            font-weight: 600;
+        }
+
+        h3 {
+            color: #2FA3A0;
+            font-size: 16px;
+            margin: 18px 0 8px;
+            font-weight: 600;
+        }
+
+        p {
+            line-height: 1.5;
+            margin: 8px 0 12px;
+            font-size: 13px;
+            text-align: justify;
+        }
+
+        /* Two-column info panels */
+        .info {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            width: 49%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.95));
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(47, 163, 160, 0.1);
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            font-size: 16px;
+            color: #7A6CCF;
+        }
+
+        .panel table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .panel td {
+            padding: 6px 4px;
+            vertical-align: top;
+        }
+
+        .panel td.label {
+            width: 40%;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .panel td.value {
+            color: #222;
+            border-bottom: 1px dotted rgba(0, 0, 0, 0.1);
+        }
+
+        /* Clauses and lists */
+        ul,
+        ol {
+            margin: 8px 0 12px 20px;
+            padding-left: 10px;
+        }
+
+        li {
+            margin-bottom: 6px;
+            font-size: 13px;
+            text-align: justify;
+        }
+
+        .clause {
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .clause strong {
+            color: #2FA3A0;
+        }
+
+        /* QR + meta stamp area */
+        .side-meta {
+            position: absolute;
+            right: 25mm;
+            top: 36mm;
+            z-index: 3;
+            text-align: center;
+        }
+
+        .qr {
+            background: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(47, 163, 160, 0.2);
+        }
+
+        .qr img {
+            width: 110px;
+            height: 110px;
+            display: block;
+        }
+
+        .qr-text {
+            font-size: 11px;
+            color: #444;
+            margin-top: 6px;
+            font-weight: 500;
+        }
+
+        /* Stamp */
+        .stamp {
+            position: absolute;
+            right: 30mm;
+            bottom: 42mm;
+            width: 170px;
+            opacity: 0.75;
+            transform: rotate(-6deg);
+            z-index: 2;
+        }
+
+        /* Signatures */
+        .sign-grid {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .sig {
+            width: 32%;
+            text-align: center;
+            font-size: 12px;
+            border-top: 1px dashed rgba(0, 0, 0, 0.15);
+            padding-top: 10px;
+            background: linear-gradient(180deg, rgba(250, 250, 250, 0.7), rgba(255, 255, 255, 0.9));
+            border-radius: 8px;
+            padding: 15px 10px 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .sig-title {
+            font-weight: 700;
+            color: #444;
+            margin-bottom: 8px;
+        }
+
+        .sig-line {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.1);
+            margin: 8px 0;
+        }
+
+        .sig-name {
+            margin-top: 5px;
+            font-weight: 600;
+            color: #2FA3A0;
+        }
+
+        .sig-role {
+            font-size: 11px;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        .sig img.sig-img {
+            width: 160px;
+            height: auto;
+            margin-top: 8px;
+            opacity: 0.95;
+        }
+
+        /* Footer */
+        .footer {
+            position: absolute;
+            bottom: 12mm;
+            left: 25mm;
+            right: 25mm;
+            text-align: center;
+            font-size: 11px;
+            color: #666;
+            z-index: 2;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            padding-top: 8px;
+        }
+
+        /* Enhanced microtext watermark */
+        .micro-watermark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.035;
+            font-size: 6px;
+            color: #000;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 21px, rgba(0, 0, 0, 0.02) 21px, rgba(0, 0, 0, 0.02) 22px);
+            padding: 20mm;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .micro-watermark::before {
+            content: "KAZIPERT • {{DOCUMENT_ID}} • OFFICIAL EMPLOYMENT CONTRACT • KAZIPERT • {{DOCUMENT_ID}} • OFFICIAL EMPLOYMENT CONTRACT • KAZIPERT • {{DOCUMENT_ID}} • OFFICIAL EMPLOYMENT CONTRACT • KAZIPERT • {{DOCUMENT_ID}} • OFFICIAL EMPLOYMENT CONTRACT • KAZIPERT • {{DOCUMENT_ID}} • OFFICIAL EMPLOYMENT CONTRACT • KAZIPERT • {{DOCUMENT_ID}} • OFFICIAL EMPLOYMENT CONTRACT • KAZIPERT • {{DOCUMENT_ID}} • OFFICIAL EMPLOYMENT CONTRACT • KAZIPERT • {{DOCUMENT_ID}} • OFFICIAL EMPLOYMENT CONTRACT • KAZIPERT • {{DOCUMENT_ID}} • OFFICIAL EMPLOYMENT CONTRACT • KAZIPERT • {{DOCUMENT_ID}} • OFFICIAL EMPLOYMENT CONTRACT • KAZIPERT • {{DOCUMENT_ID}} • OFFICIAL EMPLOYMENT CONTRACT • KAZIPERT • {{DOCUMENT_ID}} • OFFICIAL EMPLOYMENT CONTRACT • KAZIPERT • {{DOCUMENT_ID}} • OFFICIAL EMPLOYMENT CONTRACT";
+            position: absolute;
+            white-space: nowrap;
+        }
+
+        /* First page special styling */
+        .first-page {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .first-page .header {
+            border-bottom: 2px solid #2FA3A0;
+            flex-direction: row;
+            text-align: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .first-page .logo {
+            height: 100px;
+        }
+
+        .first-page .logo-placeholder {
+            width: 150px;
+            height: 100px;
+        }
+
+        .first-page .doc-title h1 {
+            font-size: 24px;
+            color: #2FA3A0;
+            margin-bottom: 5px;
+        }
+
+        .first-page .doc-subtitle {
+            font-size: 16px;
+            color: #7A6CCF;
+        }
+
+        .contract-intro {
+            text-align: center;
+            margin: 20px 0 30px;
+            padding: 25px;
+            background: rgba(47, 163, 160, 0.05);
+            border-radius: 10px;
+            border-left: 4px solid #2FA3A0;
+            border-right: 4px solid #7A6CCF;
+        }
+
+        .contract-intro h2 {
+            color: #2FA3A0;
+            border-bottom: none;
+            margin-top: 0;
+            font-size: 20px;
+        }
+
+        .embassy-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin: 25px 0;
+            padding: 15px;
+            background: rgba(245, 217, 78, 0.05);
+            border-radius: 8px;
+        }
+
+        .embassy-logo {
+            height: 80px;
+            width: auto;
+        }
+
+        .embassy-text {
+            text-align: center;
+        }
+
+        .embassy-text h3 {
+            margin: 0;
+            color: #7A6CCF;
+        }
+
+        .embassy-text p {
+            margin: 5px 0 0;
+            text-align: center;
+        }
+
+        /* Print button for testing */
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #2FA3A0;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 1000;
+            font-family: sans-serif;
+        }
+
+        .print-button:hover {
+            background: #268f8c;
+        }
+    </style>
+</head>
+
+<body>
+    <button class="print-button no-print" onclick="window.print()">Print Contract</button>
+
+    <!-- Page 1: Cover Page with Logo -->
+    <section class="paper first-page">
+        <div class="bg-pattern" aria-hidden="true"></div>
+        <div class="micro-watermark"></div>
+
+        <header class="header" role="banner">
+            <div class="logo-container">
+                <img class="logo" src="/public/logo.svg" alt="Kazipert Logo" />
+                <div class="logo-text">EMPLOYMENT CONTRACT</div>
+            </div>
+            <!-- <div class="doc-title">
+                <h1>KENYA SIMBAS</h1>
+                <div class="doc-subtitle">Official Employment Agreement</div>
+                <div class="doc-meta">For Blue-Collar Jobs From Kenya to Oman</div>
+            </div> -->
+            <div class="logo-container" style="justify-content: flex-end;">
+                <div class="logo-text">REPUBLIC OF KENYA</div>
+                <div class="logo-placeholder">
+                    EMBASSY<br>LOGO
+                </div>
+            </div>
+        </header>
+
+        <div class="contract-intro">
+            <h2>KENYA EMBASSY IN MUSCAT, SULTANATE OF OMAN</h2>
+            <p>This employment contract is issued under the authority of the Kenya Embassy in Muscat and in accordance
+                with the laws of the Sultanate of Oman and the Republic of Kenya.</p>
+            <p>All parties are bound by the terms and conditions outlined in this document, which has been prepared
+                through the official Kazipert System.</p>
+        </div>
+
+        <div class="embassy-info">
+            <div class="embassy-text">
+                <h3>Republic of Kenya</h3>
+                <p>Embassy in Muscat, Sultanate of Oman</p>
+            </div>
+            <div class="logo-placeholder" style="width: 120px; height: 120px;">
+                TWO LIONS<br>EMBLEM
+            </div>
+            <div class="embassy-text">
+                <h3>Kazipert System</h3>
+                <p>Official Employment Portal</p>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="info">
+                <div class="panel">
+                    <h2>Employer Details</h2>
+                    <table>
+                        <tr>
+                            <td class="label">Name/Agency:</td>
+                            <td class="value">{{EMPLOYER_NAME}}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">ID No/CR No:</td>
+                            <td class="value">{{EMPLOYER_ID}}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Contact Person:</td>
+                            <td class="value">{{EMPLOYER_CONTACT}}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Phone No:</td>
+                            <td class="value">{{EMPLOYER_PHONE}}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Office/Fax:</td>
+                            <td class="value">{{EMPLOYER_OFFICE}}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Address:</td>
+                            <td class="value">{{EMPLOYER_ADDRESS}}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Email:</td>
+                            <td class="value">{{EMPLOYER_EMAIL}}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="panel">
+                    <h2>Employee Details</h2>
+                    <table>
+                        <tr>
+                            <td class="label">Full Name:</td>
+                            <td class="value">{{EMPLOYEE_NAME}}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Passport No:</td>
+                            <td class="value">{{EMPLOYEE_PASSPORT}}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Passport Expiry:</td>
+                            <td class="value">{{EMPLOYEE_PASSPORT_EXPIRY}}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Date of Birth:</td>
+                            <td class="value">{{EMPLOYEE_DOB}}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Arrival Date (Oman):</td>
+                            <td class="value">{{CONTRACT_START_DATE}}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Education:</td>
+                            <td class="value">{{EMPLOYEE_EDUCATION}}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Home Address:</td>
+                            <td class="value">{{EMPLOYEE_ADDRESS}}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="info">
+                <div class="panel">
+                    <h2>Next of Kin Details</h2>
+                    <table>
+                        <tr>
+                            <td class="label">Primary Contact:</td>
+                            <td class="value">{{NEXT_OF_KIN_NAME}}<br>{{NEXT_OF_KIN_PHONE}}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Secondary Contact:</td>
+                            <td class="value">{{NEXT_OF_KIN_2_NAME}}<br>{{NEXT_OF_KIN_2_PHONE}}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="panel">
+                    <h2>Contract Terms</h2>
+                    <table>
+                        <tr>
+                            <td class="label">Contract Duration:</td>
+                            <td class="value">2 Years</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Start Date:</td>
+                            <td class="value">{{CONTRACT_START_DATE}}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Monthly Salary:</td>
+                            <td class="value">{{MONTHLY_SALARY}}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Working Hours:</td>
+                            <td class="value">Max 10 hours/day</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Weekly Rest:</td>
+                            <td class="value">1 day per week</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <aside class="side-meta" aria-hidden="true">
+            <div class="qr">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://kazipert.com/verify/{{DOCUMENT_ID}}"
+                    alt="Verify QR Code" />
+                <div class="qr-text">Scan to Verify Document</div>
+            </div>
+        </aside>
+
+        <img class="stamp" src="https://i.imgur.com/5bXq7yA.png" alt="Official Stamp" />
+
+        <footer class="footer">
+            KAZIPERT SYSTEM • Official Employment Contract • Document ID: <strong>{{DOCUMENT_ID}}</strong> • Issued:
+            {{ISSUE_DATE}}
+        </footer>
+    </section>
+
+    <!-- Page 2: Contract Details -->
+    <section class="paper">
+        <div class="bg-pattern" aria-hidden="true"></div>
+        <div class="micro-watermark"></div>
+
+        <header class="header">
+            <div class="logo-container">
+                <div class="logo-placeholder" style="width: 80px; height: 60px;">
+                    KAZIPERT
+                </div>
+                <div class="logo-text">EMPLOYMENT CONTRACT</div>
+            </div>
+            <div class="doc-title">
+                <h1>Terms & Conditions</h1>
+                <div class="doc-meta">Document reference: <strong>{{DOCUMENT_ID}}</strong> • Page 2 of 3</div>
+            </div>
+            <div class="doc-ref">
+                Issue Date: <strong>14 Jan 2025</strong>
+            </div>
+        </header>
+
+        <div class="content">
+            <h2>Full Contract Agreement</h2>
+
+            <p class="clause">
+                <strong>KENYA EMBASSY IN MUSCAT, SULTANATE OF OMAN</strong><br>
+                <em>EMPLOYMENT CONTRACT FOR BLUE-COLLAR JOBS FROM KENYA</em>
+            </p>
+
+            <p class="clause">
+                The Agreement is made on: <strong>{{CONTRACT_START_DATE}}</strong><br>
+                Between the First Party (Employer/Omani Agency), Second Party (Recruitment Agency), and Third Party
+                (Employee).
+            </p>
+
+            <h3>A — The Above-mentioned Parties have agreed to the Following:</h3>
+            <ol>
+                <li>The Third Party commits to work under the First Party's supervision and administration, or whomever
+                    they designate as their representative, for a monthly salary not less than 140 Omani Rials.</li>
+                <li>The period of this Contract is for two years, starting from the date of arrival of the Third Party
+                    to Oman.</li>
+                <li>The Contract is valid for two years and may be renewed with new terms and conditions with mutual
+                    agreement of both Parties. The Employer should notify the Employee of the intended renewal three
+                    months before the Contract expires.</li>
+                <li>Working hours:
+                    <ul>
+                        <li>She/he shall be provided with continuous rest of at least 8 hours per day, she/he must not
+                            work for more than 10 hours a day and must be allowed no less than an hour break after 5
+                            consecutive hours of work.</li>
+                        <li>She/he entitled to 1 day off per week.</li>
+                        <li>Overtime and leave pay: as per Omani Labor Law.</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h3>B — The First party undertakes and agrees to:</h3>
+            <ol>
+                <li>To pay the Third Party's salary after the end of every month or corresponding to the period when it
+                    becomes due, by bank transfer.</li>
+                <li>To issue an Air Travel ticket at his/her expense for the second party to Kenya in the following
+                    cases:
+                    <ol type="i">
+                        <li>Where the First Party decides to terminate the contract prematurely or when the Contract
+                            expires.</li>
+                        <li>Where the Third-Party travels to his/her Country of origin during his/her leave period.</li>
+                        <li>In case of death the employer will insure Repatriation of the body to Kenya.</li>
+                        <li>The ticket should be booked on a direct flight or the most convenient flight to the closest
+                            Airport to her hometown in Kenya.</li>
+                        <li>To give details of the new Sponsor in case of an intention transfer of sponsorship and
+                            present the employee to the embassy for consent.</li>
+                        <li>To provide medical insurance cover for the employee against occupational injuries,
+                            illnesses, death etc. as per Omani Labor Law.</li>
+                    </ol>
+                </li>
+            </ol>
+
+            <h3>C — The Second party undertakes and agrees to:</h3>
+            <ol>
+                <li>To offer basic training on:
+                    <ol type="i">
+                        <li>the nature of work the employees should expect;</li>
+                        <li>Kitchen appliances and other house appliances that relate to employee's work;</li>
+                        <li>Cultural, religion and language difference and how to cope;</li>
+                        <li>Weather changes and how to adapt.</li>
+                    </ol>
+                </li>
+                <li>Conduct medical tests as required by Oman Labour Laws. This include, HIV tests, Tuberculosis,
+                    Hepatitis B&C and Pregnant test. This will ensure that the employee is free from major illness and
+                    is not pregnant therefore capable of conducting her duties and responsibilities efficiently and
+                    effectively.</li>
+                <li>To disclose all relevant information such as salary expected and not less than Omr. 140, work load
+                    expected, the number of family members to be attended to and the size of the houses where the
+                    employee will be working.</li>
+                <li>Maintain contacts with the employee checking on her wellbeing while abroad.</li>
+                <li>In an unlikely event of any emergency such as death of immediate family member, sickness or
+                    inability to work as required, second part to follow-up with the First Party to ensure ticketing and
+                    repatriation are done as efficiently and effectively as possible.</li>
+            </ol>
+        </div>
+
+        <footer class="footer">
+            KAZIPERT SYSTEM • Official Employment Contract • Page 2 of 3 • Document ID: <strong>{{DOCUMENT_ID}}</strong>
+        </footer>
+    </section>
+
+    <!-- Page 3: Contract Continuation and Signatures -->
+    <section class="paper">
+        <div class="bg-pattern" aria-hidden="true"></div>
+        <div class="micro-watermark"></div>
+
+        <header class="header">
+            <div class="logo-container">
+                <div class="logo-placeholder" style="width: 80px; height: 60px;">
+                    KAZIPERT
+                </div>
+                <div class="logo-text">EMPLOYMENT CONTRACT</div>
+            </div>
+            <div class="doc-title">
+                <h1>Continuation & Signatures</h1>
+                <div class="doc-meta">Document reference: <strong>{{DOCUMENT_ID}}</strong> • Page 3 of 3</div>
+            </div>
+            <div class="doc-ref">
+                Issue Date: <strong>14 Jan 2025</strong>
+            </div>
+        </header>
+
+        <div class="content">
+            <h3>D — The Third Party undertakes to carry out the obligations required by his/her job, particularly the
+                following:</h3>
+            <ol>
+                <li>Exerting reasonable efforts to carry out the work, and following the instructions of the First Party
+                    as to the assigned work, unless such instructions violate laws, regulations are against personal
+                    integrity, or are in violation of this contract conditions.</li>
+                <li>Keeping any information relating to the First Party confidential.</li>
+                <li>Respecting the Islamic Religion, Social Traditions, Customs and Moral values and rules and
+                    regulations effective in the sultanate of Oman.</li>
+                <li>Not working for any other person before completing the procedures of changing to another Employer.
+                </li>
+            </ol>
+
+            <h3>E — Termination of Contract</h3>
+            <ol>
+                <li>Both parties may terminate the Contract upon giving the other party 30 days' notice in writing.</li>
+                <li>The First Party may terminate this Contract without serving any notice to the Third Party if there
+                    is any serious misconduct or violations of the provisions of this Contract by the Third Party.</li>
+                <li>The Third Party may terminate this Contract without serving any notice to the First Party for any of
+                    this causes:
+                    <ol type="i">
+                        <li>If there is a serious breach of this Contract by the First Party.</li>
+                        <li>The Third Party suffered ill-treatment by the Employer or was treated unfairly.</li>
+                        <li>Abuse by the First Party.</li>
+                        <li>In case of work injury or illness.</li>
+                    </ol>
+                </li>
+            </ol>
+
+            <h3>F — Dispute Resolution</h3>
+            <p class="clause">In case of a dispute between the two parties the Embassy takes precedence to prevail upon
+                the matter, if the disputes unsolved the two parties have the right to request for an amicable
+                settlement of disputes, from the Ministry of Manpower (Dispute Settlement Department) which is obligated
+                to take the necessary steps to reach a settlement. If a settlement is reached, the department has to
+                issue a Certificate to that effect and it shall be binding on both parties.</p>
+
+            <h3>H — Signing the Contract</h3>
+            <p class="clause">The Contract shall be drafted in both the Arabic and English languages and signed in
+                triplicate at the Embassy of the Republic of Kenya in Muscat (A copy for each Party with one copy
+                remaining in the Embassy). The Employer shall present the Employee to the Embassy within the first week
+                of arrival to the Sultanate.</p>
+
+            <div class="sign-grid">
+                <div class="sig">
+                    <div class="sig-title">FIRST PARTY (EMPLOYER)</div>
+                    <div class="sig-line"></div>
+                    <div class="sig-name">{{EMPLOYER_CONTACT}}</div>
+                    <div class="sig-role">Authorized Signatory</div>
+                    <div class="sig-line"></div>
+                    <div>Signature: {{EMPLOYER_SIGNATURE}}</div>
+                    <div>Date: _________________________</div>
+                </div>
+                <div class="sig">
+                    <div class="sig-title">SECOND PARTY (AGENCY)</div>
+                    <div class="sig-line"></div>
+                    <div class="sig-name">Kazipert Systems</div>
+                    <div class="sig-role">Recruitment Agency</div>
+                    <div class="sig-line"></div>
+                    <div>Signature: {{AGENCY_SIGNATURE}}</div>
+                    <div>Date: _________________________</div>
+                </div>
+                <div class="sig">
+                    <div class="sig-title">THIRD PARTY (EMPLOYEE)</div>
+                    <div class="sig-line"></div>
+                    <div class="sig-name">{{EMPLOYEE_NAME}}</div>
+                    <div class="sig-role">Employee</div>
+                    <div class="sig-line"></div>
+                    <div>Signature: {{EMPLOYEE_SIGNATURE}}</div>
+                    <div>Date: _________________________</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; font-size: 12px; color: #444; border-top: 1px solid #eee; padding-top: 15px;">
+                <p><strong>Note:</strong> To endorse this contract at the Ministry of Manpower, the following shall be
+                    submitted: A copy of the Employer Civil Card (ID Card) (Employer to provide the copy of civil card).
+                    Kenya Embassy Endorsement.</p>
+
+                <div style="margin-top: 15px;">
+                    <strong>Kenya Embassy Endorsement:</strong><br>
+                    Name: _________________________________<br>
+                    Stamp: ____________________________<br>
+                    Date: ____________
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <strong>Document Verification:</strong><br>
+                    Scan the QR code or visit: <em>https://kazipert.com/verify</em> and enter Document ID
+                    <strong>{{DOCUMENT_ID}}</strong> to see the digital record and status.
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            KAZIPERT SYSTEM • © 2025 • This document was generated through the Official Kazipert Portal.
+        </footer>
+    </section>
+
+</body>
+
+</html>

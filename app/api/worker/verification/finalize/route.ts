@@ -52,7 +52,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { sessionId, formData, paymentData } = await request.json()
+        const body = await request.json()
+        const { sessionId, formData, paymentData } = body
+
+        console.log('📝 VERIFICATION FINALIZE API - Request body parsed')
+        console.log('Session ID:', sessionId)
+        console.log('Payment Data:', paymentData)
+        console.log('Form Data keys:', Object.keys(formData || {}))
 
         console.log('📝 VERIFICATION FINALIZE API - Finalizing verification for user:', user.email)
 

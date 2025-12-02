@@ -37,6 +37,9 @@ export default function WorkerVerificationPage() {
     idFront: null as File | null,
     idBack: null as File | null,
     selfie: null as File | null,
+    idFrontPath: null as string | null,
+    idBackPath: null as string | null,
+    selfiePath: null as string | null,
     fullName: '',
     gender: '',
     dateOfBirth: '',
@@ -214,66 +217,70 @@ export default function WorkerVerificationPage() {
   }
 
   const handleFinalizeVerification = async () => {
-    if (!user || !sessionId) return
+    if (!user || !sessionId) {
+      console.error('❌ Cannot finalize: Missing user or sessionId', { user: !!user, sessionId })
+      return
+    }
 
     setFinalizing(true)
     try {
-      console.log('Finalizing verification...')
+      console.log('🚀 Starting finalization...')
+      console.log('📋 FormData at finalization:', {
+        hasIdFrontPath: !!formData.idFrontPath,
+        hasIdBackPath: !!formData.idBackPath,
+        hasSelfiePath: !!formData.selfiePath,
+        fullName: formData.fullName,
+        paymentCompleted: formData.paymentCompleted,
+        mpesaNumber: formData.mpesaNumber,
+        transactionCode: formData.transactionCode
+      })
 
-      // Upload files first if they exist and are new files
-      const uploadPromises = []
-      if (formData.idFront && formData.idFront instanceof File) {
-        uploadPromises.push(
-          uploadVerificationFile(formData.idFront, 'idFront', user.id)
-        )
-      }
-      if (formData.idBack && formData.idBack instanceof File) {
-        uploadPromises.push(
-          uploadVerificationFile(formData.idBack, 'idBack', user.id)
-        )
-      }
-      if (formData.selfie && formData.selfie instanceof File) {
-        uploadPromises.push(
-          uploadVerificationFile(formData.selfie, 'selfie', user.id)
-        )
-      }
+      // Files should already be uploaded at each step
+      // No need to re-upload here - just finalize with the existing paths
 
-      // Wait for all file uploads to complete
-      if (uploadPromises.length > 0) {
-        await Promise.all(uploadPromises)
-      }
-
+      console.log('📡 Calling finalizeVerification API...')
       // Finalize verification in backend
       const result = await finalizeVerification(sessionId, formData, {
         mpesaNumber: formData.mpesaNumber,
         transactionCode: formData.transactionCode
       })
 
+      console.log('📡 API Response:', result)
+
       if (result.success) {
-        console.log('Verification finalized successfully!')
+        console.log('✅ Verification finalized successfully!')
 
         // Update user in session storage
         const userData = sessionStorage.getItem("user")
         if (userData) {
           const userObj = JSON.parse(userData)
+          console.log('📝 Updating session storage - Before:', { verified: userObj.verified, onboardingCompleted: userObj.onboardingCompleted })
           userObj.verified = true
           userObj.onboardingCompleted = true
           userObj.fullName = formData.fullName
           userObj.firstName = formData.fullName?.split(' ')[0]
           userObj.lastName = formData.fullName?.split(' ').slice(1).join(' ')
           sessionStorage.setItem("user", JSON.stringify(userObj))
+          console.log('📝 Session storage updated - After:', { verified: true, onboardingCompleted: true })
         }
+
+        // Dispatch event to update layout
+        console.log('📢 Dispatching verification-updated event')
+        window.dispatchEvent(new Event('kazipert-verification-updated'))
+        console.log('🎉 Finalization complete!')
 
         // Show success message for 3 seconds then redirect
         setTimeout(() => {
           router.push('/portals/worker/dashboard')
         }, 3000)
       } else {
-        throw new Error(result.message || 'Failed to finalize verification')
+        console.error('❌ Finalization failed:', result.message)
+        alert(`Failed to complete verification: ${result.message}`)
       }
-    } catch (error) {
-      console.error('Error finalizing verification:', error)
-      alert('Failed to complete verification. Please try again.')
+    } catch (error: any) {
+      console.error('❌ Error finalizing verification:', error)
+      console.error('Error details:', error.message, error.stack)
+      alert(`Failed to complete verification: ${error.message}`)
     } finally {
       setFinalizing(false)
     }
@@ -397,6 +404,7 @@ export default function WorkerVerificationPage() {
               sessionId={sessionId}
               finalizing={finalizing}
               role="EMPLOYEE"
+              user={user}
             />
           </div>
         </div>

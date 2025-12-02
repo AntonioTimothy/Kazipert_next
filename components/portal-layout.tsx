@@ -342,13 +342,48 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
   } = useNavigation()
 
   // Check if user needs verification
-  const needsVerification = user?.role === "EMPLOYEE" && (!user?.verified || !user?.onboardingCompleted)
+  const [localUser, setLocalUser] = useState(user)
+
+  useEffect(() => {
+    setLocalUser(user)
+  }, [user])
+
+  // Listen for verification updates from other components
+  useEffect(() => {
+    const handleVerificationUpdate = () => {
+      const userData = sessionStorage.getItem("user")
+      if (userData) {
+        const parsedUser = JSON.parse(userData)
+        setLocalUser(parsedUser)
+      }
+    }
+
+    window.addEventListener('kazipert-verification-updated', handleVerificationUpdate)
+
+    // Also check periodically just in case
+    const interval = setInterval(() => {
+      const userData = sessionStorage.getItem("user")
+      if (userData) {
+        const parsedUser = JSON.parse(userData)
+        if (parsedUser.verified !== localUser.verified) {
+          setLocalUser(parsedUser)
+        }
+      }
+    }, 2000)
+
+    return () => {
+      window.removeEventListener('kazipert-verification-updated', handleVerificationUpdate)
+      clearInterval(interval)
+    }
+  }, [localUser.verified])
+
+  const needsVerification = (localUser?.role === "EMPLOYEE" || localUser?.role === "EMPLOYER") && (!localUser?.verified || !localUser?.onboardingCompleted)
   const isVerificationPage = pathname === '/portals/worker/verification'
 
   console.log("🔍 PortalLayout Debug:", {
-    user: user?.email,
-    verified: user?.verified,
-    onboardingCompleted: user?.onboardingCompleted,
+    user: localUser?.email,
+    verified: localUser?.verified,
+    onboardingCompleted: localUser?.onboardingCompleted,
     needsVerification,
     pathname
   })
@@ -690,7 +725,11 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
               <span className="text-xs font-bold text-text">Complete Verification</span>
             </div>
             <p className="text-xs text-text-muted mb-3">Verify your identity to access all features</p>
-            <Link href="/portals/worker/verification" className="block" onClick={() => setSidebarOpen(false)}>
+            <Link
+              href={localUser?.role === 'EMPLOYER' ? '/portals/employer/verification' : '/portals/worker/verification'}
+              className="block"
+              onClick={() => setSidebarOpen(false)}
+            >
               <Button
                 className="w-full h-8 text-text font-semibold shadow-md hover:shadow-lg transition-all duration-300 rounded-lg text-xs"
                 style={{
@@ -724,9 +763,9 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-text truncate">{user?.name}</p>
             <p className="text-xs text-text-muted truncate capitalize">{user?.role}</p>
-            {user.verified && user.onboardingCompleted ? (
-              <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
-                <CheckCircle className="h-3 w-3" />
+            {localUser.verified && localUser.onboardingCompleted ? (
+              <p className="text-xs flex items-center gap-1 mt-1" style={{ color: '#6c71b5' }}>
+                <Shield className="h-3 w-3 fill-current" />
                 Verified
               </p>
             ) : (
@@ -877,7 +916,7 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                 <span className="text-xs font-bold text-text">Complete Verification</span>
               </div>
               <p className="text-xs text-text-muted mb-3">Verify your identity to access all features</p>
-              <Link href="/portals/worker/verification" className="block">
+              <Link href={localUser?.role === 'EMPLOYER' ? '/portals/employer/verification' : '/portals/worker/verification'} className="block">
                 <Button
                   className="w-full h-8 text-text font-semibold shadow-md hover:shadow-lg transition-all duration-300 rounded-lg text-xs"
                   style={{
@@ -912,9 +951,9 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-text truncate">{user?.name}</p>
                 <p className="text-xs text-text-muted truncate capitalize">{user?.role}</p>
-                {user.verified && user.onboardingCompleted ? (
-                  <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
-                    <CheckCircle className="h-3 w-3" />
+                {localUser.verified && localUser.onboardingCompleted ? (
+                  <p className="text-xs flex items-center gap-1 mt-1" style={{ color: '#6c71b5' }}>
+                    <Shield className="h-3 w-3 fill-current" />
                     Verified
                   </p>
                 ) : (
@@ -1066,18 +1105,17 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                     <div className="hidden sm:flex flex-col items-start text-left">
                       <span className="text-sm font-semibold text-text leading-tight">{user?.name}</span>
                       <span className={cn(
-                        "text-xs leading-tight flex items-center gap-1 font-medium",
-                        user?.verified && user?.onboardingCompleted ? "text-success" : "text-primary"
-                      )}>
-                        {user?.verified && user?.onboardingCompleted ? (
+                        "text-xs leading-tight flex items-center gap-1 font-medium"
+                      )} style={localUser?.verified && localUser?.onboardingCompleted ? { color: '#6c71b5' } : {}}>
+                        {localUser?.verified && localUser?.onboardingCompleted ? (
                           <>
-                            <CheckCircle className="h-3 w-3" />
+                            <Shield className="h-3 w-3 fill-current" />
                             Verified
                           </>
                         ) : (
                           <>
-                            <Clock className="h-3 w-3" />
-                            Verify Required
+                            <Clock className="h-3 w-3 text-amber-600" />
+                            <span className="text-amber-600">Verify Required</span>
                           </>
                         )}
                       </span>
@@ -1115,13 +1153,13 @@ export function PortalLayout({ children, user, notificationCount = 3 }: PortalLa
                         <div className="flex items-center gap-2 mt-2">
                           <span className={cn(
                             "px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1",
-                            user?.verified && user?.onboardingCompleted
-                              ? "bg-success/10 text-success"
+                            localUser?.verified && localUser?.onboardingCompleted
+                              ? "text-white"
                               : "bg-primary/10 text-primary"
-                          )}>
-                            {user?.verified && user?.onboardingCompleted ? (
+                          )} style={localUser?.verified && localUser?.onboardingCompleted ? { backgroundColor: '#6c71b5' } : {}}>
+                            {localUser?.verified && localUser?.onboardingCompleted ? (
                               <>
-                                <CheckCircle className="h-3 w-3" />
+                                <Shield className="h-3 w-3 fill-current" />
                                 Verified
                               </>
                             ) : (

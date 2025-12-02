@@ -42,6 +42,9 @@ export default function WorkerVerificationPage() {
     idFront: null as File | null,
     idBack: null as File | null,
     selfie: null as File | null,
+    idFrontPath: null as string | null,
+    idBackPath: null as string | null,
+    selfiePath: null as string | null,
     fullName: '',
     gender: '',
     dateOfBirth: '',
@@ -49,6 +52,9 @@ export default function WorkerVerificationPage() {
     idNumber: '',
     physicalAddress: '',
     ocrData: {} as any,
+    paymentCompleted: false,
+    pesapalOrderId: '',
+    pesapalTrackingId: '',
   })
 
   const steps = [
@@ -146,28 +152,7 @@ export default function WorkerVerificationPage() {
             setCompletedSteps([1])
           }
 
-          // Upload files first if they exist and are new files
-          const uploadPromises = []
-          if (formData.idFront && formData.idFront instanceof File) {
-            uploadPromises.push(
-              uploadVerificationFile(formData.idFront, 'idFront', user.id)
-            )
-          }
-          if (formData.idBack && formData.idBack instanceof File) {
-            uploadPromises.push(
-              uploadVerificationFile(formData.idBack, 'idBack', user.id)
-            )
-          }
-          if (formData.selfie && formData.selfie instanceof File) {
-            uploadPromises.push(
-              uploadVerificationFile(formData.selfie, 'selfie', user.id)
-            )
-          }
-
-          // Wait for all file uploads to complete
-          if (uploadPromises.length > 0) {
-            await Promise.all(uploadPromises)
-          }
+          // Restore saved data from progress
           if (progressData.data) {
             const savedData = progressData.data
             setFormData(prev => ({
@@ -235,13 +220,38 @@ export default function WorkerVerificationPage() {
       setCurrentStep(safeStep)
       window.scrollTo(0, 0)
 
-      // ✅ Handle completion (step 7) instead of step 6
-      if (safeStep === steps.length) { // Last step
-        console.log('Verification process completed!')
-        // Redirect to dashboard after completion
-        setTimeout(() => {
-          router.push('/portals/employer/dashboard')
-        }, 3000)
+      // ✅ Handle completion (step 7)
+      if (safeStep === steps.length) {
+        console.log('Finalizing employer verification...')
+        try {
+          const result = await finalizeVerification(sessionId!, updatedData, {
+            pesapalOrderId: updatedData.pesapalOrderId,
+            pesapalTrackingId: updatedData.pesapalTrackingId
+          })
+
+          if (result.success) {
+            console.log('✅ Employer verification finalized successfully!')
+            
+            // Update user in session storage
+            const userData = sessionStorage.getItem("user")
+            if (userData) {
+              const userObj = JSON.parse(userData)
+              userObj.verified = true
+              userObj.onboardingCompleted = true
+              userObj.fullName = updatedData.fullName
+              userObj.firstName = updatedData.fullName?.split(' ')[0]
+              userObj.lastName = updatedData.fullName?.split(' ').slice(1).join(' ')
+              sessionStorage.setItem("user", JSON.stringify(userObj))
+            }
+
+            // Dispatch event to update layout
+            window.dispatchEvent(new Event('kazipert-verification-updated'))
+          } else {
+            console.error('❌ Finalization failed:', result.message)
+          }
+        } catch (error) {
+          console.error('❌ Error finalizing verification:', error)
+        }
       }
     } catch (error) {
       console.error('Error updating step:', error)

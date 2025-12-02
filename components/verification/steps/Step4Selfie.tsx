@@ -3,10 +3,10 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Webcam from 'react-webcam';
-import { verifySelfie } from '@/lib/verification';
+import { verifySelfie, uploadVerificationFile } from '@/lib/verification';
 import { cropImage } from '@/lib/imageUtils';
 
-export default function Step4Selfie({ formData, updateStep, sessionId }: any) {
+export default function Step4Selfie({ formData, updateStep, sessionId, user }: any) {
   const webcamRef = useRef<Webcam>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -187,8 +187,25 @@ export default function Step4Selfie({ formData, updateStep, sessionId }: any) {
 
       if (result.match && similarityScore >= MINIMUM_SIMILARITY) {
         console.log('✅ Face verification successful');
+
+        // Upload file to local backend for persistence
+        let filePath = null;
+        if (user?.id) {
+          try {
+            console.log('💾 Saving Selfie locally...');
+            const uploadResult = await uploadVerificationFile(selfieFile, 'selfie', user.id);
+            if (uploadResult.success) {
+              filePath = uploadResult.fileUrl;
+              console.log('✅ Selfie saved locally:', filePath);
+            }
+          } catch (uploadError) {
+            console.error('⚠️ Failed to save Selfie locally:', uploadError);
+          }
+        }
+
         updateStep(5, {
           selfie: selfieFile,
+          selfiePath: filePath,
           ocrData: {
             ...formData.ocrData,
             faceVerification: {

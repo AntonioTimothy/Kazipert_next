@@ -60,13 +60,125 @@ export async function GET(request: NextRequest) {
 
             console.log('✅ User verified successfully:', kycDetails.userId);
 
-            // Redirect to success page
-            return NextResponse.redirect(new URL('/portals/employer/verification?step=7&payment=success', request.url));
+            // Return HTML that notifies parent and closes popup
+            return new NextResponse(`
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Successful</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .checkmark {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        h1 { margin: 0 0 10px 0; }
+        p { margin: 10px 0; opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="checkmark">✓</div>
+        <h1>Payment Successful!</h1>
+        <p>Your verification payment has been processed.</p>
+        <p>This window will close automatically...</p>
+    </div>
+    <script>
+        // Notify parent window
+        if (window.opener) {
+            window.opener.postMessage({
+                type: 'PESAPAL_PAYMENT_SUCCESS',
+                orderTrackingId: '${orderTrackingId}',
+                status: 'success'
+            }, '*');
+        }
+        // Close popup after 2 seconds
+        setTimeout(() => {
+            window.close();
+        }, 2000);
+    </script>
+</body>
+</html>
+            `, {
+                headers: { 'Content-Type': 'text/html' }
+            });
         } else {
             console.log('❌ Payment failed for user:', kycDetails.userId);
 
-            // Redirect to failure page
-            return NextResponse.redirect(new URL('/portals/employer/verification?step=6&payment=failed', request.url));
+            // Return HTML for failed payment
+            return new NextResponse(`
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Failed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        h1 { margin: 0 0 10px 0; }
+        p { margin: 10px 0; opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">✗</div>
+        <h1>Payment Failed</h1>
+        <p>Your payment could not be processed.</p>
+        <p>This window will close automatically...</p>
+    </div>
+    <script>
+        // Notify parent window
+        if (window.opener) {
+            window.opener.postMessage({
+                type: 'PESAPAL_PAYMENT_FAILED',
+                orderTrackingId: '${orderTrackingId}',
+                status: 'failed'
+            }, '*');
+        }
+        // Close popup after 3 seconds
+        setTimeout(() => {
+            window.close();
+        }, 3000);
+    </script>
+</body>
+</html>
+            `, {
+                headers: { 'Content-Type': 'text/html' }
+            });
         }
     } catch (error: any) {
         console.error('❌ Pesapal callback error:', error);

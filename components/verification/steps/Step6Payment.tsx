@@ -36,6 +36,33 @@ export default function Step6Payment({ formData, updateStep, role = 'EMPLOYEE', 
     }
   }, []);
 
+  // Listen for messages from Pesapal popup
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Verify message is from our payment popup
+      if (event.data.type === 'PESAPAL_PAYMENT_SUCCESS') {
+        console.log('✅ Payment successful from popup:', event.data);
+        setPaymentStatus('success');
+        setProcessing(false);
+
+        // Auto-progress after success
+        setTimeout(() => {
+          updateStep(7, {
+            paymentCompleted: true,
+            pesapalOrderId: event.data.orderTrackingId
+          });
+        }, 2000);
+      } else if (event.data.type === 'PESAPAL_PAYMENT_FAILED') {
+        console.log('❌ Payment failed from popup:', event.data);
+        setPaymentStatus('failed');
+        setProcessing(false);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [updateStep]);
+
   // M-Pesa Payment Handler (for workers)
   const handleMpesaPayment = async () => {
     if (!phoneNumber.trim()) {
@@ -108,8 +135,8 @@ export default function Step6Payment({ formData, updateStep, role = 'EMPLOYEE', 
         },
         body: JSON.stringify({
           userId: user.id,
-          amount: 200, // KES 200 for test (using Kenyan merchant)
-          currency: 'KES',
+          amount: 15, // $15 USD
+          currency: 'USD',
         }),
       });
 
@@ -135,13 +162,15 @@ export default function Step6Payment({ formData, updateStep, role = 'EMPLOYEE', 
 
       setPaymentWindow(newWindow);
 
-      // Monitor payment window
+      // Monitor payment window - no need to reload, postMessage will handle it
       const checkWindow = setInterval(() => {
         if (newWindow && newWindow.closed) {
           clearInterval(checkWindow);
-          setProcessing(false);
-          // Check payment status
-          window.location.reload();
+          // Only set processing to false if payment status hasn't been updated
+          if (paymentStatus === 'processing') {
+            setProcessing(false);
+            console.log('⚠️ Payment window closed without status update');
+          }
         }
       }, 1000);
 
@@ -207,7 +236,9 @@ export default function Step6Payment({ formData, updateStep, role = 'EMPLOYEE', 
             <div className="flex justify-between">
               <span className="text-gray-600">Verification Fee</span>
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-green-600">KES 200.00</span>
+                <span className="font-semibold text-green-600">
+                  {isEmployer ? '$15.00' : 'KES 200.00'}
+                </span>
               </div>
             </div>
             <div className="flex justify-between">
@@ -217,7 +248,9 @@ export default function Step6Payment({ formData, updateStep, role = 'EMPLOYEE', 
             <div className="border-t pt-3">
               <div className="flex justify-between text-lg font-bold">
                 <span>Total Amount</span>
-                <span className="text-green-600">KES 200.00</span>
+                <span className="text-green-600">
+                  {isEmployer ? '$15.00' : 'KES 200.00'}
+                </span>
               </div>
             </div>
           </div>

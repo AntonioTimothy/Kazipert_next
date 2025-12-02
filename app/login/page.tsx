@@ -595,7 +595,7 @@ function LoginForm() {
   const getDashboardRoute = (role: string) => {
     switch (role) {
       case 'EMPLOYEE':
-        return '/portals/employee/dashboard';
+        return '/portals/worker/dashboard';
       case 'EMPLOYER':
         return '/portals/employer/dashboard';
       case 'ADMIN':

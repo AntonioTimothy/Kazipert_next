@@ -161,7 +161,7 @@ export async function finalizeVerification(
     paymentData: any
 ): Promise<{ success: boolean; user?: any; message?: string }> {
     try {
-        const response = await fetch('/api/verification/finalize', {
+        const response = await fetch('/api/worker/verification/finalize', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -196,7 +196,7 @@ export async function uploadVerificationFile(
         formData.append('fileType', fileType)
         formData.append('userId', userId)
 
-        const response = await fetch('/api/verification/upload', {
+        const response = await fetch('/api/worker/verification/upload', {
             method: 'POST',
             credentials: 'include',
             body: formData,

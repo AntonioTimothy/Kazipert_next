@@ -65,7 +65,7 @@ import { ApplicationStepper } from "@/components/application-stepper"
 // Define color scheme
 const KAZIPERT_COLORS = {
   primary: '#117c82',
-  secondary: '#117c82', 
+  secondary: '#117c82',
   accent: '#6c71b5',
   brown: '#8B7355',
   background: '#f8fafc',
@@ -96,11 +96,11 @@ const AVAILABLE_FROM_OPTIONS = [
 const initialJobForm = {
   // Step 1: Job Category & Attestation
   title: "",
-  category: "GENERAL_HOUSE_HELP", // Default value that matches enum
+  category: "GENERAL_HOUSE_HELP",
   description: "",
   agreeToTruth: false,
   agreeToTerms: false,
-  
+
   // Step 2: Household Details
   residenceType: "VILLA",
   bedrooms: 3,
@@ -109,35 +109,51 @@ const initialJobForm = {
   hasGarden: false,
   hasPool: false,
   squareMeters: 200,
-  
-  // Step 3: Family Details
+
+  // Step 3: Family Details (Enhanced)
   familyMembers: 4,
-  childrenCount: 2,
-  childrenAges: [] as string[],
-  elderlyCare: false,
-  specialNeeds: false,
+  familyComposition: [] as { type: string, age: string, condition: string }[],
   pets: [] as string[],
-  
+
   // Step 4: Job Requirements
   duties: [] as string[],
   experienceRequired: "ONE_TO_TWO_YEARS",
   languageRequirements: ["English"] as string[],
-  workingHours: "8 hours",
+  workingHours: "10 hours", // Updated to max 10 hours per contract
   vacationDays: 30,
-  
+
   // Step 5: Benefits
   benefits: ["health-insurance", "annual-flight"] as string[],
-  
+
   // Step 6: Final Details
-  salary: 320,
+  salary: 140, // Updated min salary
   salaryCurrency: "OMR",
   location: "",
   city: "Muscat",
   availableFrom: "",
   availableFromType: "IMMEDIATELY",
-  
+
   // Auto-calculated fields
-  autoSalaryCalculation: true
+  autoSalaryCalculation: true,
+  emergencySupport: true,
+  salaryBreakdown: {} as any
+}
+
+// Salary Configuration (Default values matching Admin Settings)
+const SALARY_CONFIG = {
+  baseSalary: 90,
+  ageMultipliers: {
+    infant: 42,   // 0-3 yrs
+    child: 24,    // 3-12 yrs
+    elderly: 21,  // 70+ yrs
+    disabled: 52  // Disabled/Sick
+  },
+  taskAddons: {
+    cooking_large: 28,
+    cleaning_large: 14,
+    extra_bathroom: 10,
+    laundry_large: 14
+  }
 }
 
 export default function EmployerJobsPage() {
@@ -185,71 +201,77 @@ export default function EmployerJobsPage() {
     }
   }
 
-  // Base salary calculation with reasonable maximum
+  // Enhanced Salary Calculation based on Excel Logic
   const calculateTotalSalary = () => {
-    let baseSalary = 90 // Base OMR for up to 3 bedrooms, 2 children
-    
-    // Bedroom multiplier (beyond 3 bedrooms)
-    if (jobForm.bedrooms > 3) {
-      baseSalary += (jobForm.bedrooms - 3) * 10 // Reduced from 15
+    let totalSalary = SALARY_CONFIG.baseSalary
+    const breakdown: any = { base: SALARY_CONFIG.baseSalary, addons: [] }
+
+    // 1. Family Composition Add-ons
+    jobForm.familyComposition.forEach(member => {
+      let amount = 0
+      if (member.type === 'infant') amount = SALARY_CONFIG.ageMultipliers.infant
+      else if (member.type === 'child') amount = SALARY_CONFIG.ageMultipliers.child
+      else if (member.type === 'elderly') amount = SALARY_CONFIG.ageMultipliers.elderly
+
+      // Condition multiplier (if disabled/sick)
+      if (member.condition !== 'normal') {
+        amount += SALARY_CONFIG.ageMultipliers.disabled
+      }
+
+      if (amount > 0) {
+        totalSalary += amount
+        breakdown.addons.push({ label: `${member.type} (${member.condition})`, amount })
+      }
+    })
+
+    // 2. Household/Task Add-ons
+    // Extra Bathrooms (>2)
+    if (jobForm.bathrooms > 2) {
+      const extraBaths = jobForm.bathrooms - 2
+      const amount = extraBaths * SALARY_CONFIG.taskAddons.extra_bathroom
+      totalSalary += amount
+      breakdown.addons.push({ label: `Extra Bathrooms (${extraBaths})`, amount })
     }
-    
-    // Children multiplier (beyond 2 children)
-    if (jobForm.childrenCount > 2) {
-      baseSalary += (jobForm.childrenCount - 2) * 15 // Reduced from 20
+
+    // Cooking for Large Family (>5 members)
+    if (jobForm.duties.includes("Cooking") && jobForm.familyMembers > 5) {
+      const amount = SALARY_CONFIG.taskAddons.cooking_large
+      totalSalary += amount
+      breakdown.addons.push({ label: "Large Family Cooking", amount })
     }
-    
-    // Special care additions
-    if (jobForm.elderlyCare) baseSalary += 25 // Reduced from 30
-    if (jobForm.specialNeeds) baseSalary += 30 // Reduced from 40
-    
-    // Residence type multiplier
+
+    // Laundry for Large Family (>5 members)
+    if (jobForm.duties.includes("Laundry") && jobForm.familyMembers > 5) {
+      const amount = SALARY_CONFIG.taskAddons.laundry_large
+      totalSalary += amount
+      breakdown.addons.push({ label: "Large Family Laundry", amount })
+    }
+
+    // 3. Residence Multiplier (Luxury Tax)
     const residenceMultipliers = {
       "APARTMENT": 1.0,
-      "VILLA": 1.15, // Reduced from 1.2
-      "DUPLEX": 1.08, // Reduced from 1.1
-      "MANSION": 1.25 // Reduced from 1.4
+      "VILLA": 1.1,
+      "DUPLEX": 1.05,
+      "MANSION": 1.2
     }
-    baseSalary *= residenceMultipliers[jobForm.residenceType as keyof typeof residenceMultipliers] || 1.0
-    
-    // Total floors multiplier
-    if (jobForm.totalFloors > 1) {
-      baseSalary += (jobForm.totalFloors - 1) * 5
+    const multiplier = residenceMultipliers[jobForm.residenceType as keyof typeof residenceMultipliers] || 1.0
+    if (multiplier > 1.0) {
+      const oldTotal = totalSalary
+      totalSalary = Math.round(totalSalary * multiplier)
+      breakdown.addons.push({ label: `Residence Type (${jobForm.residenceType})`, amount: totalSalary - oldTotal })
     }
-    
-    // Garden and Pool additions
-    if (jobForm.hasGarden) baseSalary += 8 // Reduced from 12
-    if (jobForm.hasPool) baseSalary += 12 // Reduced from 18
-    
-    // Duties complexity
-    //  Add medical care duty
-    // if (jobForm.duties.includes("Medical care")) {
-    //   baseSalary += 25
-    // }
 
-    // define duty values
-    
-    jobForm.duties.forEach(duty => {
-      const dutyValues: { [key: string]: number } = {
-        "Childcare": 20, // Reduced
-        "Elderly care": 25, // Reduced
-        "Special needs care": 30, // Reduced
-        "Cooking": 12, // Reduced
-        "Cleaning": 8, // Reduced
-        "Laundry": 6, // Reduced
-        "Ironing": 6, // Reduced
-        "Grocery shopping": 10, // Reduced
-        "Pet care": 12, // Reduced
-        "Gardening": 8, // Reduced
-        "Pool maintenance": 10, // Reduced
-        "House management": 20 // Reduced
-      }
-      baseSalary += dutyValues[duty] || 0
-    })
-    
-    // Round to nearest 5 OMR and cap at reasonable maximum
-    const finalSalary = Math.ceil(baseSalary / 5) * 5
-    return Math.min(finalSalary, 160) // Cap at 180 OMR
+    // Ensure minimum salary of 140 OMR
+    if (totalSalary < 140) {
+      breakdown.addons.push({ label: "Minimum Wage Adjustment", amount: 140 - totalSalary })
+      totalSalary = 140
+    }
+
+    // Round to nearest 5
+    totalSalary = Math.ceil(totalSalary / 5) * 5
+
+    setJobForm(prev => ({ ...prev, salaryBreakdown: breakdown }))
+    return totalSalary
   }
 
   // Enhanced duty options
@@ -286,7 +308,7 @@ export default function EmployerJobsPage() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
-      
+
       const userData = sessionStorage.getItem("user")
       if (!userData) {
         router.push("/login")
@@ -300,14 +322,14 @@ export default function EmployerJobsPage() {
       }
 
       setUser(parsedUser)
-      
+
       try {
-        const jobsData = await jobService.getJobs({ 
+        const jobsData = await jobService.getJobs({
           role: 'employer',
-          status: activeTab === 'posted' ? 'ACTIVE' : 
-                 activeTab === 'drafts' ? 'DRAFT' : 'CLOSED'
+          status: activeTab === 'posted' ? 'ACTIVE' :
+            activeTab === 'drafts' ? 'DRAFT' : 'CLOSED'
         })
-        
+
         if (activeTab === 'posted') {
           setJobs(jobsData.jobs || [])
         } else if (activeTab === 'drafts') {
@@ -342,14 +364,12 @@ export default function EmployerJobsPage() {
         setCalculatedSalary(newSalary)
         setIsCalculatingSalary(false)
       }, 600)
-      
+
       return () => clearTimeout(timer)
     }
   }, [
     jobForm.bedrooms,
-    jobForm.childrenCount,
-    jobForm.elderlyCare,
-    jobForm.specialNeeds,
+    jobForm.familyComposition,
     jobForm.residenceType,
     jobForm.totalFloors,
     jobForm.hasGarden,
@@ -375,7 +395,7 @@ export default function EmployerJobsPage() {
     // Don't allow unchecking required benefits
     const benefitInfo = benefitOptions.find(b => b.value === benefit)
     if (benefitInfo?.required) return
-    
+
     setJobForm(prev => ({
       ...prev,
       benefits: prev.benefits.includes(benefit)
@@ -408,39 +428,59 @@ export default function EmployerJobsPage() {
   const submitJob = async () => {
     try {
       const availableFromDate = getAvailableFromDate()
-      
+
+      // Derive values from familyComposition for backend compatibility
+      const childrenCount = jobForm.familyComposition.filter(m => m.type === 'child' || m.type === 'infant').length
+      const elderlyCare = jobForm.familyComposition.some(m => m.type === 'elderly')
+      const specialNeeds = jobForm.familyComposition.some(m => m.condition !== 'normal')
+      const childrenAges = jobForm.familyComposition
+        .filter(m => m.type === 'child' || m.type === 'infant')
+        .map(m => m.type === 'infant' ? "0-3" : "3-12") // Approximate ages
+
       const jobData = {
         ...jobForm,
         status: 'ACTIVE',
         salary: calculatedSalary,
-        availableFrom: jobForm.availableFromType === "SPECIFIC_DATE" 
-        ? jobForm.availableFrom 
-        : jobForm.availableFromType,
+        availableFrom: jobForm.availableFromType === "SPECIFIC_DATE"
+          ? jobForm.availableFrom
+          : jobForm.availableFromType,
         type: "FULL_TIME", // All jobs are live-in in Oman
         accommodation: "PROVIDED", // Compulsory in Oman
         meals: "INCLUDED", // Compulsory in Oman
         interviewRequired: true,
-        childrenAges: jobForm.childrenAges || [],
+
+        // Derived fields
+        childrenCount,
+        elderlyCare,
+        specialNeeds,
+        childrenAges,
+
+        // Map family composition to questionnaire
+        questionnaire: {
+          familyComposition: jobForm.familyComposition,
+          pets: jobForm.pets
+        },
+
         skills: [], // Add empty skills array as required by schema
         certifications: [], // Add empty certifications array as required by schema
         overtimeRequired: false // Add default value as required by schema
       }
 
       await jobService.createJob(jobData)
-      
+
       const jobsData = await jobService.getJobs({ role: 'employer', status: 'ACTIVE' })
       setJobs(jobsData.jobs || [])
-      
+
       setShowJobStepper(false)
       setShowSuccessAnimation(true)
-      
+
       // Reset form after success
       setTimeout(() => {
         setCurrentStep(1)
         setJobForm(initialJobForm)
         setShowSuccessAnimation(false)
       }, 3000)
-      
+
     } catch (error) {
       console.error('Error creating job:', error)
       alert('Failed to create job. Please try again.')
@@ -449,7 +489,7 @@ export default function EmployerJobsPage() {
 
   const deleteJob = async (jobId: string) => {
     if (!confirm('Are you sure you want to delete this job?')) return
-    
+
     try {
       await jobService.deleteJob(jobId)
       setJobs(prev => prev.filter(job => job.id !== jobId))
@@ -464,12 +504,12 @@ export default function EmployerJobsPage() {
   const updateJobStatus = async (jobId: string, status: string) => {
     try {
       await jobService.updateJob(jobId, { status })
-      
-      const jobsData = await jobService.getJobs({ 
-        role: 'employer', 
-        status: status === 'ACTIVE' ? 'ACTIVE' : 'CLOSED' 
+
+      const jobsData = await jobService.getJobs({
+        role: 'employer',
+        status: status === 'ACTIVE' ? 'ACTIVE' : 'CLOSED'
       })
-      
+
       if (status === 'ACTIVE') {
         setJobs(jobsData.jobs || [])
         setClosedJobs(prev => prev.filter(job => job.id !== jobId))
@@ -489,7 +529,7 @@ export default function EmployerJobsPage() {
     setSelectedJob(job)
     setApplicantsView(job.id)
     setLoadingApplications(true)
-    
+
     try {
       console.log('📡 Fetching applications for job:', job.id)
       const applications = await jobService.getJobApplications(job.id)
@@ -506,7 +546,7 @@ export default function EmployerJobsPage() {
   // Add this function to handle application actions
   const handleApplicationAction = async (applicationId: string, action: string, data?: any) => {
     console.log('🔄 Handling application action:', action, 'for application:', applicationId)
-    
+
     try {
       switch (action) {
         case 'SHORTLISTED':
@@ -534,11 +574,11 @@ export default function EmployerJobsPage() {
         default:
           await jobService.updateApplicationStep(applicationId, action, data)
       }
-      
+
       // Refresh applications
       const applications = await jobService.getJobApplications(selectedJob.id)
       setJobApplications(applications)
-      
+
       console.log('✅ Application action completed successfully')
     } catch (error) {
       console.error('❌ Error updating application:', error)
@@ -547,7 +587,7 @@ export default function EmployerJobsPage() {
   }
 
   const getStatusColor = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'ACTIVE': return 'bg-green-500/10 text-green-600 border-green-200'
       case 'DRAFT': return 'bg-gray-500/10 text-gray-600 border-gray-200'
       case 'CLOSED': return 'bg-red-500/10 text-red-600 border-red-200'
@@ -556,7 +596,7 @@ export default function EmployerJobsPage() {
   }
 
   const getStatusText = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'ACTIVE': return 'Active'
       case 'DRAFT': return 'Draft'
       case 'CLOSED': return 'Closed'
@@ -565,7 +605,7 @@ export default function EmployerJobsPage() {
   }
 
   const formatExperience = (experience: string) => {
-    switch(experience) {
+    switch (experience) {
       case 'NO_EXPERIENCE': return 'No experience'
       case 'ONE_TO_TWO_YEARS': return '1-2 years'
       case 'THREE_TO_FIVE_YEARS': return '3-5 years'
@@ -592,7 +632,7 @@ export default function EmployerJobsPage() {
         </div>
         <h3 className="text-2xl font-bold text-gray-900 mb-2">Job Posted Successfully! 🎉</h3>
         <p className="text-gray-600 mb-6">
-          Your job has been posted and is now visible to qualified candidates. 
+          Your job has been posted and is now visible to qualified candidates.
           You'll be notified when applicants start applying.
         </p>
         <div className="animate-pulse">
@@ -601,7 +641,7 @@ export default function EmployerJobsPage() {
             <span className="font-semibold">Your job is now live!</span>
           </div>
         </div>
-        <Button 
+        <Button
           onClick={() => setShowSuccessAnimation(false)}
           className="w-full"
           style={{ backgroundColor: KAZIPERT_COLORS.primary, color: 'white' }}
@@ -620,7 +660,7 @@ export default function EmployerJobsPage() {
           <h3 className="text-2xl font-bold text-gray-900">Terms & Conditions</h3>
           <Button variant="ghost" size="sm" onClick={() => setShowTermsModal(false)}>✕</Button>
         </div>
-        
+
         <div className="space-y-6">
           <div className="space-y-4">
             <h4 className="font-semibold text-lg">Employer Responsibilities</h4>
@@ -663,7 +703,7 @@ export default function EmployerJobsPage() {
           </div>
 
           <div className="flex items-center space-x-2">
-            <Checkbox 
+            <Checkbox
               id="agree-terms"
               checked={jobForm.agreeToTerms}
               onCheckedChange={(checked) => handleInputChange('agreeToTerms', checked)}
@@ -674,14 +714,14 @@ export default function EmployerJobsPage() {
           </div>
 
           <div className="flex gap-3">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex-1"
               onClick={() => setShowTermsModal(false)}
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               className="flex-1"
               disabled={!jobForm.agreeToTerms}
               onClick={() => {
@@ -706,13 +746,13 @@ export default function EmployerJobsPage() {
           <div>
             <h3 className="text-2xl font-bold text-gray-900">Applicants for {selectedJob?.title}</h3>
             <p className="text-gray-600">
-              {selectedJob?.city} • {selectedJob?.salary} {selectedJob?.salaryCurrency} • 
+              {selectedJob?.city} • {selectedJob?.salary} {selectedJob?.salaryCurrency} •
               {jobApplications.length} applicant{jobApplications.length !== 1 ? 's' : ''}
             </p>
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => {
               setApplicantsView(null)
               setSelectedJob(null)
@@ -722,7 +762,7 @@ export default function EmployerJobsPage() {
             ✕
           </Button>
         </div>
-        
+
         {loadingApplications ? (
           <div className="flex justify-center py-8">
             <LoadingSpinner />
@@ -744,7 +784,7 @@ export default function EmployerJobsPage() {
                           </h4>
                           <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                             <span>
-                              Age: {application.employee?.kycDetails?.dateOfBirth ? 
+                              Age: {application.employee?.kycDetails?.dateOfBirth ?
                                 Math.floor((new Date().getTime() - new Date(application.employee.kycDetails.dateOfBirth).getTime()) / 3.15576e+10) : 'N/A'
                               }
                             </span>
@@ -757,7 +797,7 @@ export default function EmployerJobsPage() {
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* KYC Status */}
                       <div className="flex gap-2 mb-3">
                         <Badge variant={application.employee?.kycDetails?.profileVerified ? 'default' : 'outline'}>
@@ -775,9 +815,9 @@ export default function EmployerJobsPage() {
                       <div className="flex items-center gap-4 text-sm">
                         <Badge className={
                           application.status === 'SHORTLISTED' ? 'bg-green-500 text-white' :
-                          application.status === 'REJECTED' ? 'bg-red-500 text-white' :
-                          application.status === 'UNDER_REVIEW' ? 'bg-blue-500 text-white' :
-                          'bg-gray-500 text-white'
+                            application.status === 'REJECTED' ? 'bg-red-500 text-white' :
+                              application.status === 'UNDER_REVIEW' ? 'bg-blue-500 text-white' :
+                                'bg-gray-500 text-white'
                         }>
                           {application.status?.replace('_', ' ') || 'PENDING'}
                         </Badge>
@@ -786,10 +826,10 @@ export default function EmployerJobsPage() {
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="text-right space-y-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => handleApplicationAction(application.id, 'SHORTLISTED')}
                         disabled={application.status === 'SHORTLISTED'}
@@ -798,18 +838,18 @@ export default function EmployerJobsPage() {
                       </Button>
                     </div>
                   </div>
-                  
+
                   {/* Application Progress Stepper */}
                   <div className="mt-6 pt-4 border-t">
                     <h5 className="text-sm font-semibold text-gray-900 mb-4">Application Progress</h5>
-                    <ApplicationStepper 
+                    <ApplicationStepper
                       currentStep={application.currentStep || 'APPLICATION_SUBMITTED'}
                       application={application}
                       role="employer"
                       onAction={(step) => handleApplicationAction(application.id, step)}
                     />
                   </div>
-                  
+
                   {/* Action Buttons */}
                   <div className="flex gap-2 mt-6 pt-4 border-t">
                     <Button variant="outline" size="sm">
@@ -820,8 +860,8 @@ export default function EmployerJobsPage() {
                       <FileText className="h-4 w-4 mr-2" />
                       View Profile
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => handleApplicationAction(application.id, 'INTERVIEW_SCHEDULED')}
                     >
@@ -852,9 +892,9 @@ export default function EmployerJobsPage() {
     return <LoadingSpinner />
   }
 
-  const currentJobs = activeTab === 'posted' ? jobs : 
-                    activeTab === 'drafts' ? drafts : 
-                    closedJobs
+  const currentJobs = activeTab === 'posted' ? jobs :
+    activeTab === 'drafts' ? drafts :
+      closedJobs
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -871,7 +911,7 @@ export default function EmployerJobsPage() {
             </p>
           </div>
           {!showJobStepper && (
-            <Button 
+            <Button
               onClick={() => setShowJobStepper(true)}
               style={{
                 backgroundColor: KAZIPERT_COLORS.primary,
@@ -891,9 +931,9 @@ export default function EmployerJobsPage() {
               {/* Stepper Header */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => {
                       setShowJobStepper(false)
                       setCurrentStep(1)
@@ -912,7 +952,7 @@ export default function EmployerJobsPage() {
                 <div className="text-right">
                   <div className="text-sm text-gray-500">Step {currentStep} of {steps.length}</div>
                   <div className="w-32 bg-gray-200 rounded-full h-2">
-                    <div 
+                    <div
                       className="bg-green-500 h-2 rounded-full transition-all duration-500"
                       style={{ width: `${(currentStep / steps.length) * 100}%` }}
                     />
@@ -925,11 +965,10 @@ export default function EmployerJobsPage() {
                 {steps.map((step, index) => (
                   <div key={step.number} className="flex items-center">
                     <div className={`flex flex-col items-center ${currentStep >= step.number ? 'text-green-600' : 'text-gray-400'}`}>
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                        currentStep >= step.number 
-                          ? 'bg-green-500 border-green-500 text-white' 
-                          : 'bg-white border-gray-300 text-gray-400'
-                      }`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${currentStep >= step.number
+                        ? 'bg-green-500 border-green-500 text-white'
+                        : 'bg-white border-gray-300 text-gray-400'
+                        }`}>
                         {currentStep > step.number ? (
                           <CheckCircle className="h-5 w-5" />
                         ) : (
@@ -939,9 +978,8 @@ export default function EmployerJobsPage() {
                       <span className="text-xs mt-2 font-medium text-center max-w-20">{step.title}</span>
                     </div>
                     {index < steps.length - 1 && (
-                      <div className={`w-16 h-1 mx-2 ${
-                        currentStep > step.number ? 'bg-green-500' : 'bg-gray-300'
-                      }`} />
+                      <div className={`w-16 h-1 mx-2 ${currentStep > step.number ? 'bg-green-500' : 'bg-gray-300'
+                        }`} />
                     )}
                   </div>
                 ))}
@@ -967,11 +1005,10 @@ export default function EmployerJobsPage() {
                           {JOB_CATEGORIES.map((category) => (
                             <div
                               key={category.value}
-                              className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
-                                jobForm.category === category.value 
-                                  ? 'border-blue-500 bg-blue-50' 
-                                  : 'border-gray-200 hover:border-gray-300'
-                              }`}
+                              className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${jobForm.category === category.value
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                                }`}
                               onClick={() => {
                                 handleInputChange('category', category.value)
                                 handleInputChange('title', category.label)
@@ -992,7 +1029,7 @@ export default function EmployerJobsPage() {
 
                         <div className="space-y-4">
                           <label className="text-sm font-medium text-gray-700">Job Description</label>
-                          <Textarea 
+                          <Textarea
                             placeholder="Describe the specific responsibilities and what you're looking for in a candidate..."
                             rows={4}
                             value={jobForm.description}
@@ -1005,14 +1042,14 @@ export default function EmployerJobsPage() {
                           <div>
                             <div className="font-semibold text-yellow-800">Important Notice</div>
                             <div className="text-sm text-yellow-700 mt-1">
-                              By proceeding, you confirm that all information provided is accurate and 
+                              By proceeding, you confirm that all information provided is accurate and
                               you agree to provide accommodation and meals as required by Omani law.
                             </div>
                           </div>
                         </div>
 
                         <div className="flex items-center space-x-2">
-                          <Checkbox 
+                          <Checkbox
                             id="truth-attestation"
                             checked={jobForm.agreeToTruth}
                             onCheckedChange={(checked) => handleInputChange('agreeToTruth', checked)}
@@ -1053,31 +1090,31 @@ export default function EmployerJobsPage() {
                               </SelectContent>
                             </Select>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700">Number of Bedrooms</label>
-                            <Input 
-                              type="number" 
+                            <Input
+                              type="number"
                               min="1"
                               value={jobForm.bedrooms}
                               onChange={(e) => handleInputChange('bedrooms', parseInt(e.target.value))}
                             />
                           </div>
-                          
+
                           <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700">Number of Bathrooms</label>
-                            <Input 
-                              type="number" 
+                            <Input
+                              type="number"
                               min="1"
                               value={jobForm.bathrooms}
                               onChange={(e) => handleInputChange('bathrooms', parseInt(e.target.value))}
                             />
                           </div>
-                          
+
                           <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700">Total Floors</label>
-                            <Input 
-                              type="number" 
+                            <Input
+                              type="number"
                               min="1"
                               value={jobForm.totalFloors}
                               onChange={(e) => handleInputChange('totalFloors', parseInt(e.target.value))}
@@ -1089,7 +1126,7 @@ export default function EmployerJobsPage() {
                           <label className="text-sm font-medium text-gray-700">Additional Facilities</label>
                           <div className="grid grid-cols-2 gap-3">
                             <div className="flex items-center space-x-2">
-                              <Checkbox 
+                              <Checkbox
                                 id="garden"
                                 checked={jobForm.hasGarden}
                                 onCheckedChange={(checked) => handleInputChange('hasGarden', checked)}
@@ -1097,7 +1134,7 @@ export default function EmployerJobsPage() {
                               <label htmlFor="garden" className="text-sm text-gray-700">Garden</label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <Checkbox 
+                              <Checkbox
                                 id="pool"
                                 checked={jobForm.hasPool}
                                 onCheckedChange={(checked) => handleInputChange('hasPool', checked)}
@@ -1110,89 +1147,97 @@ export default function EmployerJobsPage() {
                     </Card>
                   )}
 
-                  {/* Step 3: Family Details */}
+                  {/* Step 3: Family Details (Enhanced) */}
                   {currentStep === 3 && (
                     <Card className="border-0 shadow-lg">
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-gray-900">
                           <Users className="h-5 w-5" style={{ color: KAZIPERT_COLORS.primary }} />
-                          Family Details
+                          Family Composition
                         </CardTitle>
                         <CardDescription>
-                          Information about your family members
+                          Add all family members living in the house to calculate accurate salary
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-6">
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700">Total Family Members</label>
-                            <Input 
-                              type="number" 
-                              min="1"
-                              value={jobForm.familyMembers}
-                              onChange={(e) => handleInputChange('familyMembers', parseInt(e.target.value))}
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700">Number of Children</label>
-                            <Input 
-                              type="number" 
-                              min="0"
-                              value={jobForm.childrenCount}
-                              onChange={(e) => handleInputChange('childrenCount', parseInt(e.target.value))}
-                            />
-                          </div>
-                        </div>
-
-                        {jobForm.childrenCount > 0 && (
-                          <div className="space-y-3">
-                            <label className="text-sm font-medium text-gray-700">Children's Ages</label>
-                            <div className="grid grid-cols-2 gap-3">
-                              {Array.from({ length: jobForm.childrenCount }, (_, i) => (
-                                <Input 
-                                  key={i}
-                                  placeholder={`Child ${i + 1} age`}
-                                  value={jobForm.childrenAges[i] || ""}
-                                  onChange={(e) => {
-                                    const newAges = [...jobForm.childrenAges]
-                                    newAges[i] = e.target.value
-                                    handleInputChange('childrenAges', newAges)
+                        <div className="space-y-4">
+                          {jobForm.familyComposition.map((member, index) => (
+                            <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                              <div className="flex-1 grid grid-cols-2 gap-3">
+                                <Select
+                                  value={member.type}
+                                  onValueChange={(val) => {
+                                    const newComp = [...jobForm.familyComposition]
+                                    newComp[index].type = val
+                                    handleInputChange('familyComposition', newComp)
+                                    // Update total count
+                                    handleInputChange('familyMembers', newComp.length)
                                   }}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Age Group" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="infant">Infant (0-3 yrs)</SelectItem>
+                                    <SelectItem value="child">Child (3-12 yrs)</SelectItem>
+                                    <SelectItem value="adult">Adult (13-69 yrs)</SelectItem>
+                                    <SelectItem value="elderly">Elderly (70+ yrs)</SelectItem>
+                                  </SelectContent>
+                                </Select>
 
-                        <div className="space-y-3">
-                          <label className="text-sm font-medium text-gray-700">Special Care Requirements</label>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox 
-                                id="elderly"
-                                checked={jobForm.elderlyCare}
-                                onCheckedChange={(checked) => handleInputChange('elderlyCare', checked)}
-                              />
-                              <label htmlFor="elderly" className="text-sm text-gray-700">Elderly Care Needed</label>
+                                <Select
+                                  value={member.condition}
+                                  onValueChange={(val) => {
+                                    const newComp = [...jobForm.familyComposition]
+                                    newComp[index].condition = val
+                                    handleInputChange('familyComposition', newComp)
+                                  }}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Condition" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="normal">Healthy / Normal</SelectItem>
+                                    <SelectItem value="sickly">Sickly / Frail</SelectItem>
+                                    <SelectItem value="disabled">Disabled / Special Needs</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                onClick={() => {
+                                  const newComp = jobForm.familyComposition.filter((_, i) => i !== index)
+                                  handleInputChange('familyComposition', newComp)
+                                  handleInputChange('familyMembers', newComp.length)
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <Checkbox 
-                                id="special-needs"
-                                checked={jobForm.specialNeeds}
-                                onCheckedChange={(checked) => handleInputChange('specialNeeds', checked)}
-                              />
-                              <label htmlFor="special-needs" className="text-sm text-gray-700">Special Needs Care</label>
-                            </div>
-                          </div>
+                          ))}
+
+                          <Button
+                            variant="outline"
+                            className="w-full border-dashed border-2 py-6 text-gray-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50"
+                            onClick={() => {
+                              const newComp = [...jobForm.familyComposition, { type: 'adult', age: '', condition: 'normal' }]
+                              handleInputChange('familyComposition', newComp)
+                              handleInputChange('familyMembers', newComp.length)
+                            }}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Family Member
+                          </Button>
                         </div>
 
-                        <div className="space-y-3">
+                        <div className="space-y-3 pt-4 border-t">
                           <label className="text-sm font-medium text-gray-700">Pets in Household</label>
                           <div className="grid grid-cols-2 gap-3">
                             {petOptions.map((pet) => (
                               <div key={pet.value} className="flex items-center space-x-2">
-                                <Checkbox 
+                                <Checkbox
                                   id={pet.value}
                                   checked={jobForm.pets.includes(pet.value)}
                                   onCheckedChange={() => handlePetToggle(pet.value)}
@@ -1225,7 +1270,7 @@ export default function EmployerJobsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {dutyOptions.map((duty) => (
                             <div key={duty.value} className="flex items-center space-x-3 p-3 border rounded-lg hover:border-gray-400 transition-colors">
-                              <Checkbox 
+                              <Checkbox
                                 id={duty.value}
                                 checked={jobForm.duties.includes(duty.value)}
                                 onCheckedChange={() => handleDutyToggle(duty.value)}
@@ -1256,10 +1301,9 @@ export default function EmployerJobsPage() {
                       <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {benefitOptions.map((benefit) => (
-                            <div key={benefit.value} className={`flex items-center space-x-3 p-3 border rounded-lg transition-colors ${
-                              benefit.required ? 'bg-blue-50 border-blue-200' : 'hover:border-gray-400'
-                            }`}>
-                              <Checkbox 
+                            <div key={benefit.value} className={`flex items-center space-x-3 p-3 border rounded-lg transition-colors ${benefit.required ? 'bg-blue-50 border-blue-200' : 'hover:border-gray-400'
+                              }`}>
+                              <Checkbox
                                 id={benefit.value}
                                 checked={jobForm.benefits.includes(benefit.value)}
                                 onCheckedChange={() => handleBenefitToggle(benefit.value)}
@@ -1298,17 +1342,17 @@ export default function EmployerJobsPage() {
                         <div className="grid gap-4 md:grid-cols-2">
                           <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700">City *</label>
-                            <Input 
+                            <Input
                               placeholder="e.g., Muscat, Salalah"
                               value={jobForm.city}
                               onChange={(e) => handleInputChange('city', e.target.value)}
                             />
                           </div>
-                          
+
                           <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700">Available From *</label>
-                            <Select 
-                              value={jobForm.availableFromType} 
+                            <Select
+                              value={jobForm.availableFromType}
                               onValueChange={(value) => handleInputChange('availableFromType', value)}
                             >
                               <SelectTrigger>
@@ -1328,7 +1372,7 @@ export default function EmployerJobsPage() {
                         {jobForm.availableFromType === "specific_date" && (
                           <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700">Specific Date</label>
-                            <Input 
+                            <Input
                               type="date"
                               value={jobForm.availableFrom}
                               onChange={(e) => handleInputChange('availableFrom', e.target.value)}
@@ -1338,7 +1382,7 @@ export default function EmployerJobsPage() {
 
                         <div className="space-y-2">
                           <label className="text-sm font-medium text-gray-700">Neighborhood / Area</label>
-                          <Input 
+                          <Input
                             placeholder="e.g., Al Khuwair, Shatti Al Qurm"
                             value={jobForm.location}
                             onChange={(e) => handleInputChange('location', e.target.value)}
@@ -1362,16 +1406,16 @@ export default function EmployerJobsPage() {
 
                   {/* Navigation Buttons */}
                   <div className="flex items-center justify-between pt-6">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={prevStep}
                       disabled={currentStep === 1}
                     >
                       Previous
                     </Button>
-                    
+
                     {currentStep === steps.length ? (
-                      <Button 
+                      <Button
                         onClick={() => setShowTermsModal(true)}
                         disabled={!jobForm.agreeToTruth}
                         style={{
@@ -1383,7 +1427,7 @@ export default function EmployerJobsPage() {
                         Review & Post Job
                       </Button>
                     ) : (
-                      <Button 
+                      <Button
                         onClick={nextStep}
                         disabled={currentStep === 1 && !jobForm.agreeToTruth}
                         style={{
@@ -1431,51 +1475,16 @@ export default function EmployerJobsPage() {
 
                       <div className="space-y-3">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Base (3 bed, 2 children)</span>
-                          <span className="font-medium">90 OMR</span>
+                          <span className="text-gray-600">Base Salary</span>
+                          <span className="font-medium">{SALARY_CONFIG.baseSalary} OMR</span>
                         </div>
-                        
-                        {jobForm.bedrooms > 3 && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Extra bedrooms</span>
-                            <span className="font-medium text-green-600">+{(jobForm.bedrooms - 3) * 10} OMR</span>
-                          </div>
-                        )}
-                        
-                        {jobForm.childrenCount > 2 && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Extra children</span>
-                            <span className="font-medium text-green-600">+{(jobForm.childrenCount - 2) * 15} OMR</span>
-                          </div>
-                        )}
-                        
-                        {jobForm.elderlyCare && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Elderly care</span>
-                            <span className="font-medium text-green-600">+25 OMR</span>
-                          </div>
-                        )}
-                        
-                        {jobForm.specialNeeds && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Special needs</span>
-                            <span className="font-medium text-green-600">+30 OMR</span>
-                          </div>
-                        )}
 
-                        {jobForm.hasGarden && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Garden maintenance</span>
-                            <span className="font-medium text-green-600">+8 OMR</span>
+                        {jobForm.salaryBreakdown?.addons?.map((addon: any, i: number) => (
+                          <div key={i} className="flex justify-between text-sm">
+                            <span className="text-gray-600">{addon.label}</span>
+                            <span className="font-medium text-green-600">+{addon.amount} OMR</span>
                           </div>
-                        )}
-
-                        {jobForm.hasPool && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Pool maintenance</span>
-                            <span className="font-medium text-green-600">+12 OMR</span>
-                          </div>
-                        )}
+                        ))}
 
                         <div className="border-t pt-2">
                           <div className="flex justify-between text-sm font-semibold">
@@ -1513,7 +1522,9 @@ export default function EmployerJobsPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Children:</span>
-                        <span className="font-medium text-gray-900">{jobForm.childrenCount}</span>
+                        <span className="font-medium text-gray-900">
+                          {jobForm.familyComposition.filter(m => m.type === 'child' || m.type === 'infant').length}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Bedrooms:</span>
@@ -1535,10 +1546,10 @@ export default function EmployerJobsPage() {
             <CardContent className="p-0">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-3 p-2 bg-gray-100/50 rounded-lg">
-                  <TabsTrigger 
-                    value="posted" 
+                  <TabsTrigger
+                    value="posted"
                     className="rounded-md text-sm font-medium data-[state=active]:shadow-lg transition-all"
-                    style={{ 
+                    style={{
                       backgroundColor: activeTab === 'posted' ? KAZIPERT_COLORS.primary : 'transparent',
                       color: activeTab === 'posted' ? 'white' : KAZIPERT_COLORS.textLight
                     }}
@@ -1549,10 +1560,10 @@ export default function EmployerJobsPage() {
                       {jobs.length}
                     </Badge>
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="drafts" 
+                  <TabsTrigger
+                    value="drafts"
                     className="rounded-md text-sm font-medium data-[state=active]:shadow-lg transition-all"
-                    style={{ 
+                    style={{
                       backgroundColor: activeTab === 'drafts' ? KAZIPERT_COLORS.primary : 'transparent',
                       color: activeTab === 'drafts' ? 'white' : KAZIPERT_COLORS.textLight
                     }}
@@ -1563,10 +1574,10 @@ export default function EmployerJobsPage() {
                       {drafts.length}
                     </Badge>
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="closed" 
+                  <TabsTrigger
+                    value="closed"
                     className="rounded-md text-sm font-medium data-[state=active]:shadow-lg transition-all"
-                    style={{ 
+                    style={{
                       backgroundColor: activeTab === 'closed' ? KAZIPERT_COLORS.primary : 'transparent',
                       color: activeTab === 'closed' ? 'white' : KAZIPERT_COLORS.textLight
                     }}
@@ -1584,7 +1595,7 @@ export default function EmployerJobsPage() {
                   {jobs.length > 0 ? (
                     <div className="grid gap-4">
                       {jobs.map((job) => (
-                        <div 
+                        <div
                           key={job.id}
                           className="rounded-2xl p-4 border border-gray-200 transition-all duration-300 hover:scale-105 bg-white"
                         >
@@ -1610,7 +1621,7 @@ export default function EmployerJobsPage() {
                                 </div>
                               </div>
                               <p className="text-sm text-gray-600 mb-3 line-clamp-2">{job.description}</p>
-                              
+
                               <div className="flex flex-wrap gap-2 mb-3">
                                 {job.duties.slice(0, 3).map((duty: string, index: number) => (
                                   <Badge key={index} variant="outline" className="text-xs">
@@ -1628,30 +1639,30 @@ export default function EmployerJobsPage() {
                               {getStatusText(job.status)}
                             </Badge>
                           </div>
-                          
+
                           <div className="flex items-center justify-between">
                             <div className="text-sm text-gray-500">
                               Posted on {new Date(job.postedAt || job.createdAt).toLocaleDateString()}
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => handleViewApplicants(job)}
                               >
                                 <Users className="h-4 w-4 mr-2" />
                                 View Applicants ({job._count?.applications || 0})
                               </Button>
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => updateJobStatus(job.id, 'CLOSED')}
                               >
                                 <CheckCircle className="h-4 w-4 mr-2" />
                                 Close Job
                               </Button>
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => deleteJob(job.id)}
                               >
@@ -1667,7 +1678,7 @@ export default function EmployerJobsPage() {
                       <Briefcase className="h-16 w-16 mx-auto mb-4 text-gray-400" />
                       <h3 className="text-lg font-semibold mb-2 text-gray-900">No Posted Jobs</h3>
                       <p className="text-gray-600 mb-6">Get started by posting your first job</p>
-                      <Button 
+                      <Button
                         onClick={() => setShowJobStepper(true)}
                         style={{
                           backgroundColor: KAZIPERT_COLORS.primary,
@@ -1685,7 +1696,7 @@ export default function EmployerJobsPage() {
                   {drafts.length > 0 ? (
                     <div className="grid gap-4">
                       {drafts.map((draft) => (
-                        <div 
+                        <div
                           key={draft.id}
                           className="rounded-2xl p-4 border border-gray-200 transition-all duration-300 hover:scale-105 bg-white"
                         >
@@ -1707,14 +1718,14 @@ export default function EmployerJobsPage() {
                               {getStatusText(draft.status)}
                             </Badge>
                           </div>
-                          
+
                           <div className="flex items-center justify-between">
                             <div className="text-sm text-gray-500">
                               Last edited {new Date(draft.updatedAt).toLocaleDateString()}
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => {
                                   setJobForm(draft)
@@ -1724,8 +1735,8 @@ export default function EmployerJobsPage() {
                                 <Edit className="h-4 w-4 mr-2" />
                                 Continue Editing
                               </Button>
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => deleteJob(draft.id)}
                               >
@@ -1749,7 +1760,7 @@ export default function EmployerJobsPage() {
                   {closedJobs.length > 0 ? (
                     <div className="grid gap-4">
                       {closedJobs.map((job) => (
-                        <div 
+                        <div
                           key={job.id}
                           className="rounded-2xl p-4 border border-gray-200 transition-all duration-300 hover:scale-105 bg-white"
                         >
@@ -1776,22 +1787,22 @@ export default function EmployerJobsPage() {
                               {getStatusText(job.status)}
                             </Badge>
                           </div>
-                          
+
                           <div className="flex items-center justify-between">
                             <div className="text-sm text-gray-500">
                               Closed on {new Date(job.closedAt || job.updatedAt).toLocaleDateString()}
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => updateJobStatus(job.id, 'ACTIVE')}
                               >
                                 <Briefcase className="h-4 w-4 mr-2" />
                                 Reopen
                               </Button>
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => deleteJob(job.id)}
                               >
