@@ -45,6 +45,7 @@ export default function EmployeeContractPage() {
   const [profileCompletion, setProfileCompletion] = useState(65)
   const [signature, setSignature] = useState("")
   const [isSigning, setIsSigning] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
 
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
@@ -89,13 +90,21 @@ export default function EmployeeContractPage() {
           status: contractApplication.status === 'CONTRACT_PENDING' ? 'pending_signature' : 'active',
           title: "Domestic Worker Employment Contract",
           employer: {
-            name: `${contractApplication.job?.employer?.firstName || ''} ${contractApplication.job?.employer?.lastName || ''}`.trim() || 'Unknown Employer',
+            name: (
+              contractApplication.job?.employer?.fullName && contractApplication.job.employer.fullName.trim()
+            ) || (
+              `${contractApplication.job?.employer?.firstName || ''} ${contractApplication.job?.employer?.lastName || ''}`.trim()
+            ) || contractApplication.job?.employer?.email || 'Unknown Employer',
             address: contractApplication.job?.employer?.profile?.address || `${contractApplication.job?.city || 'Unknown City'}, Oman`,
             phone: contractApplication.job?.employer?.phone || 'N/A',
             email: contractApplication.job?.employer?.email || 'N/A'
           },
           employee: {
-            name: `${contractApplication.employee?.firstName || ''} ${contractApplication.employee?.lastName || ''}`.trim() || 'Unknown Employee',
+            name: (
+              contractApplication.employee?.fullName && contractApplication.employee.fullName.trim()
+            ) || (
+              `${contractApplication.employee?.firstName || ''} ${contractApplication.employee?.lastName || ''}`.trim()
+            ) || contractApplication.employee?.email || 'Unknown Employee',
             position: contractApplication.job?.title || 'Domestic Worker',
             nationality: contractApplication.employee?.profile?.nationality || 'N/A',
             idNumber: contractApplication.employee?.profile?.idNumber || 'N/A'
@@ -130,6 +139,13 @@ export default function EmployeeContractPage() {
             employeeSignedAt: contractApplication.status === 'COMPLETED' ? new Date().toISOString().split('T')[0] : null
           },
           applicationId: contractApplication.id
+        ,
+          // Minimal identifiers needed to (re)generate a PDF on-demand
+          meta: {
+            jobId: contractApplication.job?.id,
+            employerId: contractApplication.job?.employer?.id,
+            employeeId: contractApplication.employee?.id
+          }
         }
         
         setContract(contractData)
@@ -175,15 +191,48 @@ export default function EmployeeContractPage() {
     }
   }
 
-  const handleDownloadContract = () => {
-    // Simulate download
-    const blob = new Blob([JSON.stringify(contract, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `contract-${contract.id}.pdf`
-    a.click()
-    URL.revokeObjectURL(url)
+  const handleDownloadContract = async () => {
+    try {
+      setIsDownloading(true)
+      // If we already have a generated PDF url on the contract object, open it.
+      if (contract?.pdfUrl) {
+        window.open(contract.pdfUrl, '_blank')
+        return
+      }
+
+      // Otherwise, request server to generate/return the PDF
+      const res = await fetch('/api/contracts/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          applicationId: contract.applicationId,
+          jobId: contract.meta?.jobId,
+          employerId: contract.meta?.employerId,
+          employeeId: contract.meta?.employeeId
+        })
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        throw new Error(text || `Failed to generate PDF (${res.status})`)
+      }
+
+      const data = await res.json()
+      const pdfUrl = data?.contract?.pdfUrl || data?.pdfUrl
+      if (!pdfUrl) {
+        throw new Error('PDF URL not returned by server')
+      }
+
+      // Save the url to state so subsequent clicks don't regenerate
+      setContract((prev: any) => ({ ...prev, pdfUrl }))
+      window.open(pdfUrl, '_blank')
+    } catch (e) {
+      console.error('Download error:', e)
+      alert('Could not generate or open the contract PDF. Please try again later.')
+    } finally {
+      setIsDownloading(false)
+    }
   }
 
   const getStatusBadge = (status: string) => {
@@ -249,9 +298,19 @@ export default function EmployeeContractPage() {
               variant="outline" 
               onClick={handleDownloadContract}
               className="flex items-center gap-2"
+              disabled={isDownloading}
             >
-              <Download className="h-4 w-4" />
-              Download
+              {isDownloading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  Download
+                </>
+              )}
             </Button>
           </div>
         </div>
