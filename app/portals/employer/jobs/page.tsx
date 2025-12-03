@@ -42,12 +42,21 @@ interface Job {
   workingHours: string
 }
 
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+
 export default function EmployerJobsPage() {
   const router = useRouter()
   const { currentTheme } = useTheme()
   const [user, setUser] = useState<any>(null)
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Applicants Modal State
+  const [showApplicantsModal, setShowApplicantsModal] = useState(false)
+  const [selectedJobApplicants, setSelectedJobApplicants] = useState<any[]>([])
+  const [loadingApplicants, setLoadingApplicants] = useState(false)
+  const [selectedJobTitle, setSelectedJobTitle] = useState("")
 
   useEffect(() => {
     const loadData = async () => {
@@ -64,7 +73,7 @@ export default function EmployerJobsPage() {
       }
 
       setUser(parsedUser)
-      
+
       try {
         const employerJobs = await jobService.getEmployerJobs(parsedUser.id)
         setJobs(employerJobs)
@@ -78,11 +87,28 @@ export default function EmployerJobsPage() {
     loadData()
   }, [router])
 
+  const handleViewApplicants = async (jobId: string, jobTitle: string) => {
+    setSelectedJobTitle(jobTitle)
+    setShowApplicantsModal(true)
+    setLoadingApplicants(true)
+    try {
+      const applicants = await jobService.getJobApplications(jobId)
+      setSelectedJobApplicants(applicants || [])
+    } catch (error) {
+      console.error('Error fetching applicants:', error)
+      setSelectedJobApplicants([])
+    } finally {
+      setLoadingApplicants(false)
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
+      case 'ACTIVE': return 'bg-green-100 text-green-800'
       case 'OPEN': return 'bg-green-100 text-green-800'
       case 'CLOSED': return 'bg-red-100 text-red-800'
       case 'PAUSED': return 'bg-yellow-100 text-yellow-800'
+      case 'DRAFT': return 'bg-gray-100 text-gray-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
@@ -156,14 +182,14 @@ export default function EmployerJobsPage() {
                     <MapPin className="h-4 w-4" />
                     <span>{job.location}, {job.city}</span>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <DollarSign className="h-4 w-4" />
                     <span className="font-semibold" style={{ color: COLORS.primary }}>
                       {job.salary} {job.salaryCurrency}/month
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Clock className="h-4 w-4" />
                     <span>{job.workingHours}</span>
@@ -177,31 +203,98 @@ export default function EmployerJobsPage() {
                     Posted {new Date(job.createdAt).toLocaleDateString()}
                   </div>
 
-                  <div className="flex gap-2 pt-3">
+                  <div className="flex flex-col gap-2 pt-3">
                     <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => router.push(`/portals/employer/jobs/${job.id}`)}
+                      className="w-full"
+                      style={{ backgroundColor: COLORS.secondary, color: 'white' }}
+                      onClick={() => handleViewApplicants(job.id, job.title)}
                     >
-                      <Eye className="h-4 w-4 mr-1" />
-                      View
+                      <Users className="h-4 w-4 mr-2" />
+                      View Applicants
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => router.push(`/portals/employer/jobs/${job.id}/edit`)}
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => router.push(`/portals/employer/jobs/${job.id}`)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Details
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => router.push(`/portals/employer/jobs/${job.id}/edit`)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
+
+        {/* Applicants Modal */}
+        <Dialog open={showApplicantsModal} onOpenChange={setShowApplicantsModal}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Applicants for {selectedJobTitle}</DialogTitle>
+              <DialogDescription>
+                Review candidates who have applied for this position.
+              </DialogDescription>
+            </DialogHeader>
+
+            {loadingApplicants ? (
+              <div className="flex justify-center py-8">
+                <LoadingSpinner />
+              </div>
+            ) : selectedJobApplicants.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <Users className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                <p>No applicants yet for this job.</p>
+              </div>
+            ) : (
+              <div className="space-y-4 mt-4">
+                {selectedJobApplicants.map((app) => (
+                  <Card key={app.id} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => router.push(`/portals/employer/applications?application=${app.id}`)}>
+                    <CardContent className="p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-12 w-12">
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            {app.employee?.firstName?.charAt(0)}{app.employee?.lastName?.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h4 className="font-semibold">{app.employee?.firstName} {app.employee?.lastName}</h4>
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <span>{app.employee?.kycDetails?.nationality || 'Nationality N/A'}</span>
+                            <span>•</span>
+                            <span>{app.employee?.kycDetails?.workExperience || 'Exp N/A'}</span>
+                          </div>
+                          <Badge variant="secondary" className="mt-1 text-xs">
+                            {app.status.replace('_', ' ')}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-primary">{app.expectedSalary || 'N/A'} OMR</div>
+                        <div className="text-xs text-gray-500">Expected</div>
+                        <Button size="sm" variant="ghost" className="mt-2 text-primary hover:text-primary/80 p-0 h-auto">
+                          View Profile <ChevronRight className="h-3 w-3 ml-1" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )

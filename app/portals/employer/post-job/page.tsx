@@ -971,8 +971,8 @@ export default function EmployerPostJobPage() {
         experienceRequired: state.experienceRequired,
         languageRequirements: state.languageRequirements,
         workingHours: `${workHoursValidation.totalHours.toFixed(1)} hours/day`,
-        // employmentType: 'FULL_TIME',
-        // status: 'OPEN'
+        employmentType: 'FULL_TIME',
+        status: 'ACTIVE'
       }
 
       await jobService.createJob(jobData as any)
