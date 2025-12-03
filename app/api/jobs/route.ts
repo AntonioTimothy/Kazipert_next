@@ -270,7 +270,17 @@ export async function POST(request: NextRequest) {
             skills: sanitizedData.skills || []
         }
 
-        const job = await prisma.job.create({ data: jobCreateData })
+        let job;
+        try {
+            job = await prisma.job.create({ data: jobCreateData })
+        } catch (error: any) {
+            if (error.message?.includes('Unknown argument')) {
+                console.error('❌ PRISMA CLIENT ERROR: The running server is using an old Prisma Client version.')
+                console.error('Please RESTART your development server (Ctrl+C, then npm run dev) to pick up the schema changes.')
+                throw new Error('Server restart required to apply database schema changes.')
+            }
+            throw error;
+        }
 
         console.log('✅ JOBS API - Job created successfully:', job.id)
         return NextResponse.json(job)
