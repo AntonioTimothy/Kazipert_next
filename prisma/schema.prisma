@@ -328,8 +328,8 @@ model Job {
   // New Fields for Dynamic Job Posting
   questionnaire     Json?    // Stores family tree, disability, house info, etc.
   salaryBreakdown   Json?    // Stores the calculated salary components
-shortlistedEmployeeId String?   // ID of shortlisted employee
-additionalDuties Json?          // Free-form duties description
+  shortlistedEmployeeId String?   // ID of shortlisted employee
+  additionalDuties Json?          // Free-form duties description
   
   // Timestamps
   createdAt         DateTime @default(now())
