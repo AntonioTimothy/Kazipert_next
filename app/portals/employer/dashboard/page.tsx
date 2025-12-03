@@ -566,7 +566,7 @@ export default function EmployerDashboard() {
           </div>
           <Button
             size="sm"
-            onClick={() => router.push('/employer/jobs/create')}
+            onClick={() => router.push('/portals/employer/post-job')}
             style={{
               backgroundColor: KAZIPERT_COLORS.primary,
               color: 'white'

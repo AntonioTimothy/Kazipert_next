@@ -159,22 +159,6 @@ export default function EmployerPostJobPage() {
   const salaryBreakdown = calculateSalary(state.familyMembers, state.selectedDuties)
   const workHoursValidation = validateWorkHours(state.familyMembers, state.selectedDuties)
 
-  // Family member modal functions
-  const getAgeRangesByType = (type: string) => {
-    return Object.entries(AGE_RANGES).filter(([_, range]) => {
-      if (type === 'child') return range.category === 'infant' || range.category === 'child' || range.category === 'teen'
-      if (type === 'elderly') return range.category === 'elderly'
-      return false
-    })
-  }
-
-  const addFamilyMember = () => {
-    // This function is no longer directly used in the HEAD version's UI flow for adding members via a modal.
-    // The HEAD version adds members directly within the question components.
-    // Keeping it here for now, but it might be dead code depending on the final UI.
-    // If a modal is reintroduced, this function would be relevant.
-  }
-
   // Dynamic question flow based on answers
   const questions = [
     {
@@ -930,76 +914,6 @@ export default function EmployerPostJobPage() {
 
   const currentQ = questions[currentQuestion]
 
-  const FamilyMemberModal = () => (
-    <Dialog open={showFamilyModal} onOpenChange={setShowFamilyModal}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add Family Member</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div>
-            <label className="text-sm font-medium mb-2 block">Member Type</label>
-            <Select value={newMemberType} onValueChange={(v) => { setNewMemberType(v); setNewMemberAge('') }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select member type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="child">Child/Teen</SelectItem>
-                <SelectItem value="elderly">Elderly Person</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {newMemberType && (
-            <div>
-              <label className="text-sm font-medium mb-2 block">Age Range</label>
-              <Select value={newMemberAge} onValueChange={setNewMemberAge}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select age range" />
-                </SelectTrigger>
-                <SelectContent>
-                  {getAgeRangesByType(newMemberType).map(([key, range]) => (
-                    <SelectItem key={key} value={key}>{range.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {newMemberAge && (
-            <div>
-              <label className="text-sm font-medium mb-2 block">Care Level</label>
-              <Select value={newMemberDisability} onValueChange={setNewMemberDisability}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(DISABILITY_LEVELS).map(([key, level]) => (
-                    <SelectItem key={key} value={key}>{level.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          <div className="flex gap-2 pt-4">
-            <Button variant="outline" onClick={() => setShowFamilyModal(false)} className="flex-1">
-              Cancel
-            </Button>
-            <Button
-              onClick={addFamilyMember}
-              disabled={!newMemberType || !newMemberAge}
-              className="flex-1"
-              style={{ backgroundColor: COLORS.primary, color: 'white' }}
-            >
-              Add Member
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
 
@@ -1020,7 +934,7 @@ export default function EmployerPostJobPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-3xl mx-auto px-4 py-8 pb-32">
+      <div className="max-w-3xl mx-auto px-4 py-8 pb-32 lg:pr-[420px]">
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">{currentQ.title}</h2>

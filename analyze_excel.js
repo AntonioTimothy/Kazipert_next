@@ -1,7 +1,7 @@
 const XLSX = require('xlsx');
 const fs = require('fs');
 
-const filePath = 'Kazipert Salary Calculator.xlsx';
+const filePath = 'KazipertSalaryCalculator.xlsx';
 
 try {
     const workbook = XLSX.readFile(filePath);

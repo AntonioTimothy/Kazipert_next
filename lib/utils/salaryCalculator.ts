@@ -174,8 +174,8 @@ export interface SelectedDuty {
 
 export interface SalaryBreakdown {
     baseSalary: number
-    familyCareCosts: { member: FamilyMember; cost: number; hours: number }[]
-    dutyCosts: { duty: SelectedDuty; cost: number; hours: number }[]
+    familyCareCosts: number // Total cost for all family care
+    dutyCosts: number // Total cost for all duties
     totalHoursPerDay: number
     totalMonthlyCost: number
     cappedSalary: number
@@ -276,10 +276,14 @@ export function calculateSalary(
         breakdown.push(`⚠️ Capped at maximum: ${MAXIMUM_SALARY} OMR`)
     }
 
+    // Calculate aggregated totals
+    const totalFamilyCareCost = familyCareCosts.reduce((sum, item) => sum + item.cost, 0)
+    const totalDutyCost = dutyCosts.reduce((sum, item) => sum + item.cost, 0)
+
     return {
         baseSalary: BASE_SALARY,
-        familyCareCosts,
-        dutyCosts,
+        familyCareCosts: totalFamilyCareCost,
+        dutyCosts: totalDutyCost,
         totalHoursPerDay: totalHours,
         totalMonthlyCost: totalCost,
         cappedSalary,

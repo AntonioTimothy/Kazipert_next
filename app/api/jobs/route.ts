@@ -213,7 +213,8 @@ export async function POST(request: NextRequest) {
             'experienceRequired', 'languageRequirements', 'workingHours', 'overtimeRequired',
             'accommodation', 'meals', 'vacationDays', 'benefits', 'certifications', 'skills',
             'salary', 'salaryCurrency', 'location', 'city', 'availableFrom', 'interviewRequired',
-            'emergencySupport', 'autoSalaryCalculation', 'postedAt', 'closedAt'
+            'emergencySupport', 'autoSalaryCalculation', 'postedAt', 'closedAt',
+            'salaryBreakdown', 'additionalDuties' // Added for dynamic salary calculation
         ])
 
         const sanitizedData: Record<string, any> = {}
@@ -242,6 +243,14 @@ export async function POST(request: NextRequest) {
         // Apply safe defaults aligned with the Prisma schema/enums
         const jobCreateData = {
             ...sanitizedData,
+            title: sanitizedData.title || 'Untitled Job',
+            description: sanitizedData.description || '',
+            residenceType: sanitizedData.residenceType || 'VILLA',
+            bedrooms: sanitizedData.bedrooms ?? 3,
+            bathrooms: sanitizedData.bathrooms ?? 2,
+            city: sanitizedData.city || 'Muscat',
+            salary: sanitizedData.salary ?? 90,
+            salaryCurrency: sanitizedData.salaryCurrency || 'OMR',
             type: sanitizedData.type || 'FULL_TIME',
             employerId: user.id,
             totalFloors: sanitizedData.totalFloors ?? 1,
