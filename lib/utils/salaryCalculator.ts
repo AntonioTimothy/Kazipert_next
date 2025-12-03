@@ -323,45 +323,85 @@ export interface SalaryBreakdown {
 
 /**
  * Calculate total salary based on family composition and selected duties
+ * BASE SALARY (90 OMR) INCLUDES:
+ * - Basic cleaning for up to 3 bedrooms
+ * - Care for up to 2 normal (non-disabled) children
+ * 
+ * ADDITIONAL CHARGES FOR:
+ * - Extra bedrooms (beyond 3)
+ * - Extra children (beyond 2)
+ * - Any disability/special needs
+ * - Infant care
+ * - Elderly care
+ * - Selected duties
  */
 export function calculateSalary(
     familyMembers: FamilyMember[],
-    selectedDuties: SelectedDuty[]
+    selectedDuties: SelectedDuty[],
+    bedrooms: number = 3
 ): SalaryBreakdown {
     let totalCost = BASE_SALARY
     let totalHours = DUTY_CONFIGS.BASIC_CLEANING.hoursPerDay
-    const breakdown: string[] = [`Base Salary (includes basic cleaning): ${BASE_SALARY} OMR`]
+    const breakdown: string[] = [`Base Salary (includes 3 bedrooms + 2 normal children): ${BASE_SALARY} OMR`]
     const familyCareCosts: { member: FamilyMember; cost: number; hours: number }[] = []
     const dutyCosts: { duty: SelectedDuty; cost: number; hours: number }[] = []
 
-    // 1. Calculate family care costs
+    // 1. Calculate extra bedroom costs (beyond 3)
+    if (bedrooms > 3) {
+        const extraBedrooms = bedrooms - 3
+        const bedroomCost = extraBedrooms * 5 // 5 OMR per extra bedroom
+        totalCost += bedroomCost
+        totalHours += extraBedrooms * 0.5 // 30 mins per extra bedroom
+        breakdown.push(`Extra Bedrooms (${extraBedrooms}): ${bedroomCost} OMR`)
+    }
+
+    // 2. Count normal children (non-disabled, non-infant, non-elderly)
+    let normalChildrenCount = 0
+    let infantCount = 0
+    let elderlyCount = 0
+    let disabledCount = 0
+
+    familyMembers.forEach(member => {
+        const ageRange = AGE_RANGES[member.ageRange]
+        const isDisabled = member.disabilityLevel !== 'NORMAL'
+
+        if (isDisabled) {
+            disabledCount++
+        } else if (ageRange.category === 'infant') {
+            infantCount++
+        } else if (ageRange.category === 'elderly') {
+            elderlyCount++
+        } else if (ageRange.category === 'child' || ageRange.category === 'teen') {
+            normalChildrenCount++
+        }
+    })
+
+    // 3. Calculate family care costs
+    let childrenProcessed = 0
+
     familyMembers.forEach(member => {
         const ageRange = AGE_RANGES[member.ageRange]
         const disability = DISABILITY_LEVELS[member.disabilityLevel]
         let memberCost = 0
         let memberHours = 0
 
-        // Determine care type and cost based on age and disability
+        // INFANTS - Always charged (not included in base)
         if (ageRange.category === 'infant') {
-            // Infant care
             memberCost = DUTY_CONFIGS.INFANT_CARE.totalCost
             memberHours = DUTY_CONFIGS.INFANT_CARE.hoursPerDay
 
             if (member.disabilityLevel !== 'NORMAL') {
                 memberCost += disability.addCost
-                memberHours += 1 // Extra hour for disabled infant
+                memberHours += 1
             }
-        } else if (ageRange.category === 'child') {
-            // Child care
-            if (member.disabilityLevel !== 'NORMAL') {
-                memberCost = DUTY_CONFIGS.DISABLED_CHILD_CARE.totalCost
-                memberHours = DUTY_CONFIGS.DISABLED_CHILD_CARE.hoursPerDay
-            } else {
-                memberCost = DUTY_CONFIGS.CHILD_CARE.totalCost
-                memberHours = DUTY_CONFIGS.CHILD_CARE.hoursPerDay
-            }
-        } else if (ageRange.category === 'elderly') {
-            // Elderly care
+
+            totalCost += memberCost
+            totalHours += memberHours
+            familyCareCosts.push({ member, cost: memberCost, hours: memberHours })
+            breakdown.push(`Infant Care (${ageRange.label}${member.disabilityLevel !== 'NORMAL' ? ' - ' + disability.label : ''}): ${memberCost} OMR`)
+        }
+        // ELDERLY - Always charged (not included in base)
+        else if (ageRange.category === 'elderly') {
             if (member.disabilityLevel === 'SEVERE' || member.disabilityLevel === 'COMPLETE') {
                 memberCost = DUTY_CONFIGS.BEDRIDDEN_ELDERLY_CARE.totalCost
                 memberHours = DUTY_CONFIGS.BEDRIDDEN_ELDERLY_CARE.hoursPerDay
@@ -374,21 +414,51 @@ export function calculateSalary(
                     memberHours += 0.5
                 }
             }
-        } else if (member.disabilityLevel !== 'NORMAL') {
-            // Adult with disability
-            memberCost = disability.addCost
-            memberHours = 2
-        }
 
-        if (memberCost > 0) {
             totalCost += memberCost
             totalHours += memberHours
             familyCareCosts.push({ member, cost: memberCost, hours: memberHours })
-            breakdown.push(`${ageRange.label} (${disability.label}): ${memberCost} OMR`)
+            breakdown.push(`Elderly Care (${ageRange.label}${member.disabilityLevel !== 'NORMAL' ? ' - ' + disability.label : ''}): ${memberCost} OMR`)
+        }
+        // DISABLED CHILDREN/TEENS/ADULTS - Always charged (disability not included in base)
+        else if (member.disabilityLevel !== 'NORMAL') {
+            if (ageRange.category === 'child' || ageRange.category === 'teen') {
+                memberCost = DUTY_CONFIGS.DISABLED_CHILD_CARE.totalCost
+                memberHours = DUTY_CONFIGS.DISABLED_CHILD_CARE.hoursPerDay
+            } else {
+                // Adult with disability
+                memberCost = disability.addCost
+                memberHours = 2
+            }
+
+            totalCost += memberCost
+            totalHours += memberHours
+            familyCareCosts.push({ member, cost: memberCost, hours: memberHours })
+            breakdown.push(`Special Needs Care (${ageRange.label} - ${disability.label}): ${memberCost} OMR`)
+        }
+        // NORMAL CHILDREN/TEENS - Only charge beyond 2
+        else if (ageRange.category === 'child' || ageRange.category === 'teen') {
+            childrenProcessed++
+
+            // Only charge for children beyond the 2 included in base salary
+            if (childrenProcessed > 2) {
+                if (ageRange.category === 'child') {
+                    memberCost = DUTY_CONFIGS.CHILD_CARE.totalCost
+                    memberHours = DUTY_CONFIGS.CHILD_CARE.hoursPerDay
+                } else {
+                    memberCost = DUTY_CONFIGS.TEEN_SUPERVISION.totalCost
+                    memberHours = DUTY_CONFIGS.TEEN_SUPERVISION.hoursPerDay
+                }
+
+                totalCost += memberCost
+                totalHours += memberHours
+                familyCareCosts.push({ member, cost: memberCost, hours: memberHours })
+                breakdown.push(`Extra Child Care (${ageRange.label}): ${memberCost} OMR`)
+            }
         }
     })
 
-    // 2. Calculate duty costs
+    // 4. Calculate duty costs
     selectedDuties.forEach(selectedDuty => {
         const duty = DUTY_CONFIGS[selectedDuty.dutyKey]
         if (!duty || duty.required) return // Skip if already included in base
@@ -408,7 +478,7 @@ export function calculateSalary(
         }
     })
 
-    // 3. Apply maximum cap
+    // 5. Apply maximum cap
     const cappedSalary = Math.min(totalCost, MAXIMUM_SALARY)
 
     if (totalCost > MAXIMUM_SALARY) {

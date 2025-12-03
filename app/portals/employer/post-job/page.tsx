@@ -156,7 +156,7 @@ export default function EmployerPostJobPage() {
   }, [router])
 
   // Calculate salary in real-time
-  const salaryBreakdown = calculateSalary(state.familyMembers, state.selectedDuties)
+  const salaryBreakdown = calculateSalary(state.familyMembers, state.selectedDuties, state.bedrooms)
   const workHoursValidation = validateWorkHours(state.familyMembers, state.selectedDuties)
 
   // Dynamic question flow based on answers

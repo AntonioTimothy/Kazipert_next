@@ -66,17 +66,23 @@ User Input → State Updates → Salary Calculator → Real-time Display
 ## Salary Calculation Formula (from Excel)
 
 ### Base Components:
-- **Base Salary**: 90 OMR (includes 3 hours/day basic cleaning)
+- **Base Salary**: 90 OMR (includes 3 bedrooms + 2 normal children + basic cleaning)
 - **Hourly Rate**: 0.288 OMR/hour (90 OMR / 312 hours per month)
 - **Days per Month**: 26 working days
 - **Hours per Day**: 12 hours maximum
 
-### Family Care Costs:
+### Additional Charges:
+- **Extra Bedrooms**: 5 OMR per bedroom (beyond 3)
+- **Extra Children**: Charged based on age (beyond 2 normal children)
+  - Child (3-12): 24 OMR
+  - Teen (13-17): 14 OMR
+
+### Family Care Costs (Always Charged):
 - **Infants (0-2 years)**: 42 OMR + disability add-on
-- **Children (3-12 years)**: 24 OMR (normal) or 52 OMR (disabled)
 - **Elderly (70+ years)**: 
   - Mobile: 21 OMR + disability add-on
   - Bedridden: 73 OMR
+- **Disability/Special Needs**: Extra cost based on severity for any family member
 
 ### Duty Costs:
 - **Simple Cooking**: 16 OMR (1.5 hrs/day)
@@ -85,6 +91,7 @@ User Input → State Updates → Salary Calculator → Real-time Display
 - **Ironing**: 8 OMR (1 hr/day)
 - **Grocery Shopping**: 5 OMR (0.5 hrs/day)
 - **Pet Care**: 4 OMR (0.5 hrs/day)
+- **And 20+ other duties...**
 
 ### Maximum Cap:
 - Total salary capped at **160 OMR** regardless of calculated total
