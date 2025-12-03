@@ -36,3 +36,4 @@ pgdata_test/
 /.idea/misc.xml
 /.idea/vcs.xml
 /~$Kazipert Salary Calculator.xlsx
+/./public/contracts/**
