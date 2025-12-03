@@ -579,16 +579,18 @@ export default function EmployerPostJobPage() {
       isValid: () => !state.needsCooking || state.cookingType !== ''
     },
     {
-      id: 'other-duties',
-      title: "Select additional duties",
-      subtitle: "Choose other tasks you need help with",
+      id: 'cleaning-duties',
+      title: "Cleaning & Maintenance Tasks",
+      subtitle: "Select additional cleaning tasks needed",
       component: (
         <div className="space-y-3">
           {[
-            { key: 'NORMAL_LAUNDRY', label: 'Laundry', icon: FileText, cost: 10 },
-            { key: 'IRONING', label: 'Ironing', icon: FileText, cost: 8 },
-            { key: 'GROCERY_SHOPPING', label: 'Grocery Shopping', icon: ShoppingCart, cost: 5 },
-            { key: 'PET_CARE', label: 'Pet Care', icon: Dog, cost: 4 },
+            { key: 'DUSTING', label: 'Dusting Furniture & Surfaces', cost: 2 },
+            { key: 'MOPPING_FLOORS', label: 'Mopping Floors', cost: 2.5 },
+            { key: 'VACUUMING', label: 'Vacuuming Carpets', cost: 2 },
+            { key: 'BATHROOM_CLEANING', label: 'Bathroom Deep Cleaning', cost: 3 },
+            { key: 'WINDOW_CLEANING', label: 'Window Cleaning', cost: 3 },
+            { key: 'WASHING_DISHES', label: 'Washing Dishes & Kitchenware', cost: 3 },
           ].map(duty => {
             const isSelected = state.selectedDuties.some(d => d.dutyKey === duty.key)
             return (
@@ -607,12 +609,169 @@ export default function EmployerPostJobPage() {
                 )}
                 style={{ borderColor: isSelected ? COLORS.primary : undefined }}
               >
-                <div className="flex items-center gap-3">
-                  <div className={cn("p-2 rounded-full", isSelected ? "bg-primary/10" : "bg-gray-100")}>
-                    <duty.icon className="h-5 w-5" style={{ color: isSelected ? COLORS.primary : '#6b7280' }} />
-                  </div>
-                  <span className="font-medium text-gray-800">{duty.label}</span>
+                <span className="font-medium text-gray-800">{duty.label}</span>
+                <Badge variant={isSelected ? "default" : "secondary"} className={cn(isSelected ? "bg-[#117c82]" : "")}>
+                  +{duty.cost} OMR
+                </Badge>
+              </button>
+            )
+          })}
+        </div>
+      ),
+      isValid: () => true
+    },
+    {
+      id: 'laundry-duties',
+      title: "Laundry & Ironing",
+      subtitle: "Select laundry-related tasks",
+      component: (
+        <div className="space-y-3">
+          {[
+            { key: 'NORMAL_LAUNDRY', label: 'Normal Laundry (1-4 people)', cost: 10 },
+            { key: 'LARGE_FAMILY_LAUNDRY', label: 'Large Family Laundry (5+ people)', cost: 14 },
+            { key: 'IRONING', label: 'Ironing Clothes', cost: 8 },
+            { key: 'FOLDING_ORGANIZING', label: 'Folding & Organizing Clothes', cost: 3 },
+          ].map(duty => {
+            const isSelected = state.selectedDuties.some(d => d.dutyKey === duty.key)
+            return (
+              <button
+                key={duty.key}
+                onClick={() => {
+                  if (isSelected) {
+                    setState({ ...state, selectedDuties: state.selectedDuties.filter(d => d.dutyKey !== duty.key) })
+                  } else {
+                    setState({ ...state, selectedDuties: [...state.selectedDuties, { dutyKey: duty.key as any }] })
+                  }
+                }}
+                className={cn(
+                  "w-full p-4 rounded-xl border-2 transition-all flex items-center justify-between hover:shadow-sm",
+                  isSelected ? "border-primary bg-primary/5" : "border-gray-100 bg-white"
+                )}
+                style={{ borderColor: isSelected ? COLORS.primary : undefined }}
+              >
+                <span className="font-medium text-gray-800">{duty.label}</span>
+                <Badge variant={isSelected ? "default" : "secondary"} className={cn(isSelected ? "bg-[#117c82]" : "")}>
+                  +{duty.cost} OMR
+                </Badge>
+              </button>
+            )
+          })}
+        </div>
+      ),
+      isValid: () => true
+    },
+    {
+      id: 'pet-shopping-duties',
+      title: "Pet Care, Shopping & Errands",
+      subtitle: "Select additional household tasks",
+      component: (
+        <div className="space-y-3">
+          {[
+            { key: 'PET_CARE', label: 'Pet Care (Feeding & Walking)', cost: 4, description: 'Daily feeding and walking of pets' },
+            { key: 'PET_GROOMING', label: 'Pet Grooming', cost: 4, description: 'Basic grooming and hygiene' },
+            { key: 'GROCERY_SHOPPING', label: 'Grocery Shopping', cost: 5 },
+            { key: 'MEAL_PLANNING_SHOPPING', label: 'Meal Planning & Shopping', cost: 6 },
+            { key: 'ERRANDS', label: 'Running Errands', cost: 3 },
+          ].map(duty => {
+            const isSelected = state.selectedDuties.some(d => d.dutyKey === duty.key)
+            return (
+              <button
+                key={duty.key}
+                onClick={() => {
+                  if (isSelected) {
+                    setState({ ...state, selectedDuties: state.selectedDuties.filter(d => d.dutyKey !== duty.key) })
+                  } else {
+                    setState({ ...state, selectedDuties: [...state.selectedDuties, { dutyKey: duty.key as any }] })
+                  }
+                }}
+                className={cn(
+                  "w-full p-4 rounded-xl border-2 transition-all hover:shadow-sm",
+                  isSelected ? "border-primary bg-primary/5" : "border-gray-100 bg-white"
+                )}
+                style={{ borderColor: isSelected ? COLORS.primary : undefined }}
+              >
+                <div className="flex-1 text-left">
+                  <div className="font-medium text-gray-800">{duty.label}</div>
+                  {duty.description && <div className="text-xs text-gray-500 mt-1">{duty.description}</div>}
                 </div>
+                <Badge variant={isSelected ? "default" : "secondary"} className={cn(isSelected ? "bg-[#117c82]" : "")}>
+                  +{duty.cost} OMR
+                </Badge>
+              </button>
+            )
+          })}
+        </div>
+      ),
+      isValid: () => true
+    },
+    {
+      id: 'maintenance-duties',
+      title: "Home & Garden Maintenance",
+      subtitle: "Select maintenance tasks",
+      component: (
+        <div className="space-y-3">
+          {[
+            { key: 'PLANT_WATERING', label: 'Watering Plants', cost: 1 },
+            { key: 'GARDEN_MAINTENANCE', label: 'Basic Garden Maintenance', cost: 3 },
+            { key: 'POOL_CLEANING', label: 'Pool Cleaning', cost: 8 },
+          ].map(duty => {
+            const isSelected = state.selectedDuties.some(d => d.dutyKey === duty.key)
+            return (
+              <button
+                key={duty.key}
+                onClick={() => {
+                  if (isSelected) {
+                    setState({ ...state, selectedDuties: state.selectedDuties.filter(d => d.dutyKey !== duty.key) })
+                  } else {
+                    setState({ ...state, selectedDuties: [...state.selectedDuties, { dutyKey: duty.key as any }] })
+                  }
+                }}
+                className={cn(
+                  "w-full p-4 rounded-xl border-2 transition-all flex items-center justify-between hover:shadow-sm",
+                  isSelected ? "border-primary bg-primary/5" : "border-gray-100 bg-white"
+                )}
+                style={{ borderColor: isSelected ? COLORS.primary : undefined }}
+              >
+                <span className="font-medium text-gray-800">{duty.label}</span>
+                <Badge variant={isSelected ? "default" : "secondary"} className={cn(isSelected ? "bg-[#117c82]" : "")}>
+                  +{duty.cost} OMR
+                </Badge>
+              </button>
+            )
+          })}
+        </div>
+      ),
+      isValid: () => true
+    },
+    {
+      id: 'family-duties',
+      title: "Family & Guest Care",
+      subtitle: "Select family assistance tasks",
+      component: (
+        <div className="space-y-3">
+          {[
+            { key: 'HOSTING_GUESTS', label: 'Assisting with Hosting Guests', cost: 2.5 },
+            { key: 'TABLE_SETTING', label: 'Setting Table & Serving', cost: 1.5 },
+            { key: 'HOMEWORK_HELP', label: 'Homework Assistance', cost: 8 },
+          ].map(duty => {
+            const isSelected = state.selectedDuties.some(d => d.dutyKey === duty.key)
+            return (
+              <button
+                key={duty.key}
+                onClick={() => {
+                  if (isSelected) {
+                    setState({ ...state, selectedDuties: state.selectedDuties.filter(d => d.dutyKey !== duty.key) })
+                  } else {
+                    setState({ ...state, selectedDuties: [...state.selectedDuties, { dutyKey: duty.key as any }] })
+                  }
+                }}
+                className={cn(
+                  "w-full p-4 rounded-xl border-2 transition-all flex items-center justify-between hover:shadow-sm",
+                  isSelected ? "border-primary bg-primary/5" : "border-gray-100 bg-white"
+                )}
+                style={{ borderColor: isSelected ? COLORS.primary : undefined }}
+              >
+                <span className="font-medium text-gray-800">{duty.label}</span>
                 <Badge variant={isSelected ? "default" : "secondary"} className={cn(isSelected ? "bg-[#117c82]" : "")}>
                   +{duty.cost} OMR
                 </Badge>
@@ -929,7 +1088,7 @@ export default function EmployerPostJobPage() {
               Cancel
             </Button>
           </div>
-          <Progress value={progress} className="h-2 bg-gray-100" indicatorClassName="bg-[#117c82] transition-all duration-500" />
+          <Progress value={progress} className="h-2 bg-gray-100" />
         </div>
       </div>
 
@@ -1014,7 +1173,7 @@ export default function EmployerPostJobPage() {
       </div>
 
       {/* Footer Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] mb-20 md:mb-0 z-20">
         <div className="max-w-3xl mx-auto flex justify-between items-center">
           <Button
             variant="outline"

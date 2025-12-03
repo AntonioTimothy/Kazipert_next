@@ -49,12 +49,40 @@ export const DUTY_CONFIGS: Record<string, DutyConfig> = {
         totalCost: 0,
         required: true
     },
-    DEEP_BATHROOM_CLEANING: {
-        label: 'Deep Bathroom Cleaning (per extra bathroom)',
+    DUSTING: {
+        label: 'Dusting Furniture & Surfaces',
+        category: 'cleaning',
+        hoursPerDay: 0.42,
+        costPerHour: 0.29,
+        totalCost: 2,
+    },
+    MOPPING_FLOORS: {
+        label: 'Mopping Floors',
         category: 'cleaning',
         hoursPerDay: 0.5,
-        costPerHour: 20,
-        totalCost: 10, // per bathroom
+        costPerHour: 0.29,
+        totalCost: 2.5,
+    },
+    VACUUMING: {
+        label: 'Vacuuming Carpets',
+        category: 'cleaning',
+        hoursPerDay: 0.33,
+        costPerHour: 0.29,
+        totalCost: 2,
+    },
+    BATHROOM_CLEANING: {
+        label: 'Bathroom Deep Cleaning',
+        category: 'cleaning',
+        hoursPerDay: 0.5,
+        costPerHour: 0.29,
+        totalCost: 3,
+    },
+    WINDOW_CLEANING: {
+        label: 'Window Cleaning',
+        category: 'cleaning',
+        hoursPerDay: 0.5,
+        costPerHour: 0.29,
+        totalCost: 3,
     },
 
     // COOKING
@@ -72,6 +100,13 @@ export const DUTY_CONFIGS: Record<string, DutyConfig> = {
         costPerHour: 11.2,
         totalCost: 28,
     },
+    OMANI_COOKING: {
+        label: 'Omani/International Cooking',
+        category: 'cooking',
+        hoursPerDay: 2,
+        costPerHour: 10,
+        totalCost: 20,
+    },
     GUEST_COOKING: {
         label: 'Cooking for Guests (occasional)',
         category: 'cooking',
@@ -79,8 +114,15 @@ export const DUTY_CONFIGS: Record<string, DutyConfig> = {
         costPerHour: 12,
         totalCost: 6,
     },
+    MEAL_PLANNING: {
+        label: 'Meal Planning & Prep',
+        category: 'cooking',
+        hoursPerDay: 0.5,
+        costPerHour: 8,
+        totalCost: 4,
+    },
 
-    // LAUNDRY
+    // LAUNDRY & IRONING
     NORMAL_LAUNDRY: {
         label: 'Normal Laundry (1-4 people)',
         category: 'laundry',
@@ -94,6 +136,29 @@ export const DUTY_CONFIGS: Record<string, DutyConfig> = {
         hoursPerDay: 1.5,
         costPerHour: 9.33,
         totalCost: 14,
+    },
+    IRONING: {
+        label: 'Ironing Clothes',
+        category: 'laundry',
+        hoursPerDay: 1,
+        costPerHour: 8,
+        totalCost: 8,
+    },
+    FOLDING_ORGANIZING: {
+        label: 'Folding & Organizing Clothes',
+        category: 'laundry',
+        hoursPerDay: 0.5,
+        costPerHour: 6,
+        totalCost: 3,
+    },
+
+    // WASHING & DISHES
+    WASHING_DISHES: {
+        label: 'Washing Dishes & Kitchenware',
+        category: 'washing',
+        hoursPerDay: 0.42,
+        costPerHour: 7,
+        totalCost: 3,
     },
 
     // CHILDCARE
@@ -111,12 +176,26 @@ export const DUTY_CONFIGS: Record<string, DutyConfig> = {
         costPerHour: 8,
         totalCost: 24,
     },
+    TEEN_SUPERVISION: {
+        label: 'Teen Supervision (13-17 years)',
+        category: 'childcare',
+        hoursPerDay: 2,
+        costPerHour: 7,
+        totalCost: 14,
+    },
     DISABLED_CHILD_CARE: {
         label: 'Disabled Child Care',
         category: 'childcare',
         hoursPerDay: 5,
         costPerHour: 10.4,
         totalCost: 52,
+    },
+    HOMEWORK_HELP: {
+        label: 'Homework Assistance',
+        category: 'childcare',
+        hoursPerDay: 1,
+        costPerHour: 8,
+        totalCost: 8,
     },
 
     // ELDERLY CARE
@@ -134,30 +213,90 @@ export const DUTY_CONFIGS: Record<string, DutyConfig> = {
         costPerHour: 12.17,
         totalCost: 73,
     },
+    ELDERLY_MOBILITY_ASSIST: {
+        label: 'Assisting Elderly with Mobility',
+        category: 'elderly',
+        hoursPerDay: 1.25,
+        costPerHour: 7.5,
+        totalCost: 9.5,
+    },
 
     // PET CARE
     PET_CARE: {
-        label: 'Pet Care',
+        label: 'Pet Care (Feeding & Walking)',
+        category: 'pets',
+        hoursPerDay: 0.75,
+        costPerHour: 5.33,
+        totalCost: 4,
+    },
+    PET_GROOMING: {
+        label: 'Pet Grooming',
         category: 'pets',
         hoursPerDay: 0.5,
         costPerHour: 8,
         totalCost: 4,
     },
 
-    // OTHER
-    IRONING: {
-        label: 'Ironing',
-        category: 'household',
+    // SHOPPING & ERRANDS
+    GROCERY_SHOPPING: {
+        label: 'Grocery Shopping',
+        category: 'shopping',
+        hoursPerDay: 1,
+        costPerHour: 5,
+        totalCost: 5,
+    },
+    MEAL_PLANNING_SHOPPING: {
+        label: 'Meal Planning & Shopping',
+        category: 'shopping',
+        hoursPerDay: 1,
+        costPerHour: 6,
+        totalCost: 6,
+    },
+    ERRANDS: {
+        label: 'Running Errands',
+        category: 'shopping',
+        hoursPerDay: 0.5,
+        costPerHour: 6,
+        totalCost: 3,
+    },
+
+    // HOME MAINTENANCE
+    PLANT_WATERING: {
+        label: 'Watering Plants',
+        category: 'maintenance',
+        hoursPerDay: 0.25,
+        costPerHour: 4,
+        totalCost: 1,
+    },
+    GARDEN_MAINTENANCE: {
+        label: 'Basic Garden Maintenance',
+        category: 'maintenance',
+        hoursPerDay: 0.5,
+        costPerHour: 6,
+        totalCost: 3,
+    },
+    POOL_CLEANING: {
+        label: 'Pool Cleaning',
+        category: 'maintenance',
         hoursPerDay: 1,
         costPerHour: 8,
         totalCost: 8,
     },
-    GROCERY_SHOPPING: {
-        label: 'Grocery Shopping',
-        category: 'household',
+
+    // FAMILY CARE
+    HOSTING_GUESTS: {
+        label: 'Assisting with Hosting Guests',
+        category: 'family',
         hoursPerDay: 0.5,
-        costPerHour: 10,
-        totalCost: 5,
+        costPerHour: 5,
+        totalCost: 2.5,
+    },
+    TABLE_SETTING: {
+        label: 'Setting Table & Serving',
+        category: 'family',
+        hoursPerDay: 0.3,
+        costPerHour: 5,
+        totalCost: 1.5,
     },
 }
 
