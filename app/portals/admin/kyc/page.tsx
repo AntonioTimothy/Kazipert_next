@@ -113,8 +113,7 @@ const mockEmployers = [
       contract: true
     },
     submittedDate: "2025-01-21",
-    lastUpdated: "30 minutes ago",
-    location: "Muscat, Oman"
+    lastUpdated: "30 minutes ago"
   },
   {
     id: "E002",
@@ -136,8 +135,7 @@ const mockEmployers = [
       contract: true
     },
     submittedDate: "2025-01-15",
-    lastUpdated: "3 days ago",
-    location: "Muscat, Oman"
+    lastUpdated: "3 days ago"
   }
 ]
 
@@ -504,14 +502,9 @@ export default function AdminKYCPage() {
                                 <div className="grid gap-2 text-sm md:grid-cols-2 lg:grid-cols-3">
                                   <div className="flex items-center gap-2">
                                     <Building className="h-3 w-3 text-muted-foreground" />
-                                    <span>{user.company}</span>
+                                    <span>{user.company ?? "—"}</span>
                                   </div>
-                                  <div>
-                                    <span className="text-muted-foreground">Family Size:</span> {user.familySize}
-                                  </div>
-                                  <div>
-                                    <span className="text-muted-foreground">House Type:</span> {user.houseType}
-                                  </div>
+                                  {/** Note: familySize and houseType are not part of the current User schema; removed to prevent runtime/TS errors. */}
                                 </div>
                               )}
 

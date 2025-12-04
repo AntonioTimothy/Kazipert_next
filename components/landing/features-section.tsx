@@ -12,10 +12,9 @@ import Image from "next/image";
     "/employee7.jpg",
   ];
 
-  // Pick 4 random employee header images
-  const cardImages = employees
-    .sort(() => 0.5 - Math.random())
-    .slice(0, 4);
+  // NOTE: Avoid randomness at render-time to prevent SSR/CSR hydration mismatches.
+  // Use a stable, deterministic selection.
+  const cardImages = employees.slice(0, 4);
 
 export default function FeaturesSection () {
  

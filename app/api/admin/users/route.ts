@@ -10,34 +10,53 @@ export async function GET(request: NextRequest) {
         const role = searchParams.get('role') || 'all'
         const status = searchParams.get('status') || 'all'
 
-        const where = {
+        const page = parseInt(searchParams.get('page') || '1')
+        const limit = parseInt(searchParams.get('limit') || '20')
+        const skip = (page - 1) * limit
+
+        const where: any = {
             AND: [
-                { role: { in: ['ADMIN', 'SUPER_ADMIN'] } },
                 search ? {
                     OR: [
                         { fullName: { contains: search, mode: 'insensitive' } },
+                        { firstName: { contains: search, mode: 'insensitive' } },
+                        { lastName: { contains: search, mode: 'insensitive' } },
                         { email: { contains: search, mode: 'insensitive' } },
                         { company: { contains: search, mode: 'insensitive' } }
                     ]
                 } : {},
                 role !== 'all' ? { role } : {},
                 status !== 'all' ? { adminStatus: status } : {}
-            ]
+            ].filter(condition => Object.keys(condition).length > 0)
         }
 
-        const users = await prisma.user.findMany({
-            where,
-            include: {
-                userPermissions: {
-                    include: {
-                        permission: true
+        const [users, total] = await Promise.all([
+            prisma.user.findMany({
+                where,
+                include: {
+                    profile: true,
+                    userPermissions: {
+                        include: {
+                            permission: true
+                        }
                     }
-                }
-            },
-            orderBy: { createdAt: 'desc' }
-        })
+                },
+                skip,
+                take: limit,
+                orderBy: { createdAt: 'desc' }
+            }),
+            prisma.user.count({ where })
+        ])
 
-        return NextResponse.json({ users })
+        return NextResponse.json({
+            users,
+            pagination: {
+                page,
+                limit,
+                total,
+                pages: Math.ceil(total / limit)
+            }
+        })
     } catch (error) {
         console.error('Get admin users error:', error)
         return NextResponse.json(
