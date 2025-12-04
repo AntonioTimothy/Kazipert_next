@@ -521,18 +521,28 @@ const getAllAdminPermissions = (): string[] => {
 const ALL_ADMIN_PERMISSIONS = getAllAdminPermissions()
 
 // Helper function to get navigation for a specific role
-export function getNavigationForRole(role: "employee" | "employer" | "admin", userPermissions: string[] = []) {
+export function getNavigationForRole(role: "employee" | "employer" | "admin" | string, userPermissions: string[] = []) {
+    // Normalize extended role names to base roles used in navigation config
+    const normalizedRole: "employee" | "employer" | "admin" = (() => {
+        const r = (role || "").toString().toLowerCase()
+        if (r === "employee") return "employee"
+        if (r === "employer") return "employer"
+        // Map any admin variants (super_admin, hospital_admin, photo_studio_admin, embassy_admin) to "admin"
+        if (r === "admin" || r.includes("admin")) return "admin"
+        // Default fallback
+        return "employee"
+    })()
     // If user has no permissions and is admin, use dummy permissions with all access
     const effectivePermissions = ALL_ADMIN_PERMISSIONS
 
     const filteredNavigation = navigationConfig.filter(item => {
         // First check if the item is for the current role
-        if (!item.roles.includes(role)) {
+        if (!item.roles.includes(normalizedRole)) {
             return false
         }
 
         // For admin with no specific permissions, show all admin items
-        if (role === "admin" && userPermissions.length === 0) {
+        if (normalizedRole === "admin" && userPermissions.length === 0) {
             return true
         }
 
@@ -545,8 +555,8 @@ export function getNavigationForRole(role: "employee" | "employer" | "admin", us
         return true
     })
 
-    console.log(`🔧 getNavigationForRole: role=${role}, permissions=`, effectivePermissions)
-    console.log(`📋 Filtered navigation for ${role}:`, filteredNavigation.map(item => item.name))
+    console.log(`🔧 getNavigationForRole: role=${normalizedRole} (raw=${role}), permissions=`, effectivePermissions)
+    console.log(`📋 Filtered navigation for ${normalizedRole}:`, filteredNavigation.map(item => item.name))
 
     return filteredNavigation
 }
@@ -560,7 +570,8 @@ export function hasAccessToRoute(pathname: string, role: string, userPermissions
     }
 
     // If user has no permissions and is admin, use dummy permissions with all access
-    const effectivePermissions = role === "admin" && userPermissions.length === 0
+    const isAdminLike = (role || "").toLowerCase().includes("admin")
+    const effectivePermissions = isAdminLike && userPermissions.length === 0
         ? ALL_ADMIN_PERMISSIONS
         : userPermissions
 
@@ -576,14 +587,15 @@ export function hasAccessToRoute(pathname: string, role: string, userPermissions
         console.log(`❌ No route found for ${pathname}`)
         return false
     }
-    if (!route.roles.includes(role as any)) {
-        console.log(`❌ Role mismatch: route requires ${route.roles}, user has ${role}`)
+    const normalizedRole = ((role || "").toLowerCase().includes("admin")) ? "admin" : (role as any)
+    if (!route.roles.includes(normalizedRole as any)) {
+        console.log(`❌ Role mismatch: route requires ${route.roles}, user has ${normalizedRole} (raw=${role})`)
         return false
     }
 
     // For admin with no specific permissions, allow access to all admin routes
-    if (role === "admin" && userPermissions.length === 0) {
-        console.log(`✅ Admin access granted to ${pathname} (full admin privileges)`)
+    if (normalizedRole === "admin" && userPermissions.length === 0) {
+        console.log(`✅ Admin access granted to ${pathname} (full admin privileges)`) 
         return true
     }
 
@@ -597,7 +609,14 @@ export function hasAccessToRoute(pathname: string, role: string, userPermissions
 }
 
 // Helper function to get flat navigation (for mobile)
-export function getFlatNavigation(role: "employee" | "employer" | "admin", userPermissions: string[] = []) {
+export function getFlatNavigation(role: "employee" | "employer" | "admin" | string, userPermissions: string[] = []) {
+    const normalizedRole: "employee" | "employer" | "admin" = (() => {
+        const r = (role || "").toString().toLowerCase()
+        if (r === "employee") return "employee"
+        if (r === "employer") return "employer"
+        if (r === "admin" || r.includes("admin")) return "admin"
+        return "employee"
+    })()
     // If user has no permissions and is admin, use dummy permissions with all access
     // const effectivePermissions = role === "admin" && userPermissions.length === 0
     //     ? ALL_ADMIN_PERMISSIONS
@@ -605,9 +624,9 @@ export function getFlatNavigation(role: "employee" | "employer" | "admin", userP
 
     // temporarily added to give admin all rights from the db
 
-    const effectivePermissions = role === "admin" ? ALL_ADMIN_PERMISSIONS : userPermissions
+    const effectivePermissions = normalizedRole === "admin" ? ALL_ADMIN_PERMISSIONS : userPermissions
 
-    const navigation = getNavigationForRole(role, effectivePermissions)
+    const navigation = getNavigationForRole(normalizedRole, effectivePermissions)
     const flatNav: NavigationItem[] = []
 
     navigation.forEach(item => {

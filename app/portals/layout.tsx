@@ -88,7 +88,24 @@ export default function RootPortalLayout({ children }: RootPortalLayoutProps) {
     if (currentPath.startsWith('/portals/employer') && userRole !== 'EMPLOYER') {
       return false;
     }
-    if (currentPath.startsWith('/portals/admin') && !['ADMIN', 'SUPER_ADMIN', 'HOSPITAL_ADMIN', 'PHOTO_STUDIO_ADMIN', 'EMBASSY_ADMIN'].includes(userRole)) {
+    // Admin core pages: allow ADMIN and SUPER_ADMIN
+    if (currentPath.startsWith('/portals/admin') && !['ADMIN', 'SUPER_ADMIN'].includes(userRole)) {
+      return false;
+    }
+    // Super Admin dedicated portal
+    if (currentPath.startsWith('/portals/super-admin') && userRole !== 'SUPER_ADMIN') {
+      return false;
+    }
+    // Hospital Admin dedicated portal
+    if (currentPath.startsWith('/portals/hospital') && userRole !== 'HOSPITAL_ADMIN') {
+      return false;
+    }
+    // Photo Studio Admin dedicated portal
+    if (currentPath.startsWith('/portals/photo-studio') && userRole !== 'PHOTO_STUDIO_ADMIN') {
+      return false;
+    }
+    // Embassy Admin dedicated portal
+    if (currentPath.startsWith('/portals/embassy') && userRole !== 'EMBASSY_ADMIN') {
       return false;
     }
     return true;
