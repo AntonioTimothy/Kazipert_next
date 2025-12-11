@@ -78,7 +78,11 @@ export default function EmployerContractsPage() {
 
           return {
             id: app.id,
-            employeeName: `${app.employee.firstName || ''} ${app.employee.lastName || ''}`.trim() || 'Unknown Employee',
+            employeeName: (
+              app.employee?.fullName && app.employee.fullName.trim()
+            ) || (
+              `${app.employee?.firstName || ''} ${app.employee?.lastName || ''}`.trim()
+            ) || app.employee?.email || 'Unknown Employee',
             jobTitle: app.job.title,
             status: status,
             signedDate: app.contract?.employeeSignedAt ? new Date(app.contract.employeeSignedAt).toLocaleDateString() : null,

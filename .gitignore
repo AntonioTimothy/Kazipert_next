@@ -36,3 +36,5 @@ pgdata_test/
 /.idea/misc.xml
 /.idea/vcs.xml
 /~$Kazipert Salary Calculator.xlsx
+/./public/contracts/**
+/public/contracts/contract-KZ-EMP-OX5R1.pdf

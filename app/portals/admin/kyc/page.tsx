@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { 
   Shield, 
@@ -42,102 +42,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 
-// Enhanced mock data
-const mockWorkers = [
-  {
-    id: "W001",
-    name: "Jane Wanjiku",
-    email: "jane.w@example.com",
-    phone: "+968 1234 5678",
-    role: "worker",
-    kycStatus: "pending",
-    avatar: "/placeholder.svg",
-    age: 28,
-    nationality: "Kenyan",
-    experience: "3 years domestic work",
-    education: "Secondary School",
-    documents: {
-      passport: true,
-      certificate: true,
-      medicalReport: false,
-      visa: true,
-      contract: false
-    },
-    submittedDate: "2025-01-20",
-    lastUpdated: "2 hours ago",
-    location: "Muscat, Oman"
-  },
-  {
-    id: "W002",
-    name: "Mary Akinyi",
-    email: "mary.a@example.com",
-    phone: "+968 2345 6789",
-    role: "worker",
-    kycStatus: "pending",
-    avatar: "/placeholder.svg",
-    age: 32,
-    nationality: "Kenyan",
-    experience: "5 years childcare",
-    education: "College Certificate",
-    documents: {
-      passport: true,
-      certificate: true,
-      medicalReport: true,
-      visa: true,
-      contract: true
-    },
-    submittedDate: "2025-01-22",
-    lastUpdated: "1 hour ago",
-    location: "Salalah, Oman"
-  }
-]
-
-const mockEmployers = [
-  {
-    id: "E001",
-    name: "Ahmed Al-Rashid",
-    email: "ahmed@alrashid.com",
-    phone: "+968 3456 7890",
-    role: "employer",
-    kycStatus: "pending",
-    avatar: "/placeholder.svg",
-    company: "Al-Rashid Family",
-    location: "Al Khuwair",
-    country: "Oman",
-    familySize: 6,
-    houseType: "Villa",
-    documents: {
-      idCopy: true,
-      residenceProof: true,
-      familyCard: false,
-      contract: true
-    },
-    submittedDate: "2025-01-21",
-    lastUpdated: "30 minutes ago"
-  },
-  {
-    id: "E002",
-    name: "Fatima Al-Balushi",
-    email: "fatima@albalushi.com",
-    phone: "+968 4567 8901",
-    role: "employer",
-    kycStatus: "verified",
-    avatar: "/placeholder.svg",
-    company: "Al-Balushi Residence",
-    location: "Shatti Al-Qurum",
-    country: "Oman",
-    familySize: 4,
-    houseType: "Apartment",
-    documents: {
-      idCopy: true,
-      residenceProof: true,
-      familyCard: true,
-      contract: true
-    },
-    submittedDate: "2025-01-15",
-    lastUpdated: "3 days ago"
-  }
-]
+// NOTE: Removed mock data. We now fetch actual users from the database via /api/admin/allUsers
 
 // Animated Counter Component
 const AnimatedCounter = ({ value, duration = 1500, className = "" }: { value: number; duration?: number; className?: string }) => {
@@ -172,6 +77,8 @@ export default function AdminKYCPage() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [loadingUsers, setLoadingUsers] = useState(true)
+  const [users, setUsers] = useState<any[]>([])
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [verificationNotes, setVerificationNotes] = useState("")
@@ -193,7 +100,76 @@ export default function AdminKYCPage() {
     setLoading(false)
   }, [router])
 
-  const allUsers = [...mockWorkers, ...mockEmployers]
+  // Fetch users with KYC details
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        setLoadingUsers(true)
+        // We fetch a reasonable number; backend supports pagination and filters
+        const res = await fetch(`/api/admin/allUsers?limit=200`)
+        if (!res.ok) throw new Error(`Failed to load users: ${res.status}`)
+        const data = await res.json()
+        setUsers(Array.isArray(data.users) ? data.users : [])
+      } catch (err) {
+        console.error('Error fetching users for KYC:', err)
+        setUsers([])
+      } finally {
+        setLoadingUsers(false)
+      }
+    }
+
+    // Only load after basic auth check is done
+    if (!loading) {
+      loadUsers()
+    }
+  }, [loading])
+
+  // Normalize API user to the shape used by the UI components
+  const normalizedUsers = useMemo(() => {
+    return users.map((u: any) => {
+      const name = u.fullName || [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || 'Unknown'
+      const roleLabel = (u.role || '').toString().toLowerCase() === 'employer' ? 'employer' : 'worker'
+      const kyc = u.kycDetails || {}
+      const avatar = u.profile?.avatar || '/placeholder.svg'
+
+      // Derive a KYC status for tabs based on available fields
+      // verified -> user.verified true
+      // rejected -> adminStatus SUSPENDED
+      // pending -> otherwise
+      let kycStatus: 'pending' | 'verified' | 'rejected' = 'pending'
+      if (u.verified) kycStatus = 'verified'
+      else if ((u.adminStatus || '').toString() === 'SUSPENDED') kycStatus = 'rejected'
+
+      // Build a simple documents map using available KYC flags
+      const documents = {
+        idFront: Boolean(kyc.idDocumentFront),
+        idBack: Boolean(kyc.idDocumentBack),
+        selfie: Boolean(kyc.selfieUrl),
+        passport: Boolean(kyc.passportNumber),
+        faceVerified: Boolean(kyc.faceVerified),
+        idVerified: Boolean(kyc.idVerified),
+        paymentVerified: Boolean(kyc.paymentVerified),
+      }
+
+      return {
+        id: u.id,
+        name,
+        email: u.email,
+        phone: u.phone,
+        role: roleLabel,
+        kycStatus,
+        avatar,
+        location: u.country || '',
+        company: u.company,
+        submittedDate: new Date(u.createdAt || Date.now()).toISOString().split('T')[0],
+        lastUpdated: new Date(u.updatedAt || u.createdAt || Date.now()).toISOString(),
+        documents,
+        raw: u,
+      }
+    })
+  }, [users])
+
+  const allUsers = normalizedUsers
   const pendingUsers = allUsers.filter((u) => u.kycStatus === "pending")
   const verifiedUsers = allUsers.filter((u) => u.kycStatus === "verified")
   const rejectedUsers = allUsers.filter((u) => u.kycStatus === "rejected")
@@ -203,7 +179,7 @@ export default function AdminKYCPage() {
     pending: pendingUsers.length,
     verified: verifiedUsers.length,
     rejected: rejectedUsers.length,
-    completionRate: Math.round((verifiedUsers.length / allUsers.length) * 100),
+    completionRate: allUsers.length ? Math.round((verifiedUsers.length / allUsers.length) * 100) : 0,
     avgProcessingTime: "2.3 days"
   }
 
@@ -213,24 +189,59 @@ export default function AdminKYCPage() {
     user.phone.includes(searchTerm)
   )
 
+  const filteredVerifiedUsers = verifiedUsers.filter(user =>
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.phone.includes(searchTerm)
+  )
+
+  const filteredRejectedUsers = rejectedUsers.filter(user =>
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.phone.includes(searchTerm)
+  )
+
   const getDocumentCompletion = (user: any) => {
-    const documents = Object.values(user.documents)
+    const documents = Object.values(user.documents || {})
+    if (!documents.length) return 0
     const completed = documents.filter(Boolean).length
     const total = documents.length
     return Math.round((completed / total) * 100)
   }
 
-  const handleApprove = (userId: string) => {
-    // In a real app, this would make an API call
-    console.log(`Approving user ${userId}`)
+  const handleApprove = async (userId: string) => {
+    try {
+      const res = await fetch(`/api/admin/allUsers?userId=${encodeURIComponent(userId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ verified: true, adminStatus: 'ACTIVE' })
+      })
+      if (!res.ok) throw new Error('Failed to approve user')
+      // Optimistically update local state
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, verified: true, adminStatus: 'ACTIVE' } : u))
+    } catch (e) {
+      console.error('Error approving user', e)
+      alert('Failed to approve user. Please try again.')
+    }
   }
 
-  const handleReject = (userId: string) => {
-    // In a real app, this would make an API call
-    console.log(`Rejecting user ${userId}`)
+  const handleReject = async (userId: string) => {
+    try {
+      const res = await fetch(`/api/admin/allUsers?userId=${encodeURIComponent(userId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ verified: false, adminStatus: 'SUSPENDED' })
+      })
+      if (!res.ok) throw new Error('Failed to reject user')
+      // Optimistically update local state
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, verified: false, adminStatus: 'SUSPENDED' } : u))
+    } catch (e) {
+      console.error('Error rejecting user', e)
+      alert('Failed to reject user. Please try again.')
+    }
   }
 
-  if (loading || !user) {
+  if (loading || !user || loadingUsers) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-900 dark:to-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -608,19 +619,222 @@ export default function AdminKYCPage() {
               </TabsContent>
 
               <TabsContent value="verified" className="mt-6">
-                <div className="text-center py-12 text-muted-foreground">
-                  <CheckCircle className="mx-auto h-16 w-16 text-green-500/50 mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Verified Users</h3>
-                  <p>View all successfully verified user accounts</p>
-                </div>
+                {filteredVerifiedUsers.length > 0 ? (
+                  filteredVerifiedUsers.map((user) => (
+                    <Card key={user.id} className="transition-all hover:shadow-md border-l-4 border-l-green-500 mb-4">
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-4 flex-1">
+                            <Avatar className="h-16 w-16 border-2 border-green-200">
+                              <AvatarImage src={user.avatar} alt={user.name} />
+                              <AvatarFallback className="text-lg bg-green-100 text-green-600">
+                                {user.name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h3 className="font-semibold text-lg">{user.name}</h3>
+                                <Badge variant="outline" className="capitalize">
+                                  {user.role}
+                                </Badge>
+                                <Badge variant="secondary" className="bg-green-500/20 text-green-600">
+                                  Verified
+                                </Badge>
+                              </div>
+
+                              <div className="grid gap-2 text-sm md:grid-cols-2 lg:grid-cols-3 mb-3">
+                                <div className="flex items-center gap-2">
+                                  <Mail className="h-3 w-3 text-muted-foreground" />
+                                  <span>{user.email}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-3 w-3 text-muted-foreground" />
+                                  <span>{user.phone}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="h-3 w-3 text-muted-foreground" />
+                                  <span>{user.location}</span>
+                                </div>
+                              </div>
+
+                              <div className="mb-3">
+                                <div className="flex items-center justify-between text-sm mb-1">
+                                  <span className="text-muted-foreground">Document Completion</span>
+                                  <span className="font-medium">{getDocumentCompletion(user)}%</span>
+                                </div>
+                                <Progress value={getDocumentCompletion(user)} className="h-2 bg-gray-200" />
+                              </div>
+
+                              <div className="mt-3">
+                                <div className="text-sm font-medium mb-2">Documents Status:</div>
+                                <div className="flex flex-wrap gap-2">
+                                  {Object.entries(user.documents).map(([doc, status]) => (
+                                    <Badge 
+                                      key={doc} 
+                                      variant={status ? "default" : "secondary"}
+                                      className={cn(
+                                        "capitalize",
+                                        status ? "bg-green-500/20 text-green-600" : "bg-red-500/20 text-red-600"
+                                      )}
+                                    >
+                                      {status ? "✓" : "✗"} {doc.replace(/([A-Z])/g, ' $1').trim()}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-2 ml-4">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button size="sm" variant="outline" onClick={() => setSelectedUser(user)}>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  Review
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                  <DialogTitle className="flex items-center gap-2">
+                                    <UserCheck className="h-5 w-5 text-blue-500" />
+                                    KYC Verification - {selectedUser?.name}
+                                  </DialogTitle>
+                                  <DialogDescription>
+                                    View verification details for this user
+                                  </DialogDescription>
+                                </DialogHeader>
+                                {selectedUser && (
+                                  <div className="space-y-6">
+                                    <div className="text-center py-8 text-muted-foreground">
+                                      Detailed verification interface with document previews
+                                    </div>
+                                  </div>
+                                )}
+                              </DialogContent>
+                            </Dialog>
+
+                            <Button 
+                              size="sm" 
+                              variant="destructive"
+                              onClick={() => handleReject(user.id)}
+                            >
+                              <XCircle className="mr-2 h-4 w-4" />
+                              Suspend
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-border text-xs text-muted-foreground">
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              Submitted: {user.submittedDate}
+                            </div>
+                            <div>Last updated: {user.lastUpdated}</div>
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            ID: {user.id}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <Card className="text-center py-12">
+                    <CardContent>
+                      <BadgeCheck className="mx-auto h-16 w-16 text-green-500/50 mb-4" />
+                      <h3 className="text-xl font-semibold mb-2">No Verified Users</h3>
+                      <p className="text-muted-foreground mb-1">Once users are approved, they will appear here.</p>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
 
               <TabsContent value="rejected" className="mt-6">
-                <div className="text-center py-12 text-muted-foreground">
-                  <AlertTriangle className="mx-auto h-16 w-16 text-red-500/50 mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Rejected Applications</h3>
-                  <p>Review declined KYC applications</p>
-                </div>
+                {filteredRejectedUsers.length > 0 ? (
+                  filteredRejectedUsers.map((user) => (
+                    <Card key={user.id} className="transition-all hover:shadow-md border-l-4 border-l-red-500 mb-4">
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-4 flex-1">
+                            <Avatar className="h-16 w-16 border-2 border-red-200">
+                              <AvatarImage src={user.avatar} alt={user.name} />
+                              <AvatarFallback className="text-lg bg-red-100 text-red-600">
+                                {user.name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h3 className="font-semibold text-lg">{user.name}</h3>
+                                <Badge variant="outline" className="capitalize">
+                                  {user.role}
+                                </Badge>
+                                <Badge variant="secondary" className="bg-red-500/20 text-red-600">
+                                  Rejected
+                                </Badge>
+                              </div>
+
+                              <div className="grid gap-2 text-sm md:grid-cols-2 lg:grid-cols-3 mb-3">
+                                <div className="flex items-center gap-2">
+                                  <Mail className="h-3 w-3 text-muted-foreground" />
+                                  <span>{user.email}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-3 w-3 text-muted-foreground" />
+                                  <span>{user.phone}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="h-3 w-3 text-muted-foreground" />
+                                  <span>{user.location}</span>
+                                </div>
+                              </div>
+
+                              <div className="mb-3">
+                                <div className="flex items-center justify-between text-sm mb-1">
+                                  <span className="text-muted-foreground">Document Completion</span>
+                                  <span className="font-medium">{getDocumentCompletion(user)}%</span>
+                                </div>
+                                <Progress value={getDocumentCompletion(user)} className="h-2 bg-gray-200" />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-2 ml-4">
+                            <Button 
+                              size="sm" 
+                              className="bg-green-500 hover:bg-green-600 text-white"
+                              onClick={() => handleApprove(user.id)}
+                            >
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Approve
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-border text-xs text-muted-foreground">
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              Submitted: {user.submittedDate}
+                            </div>
+                            <div>Last updated: {user.lastUpdated}</div>
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            ID: {user.id}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <Card className="text-center py-12">
+                    <CardContent>
+                      <AlertTriangle className="mx-auto h-16 w-16 text-red-500/50 mb-4" />
+                      <h3 className="text-xl font-semibold mb-2">No Rejected Applications</h3>
+                      <p className="text-muted-foreground mb-1">Declined KYC applications will appear here.</p>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>
