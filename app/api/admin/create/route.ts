@@ -118,6 +118,7 @@ export async function POST(request: NextRequest) {
             data: {
                 email,
                 otp,
+                type: 'ADMIN_INVITE',
                 expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
             }
         })

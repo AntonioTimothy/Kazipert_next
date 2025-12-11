@@ -490,7 +490,7 @@ const StatsCard = ({ icon, value, label, trend, percentage, color = "blue", subt
   }
 
   return (
-    <Card className={cn("backdrop-blur-sm transition-all duration-300 hover:scale-105", colorClasses[color])}>
+    <Card className={cn("backdrop-blur-sm transition-all duration-300 hover:scale-105", colorClasses[color as keyof typeof colorClasses] || colorClasses.blue)}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="p-2 rounded-lg bg-white/5">
@@ -538,7 +538,9 @@ const OmanMap = ({ regions, onRegionClick }: { regions: any[], onRegionClick: (r
           {regions.map((region, index) => (
             <button
               key={region.name}
+              type="button"
               onClick={() => onRegionClick(region)}
+              aria-label={`View ${region.name} region details`}
               className={cn(
                 "absolute w-3 h-3 rounded-full border-2 transition-all duration-300 hover:scale-150",
                 region.issueRate > 5 ? "border-red-400 bg-red-400/20" :
@@ -546,9 +548,11 @@ const OmanMap = ({ regions, onRegionClick }: { regions: any[], onRegionClick: (r
                 "border-green-400 bg-green-400/20"
               )}
               style={{
-                left: `${region.coordinates.x}%`,
-                top: `${region.coordinates.y}%`,
-              }}
+                '--region-x': `${region.coordinates.x}%`,
+                '--region-y': `${region.coordinates.y}%`,
+                left: 'var(--region-x)',
+                top: 'var(--region-y)'
+              } as React.CSSProperties}
             >
               <div className="absolute -inset-1 animate-ping rounded-full bg-current opacity-20"></div>
             </button>
@@ -560,9 +564,11 @@ const OmanMap = ({ regions, onRegionClick }: { regions: any[], onRegionClick: (r
               key={region.name}
               className="absolute text-xs text-gray-300 transform -translate-x-1/2 -translate-y-1/2"
               style={{
-                left: `${region.coordinates.x}%`,
-                top: `${region.coordinates.y + 6}%`,
-              }}
+                '--label-x': `${region.coordinates.x}%`,
+                '--label-y': `${region.coordinates.y + 6}%`,
+                left: 'var(--label-x)',
+                top: 'var(--label-y)'
+              } as React.CSSProperties}
             >
               {region.name}
             </div>

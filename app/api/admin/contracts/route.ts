@@ -19,10 +19,12 @@ export async function GET(req: Request) {
 
         if (search) {
             where.OR = [
-                { id: { contains: search, mode: 'insensitive' } }, // Assuming ID is used as contract number for now
+                { id: { contains: search, mode: 'insensitive' } },
                 {
-                    job: {
-                        title: { contains: search, mode: 'insensitive' }
+                    application: {
+                        job: {
+                            title: { contains: search, mode: 'insensitive' }
+                        }
                     }
                 },
                 {
@@ -49,16 +51,21 @@ export async function GET(req: Request) {
             prisma.contract.findMany({
                 where,
                 include: {
-                    job: {
+                    application: {
                         select: {
                             id: true,
-                            title: true,
-                            employer: {
+                            job: {
                                 select: {
                                     id: true,
-                                    firstName: true,
-                                    lastName: true,
-                                    company: true
+                                    title: true,
+                                    employer: {
+                                        select: {
+                                            id: true,
+                                            firstName: true,
+                                            lastName: true,
+                                            company: true
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -90,9 +97,17 @@ export async function GET(req: Request) {
 
         const formattedContracts = contracts.map(contract => ({
             ...contract,
-            contractNumber: contract.id.substring(0, 8).toUpperCase(), // Simple contract number generation
-            benefits: [], // Placeholder as it's not in schema yet or JSON
-            responsibilities: [] // Placeholder
+            job: contract.application.job, // Map job from application
+            contractNumber: contract.id.substring(0, 8).toUpperCase(),
+            benefits: [],
+            responsibilities: [],
+            duration: '24 months', // Default duration
+            salary: contract.application.job.salary || 0,
+            salaryCurrency: contract.application.job.salaryCurrency || 'OMR',
+            location: contract.application.job.location || contract.application.job.city,
+            startDate: contract.createdAt,
+            endDate: new Date(new Date(contract.createdAt).setFullYear(new Date(contract.createdAt).getFullYear() + 2)),
+            signedAt: contract.employeeSigned && contract.employerSigned ? contract.employeeSignedAt : null
         }))
 
         return NextResponse.json({
