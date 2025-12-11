@@ -45,10 +45,23 @@ export function useAuth() {
         }
     };
 
+    const syncWithSessionStorage = () => {
+        try {
+            const storedUser = sessionStorage.getItem('user');
+            if (storedUser) {
+                setUser(JSON.parse(storedUser));
+            }
+        } catch (error) {
+            console.error('Failed to sync with session storage:', error);
+        }
+    };
+
     return {
         user,
+        setUser,
         loading,
         logout,
+        syncWithSessionStorage,
         isAuthenticated: !!user,
         isSuperAdmin: user?.role === 'SUPER_ADMIN',
         isAdmin: ['ADMIN', 'SUPER_ADMIN'].includes(user?.role || ''),

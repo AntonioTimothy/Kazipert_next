@@ -84,6 +84,7 @@ export async function GET(request: NextRequest) {
                     employee: {
                         select: {
                             id: true,
+                            fullName: true,
                             firstName: true,
                             lastName: true,
                             email: true,
@@ -123,12 +124,24 @@ export async function GET(request: NextRequest) {
                             employer: {
                                 select: {
                                     id: true,
+                                    fullName: true,
                                     firstName: true,
                                     lastName: true,
                                     company: true,
                                     profile: true
                                 }
                             }
+                        }
+                    },
+                    employee: {
+                        select: {
+                            id: true,
+                            fullName: true,
+                            firstName: true,
+                            lastName: true,
+                            email: true,
+                            phone: true,
+                            profile: true
                         }
                     },
                     _count: {

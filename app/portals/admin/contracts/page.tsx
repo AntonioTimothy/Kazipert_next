@@ -38,6 +38,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 
 // Types for Contracts
@@ -865,7 +866,7 @@ export default function AdminContractsPage() {
           )}
         </DialogContent>
       </Dialog>
-      {/* </Dialog> */}
+
 
       {/* Upload Ticket Dialog */}
       <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
@@ -880,7 +881,7 @@ export default function AdminContractsPage() {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Airline</Label>
+                <div className="text-sm font-medium">Airline</div>
                 <Input
                   value={ticketData.airline}
                   onChange={(e) => setTicketData({ ...ticketData, airline: e.target.value })}
@@ -888,7 +889,7 @@ export default function AdminContractsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Flight Number</Label>
+                <div className="text-sm font-medium">Flight Number</div>
                 <Input
                   value={ticketData.flightNumber}
                   onChange={(e) => setTicketData({ ...ticketData, flightNumber: e.target.value })}
@@ -899,7 +900,7 @@ export default function AdminContractsPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Departure Date</Label>
+                <div className="text-sm font-medium">Departure Date</div>
                 <Input
                   type="datetime-local"
                   value={ticketData.departureDate}
@@ -907,7 +908,7 @@ export default function AdminContractsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Arrival Date</Label>
+                <div className="text-sm font-medium">Arrival Date</div>
                 <Input
                   type="datetime-local"
                   value={ticketData.arrivalDate}
@@ -917,7 +918,7 @@ export default function AdminContractsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Ticket Price (OMR)</Label>
+              <div className="text-sm font-medium">Ticket Price (OMR)</div>
               <Input
                 type="number"
                 value={ticketData.price}
@@ -927,7 +928,7 @@ export default function AdminContractsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Ticket File (PDF)</Label>
+              <div className="text-sm font-medium">Ticket File (PDF)</div>
               <Input type="file" accept=".pdf" />
               <p className="text-xs text-muted-foreground">Upload the ticket PDF file</p>
             </div>

@@ -1,12 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import * as jobService from "@/app/lib/services/jobService"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
-import { 
+import {
   FileText,
   Download,
   Clock,
@@ -43,79 +45,134 @@ export default function EmployeeContractPage() {
   const [profileCompletion, setProfileCompletion] = useState(65)
   const [signature, setSignature] = useState("")
   const [isSigning, setIsSigning] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
+
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
-    // Simulate loading contract data
     const loadContractData = async () => {
       setLoading(true)
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      const contractData = {
-        id: "CT-2024-001",
-        status: "pending_signature",
-        title: "Domestic Worker Employment Contract",
-        employer: {
-          name: "Al Harthy Family",
-          address: "Al Khuwair, Muscat, Oman",
-          phone: "+968 1234 5678",
-          email: "ahmed@alharthy-family.com"
-        },
-        employee: {
-          name: "Sarah Johnson",
-          position: "Housekeeper",
-          nationality: "Filipino",
-          idNumber: "P123456789"
-        },
-        terms: {
-          startDate: "2024-03-01",
-          duration: "24 months",
-          workingHours: "8 hours/day, 6 days/week",
-          salary: "OMR 250 per month",
-          accommodation: "Provided",
-          transportation: "Provided",
-          probationPeriod: "3 months",
-          noticePeriod: "1 month"
-        },
-        responsibilities: [
-          "General house cleaning and maintenance",
-          "Laundry and ironing",
-          "Cooking and meal preparation",
-          "Grocery shopping",
-          "Pet care (if applicable)"
-        ],
-        benefits: [
-          "Medical insurance",
-          "Annual return ticket",
-          "30 days paid annual leave",
-          "Public holidays as per Omani law",
-          "End-of-service benefits"
-        ],
-        createdDate: "2024-01-15",
-        expiryDate: "2026-03-01",
-        signed: {
-          employer: true,
-          employee: false,
-          employerSignedAt: "2024-01-18",
-          employeeSignedAt: null
+
+      try {
+        // Get user from session
+        const userData = sessionStorage.getItem("user")
+        if (!userData) {
+          router.push("/login")
+          return
         }
+
+        const parsedUser = JSON.parse(userData)
+        if (parsedUser.role !== "EMPLOYEE") {
+          router.push("/login")
+          return
+        }
+
+        setUser(parsedUser)
+
+        // Get user's applications to find contract
+        const { applications } = await jobService.getApplications({ role: 'employee' })
+
+        // Find application with contract (status CONTRACT_PENDING or COMPLETED)
+        const contractApplication = applications.find((app: any) =>
+          app.status === 'CONTRACT_PENDING' || app.status === 'COMPLETED' || app.contractUrl
+        )
+
+        if (!contractApplication) {
+          setContract(null)
+          setLoading(false)
+          return
+        }
+
+        // Transform application data to contract format
+        const contractData = {
+          id: `CT-${contractApplication.id.slice(-8).toUpperCase()}`,
+          status: contractApplication.status === 'CONTRACT_PENDING' ? 'pending_signature' : 'active',
+          title: "Domestic Worker Employment Contract",
+          employer: {
+            name: (
+              contractApplication.job?.employer?.fullName && contractApplication.job.employer.fullName.trim()
+            ) || (
+                `${contractApplication.job?.employer?.firstName || ''} ${contractApplication.job?.employer?.lastName || ''}`.trim()
+              ) || contractApplication.job?.employer?.email || 'Unknown Employer',
+            address: contractApplication.job?.employer?.profile?.address || `${contractApplication.job?.city || 'Unknown City'}, Oman`,
+            phone: contractApplication.job?.employer?.phone || 'N/A',
+            email: contractApplication.job?.employer?.email || 'N/A'
+          },
+          employee: {
+            name: (
+              contractApplication.employee?.fullName && contractApplication.employee.fullName.trim()
+            ) || (
+                `${contractApplication.employee?.firstName || ''} ${contractApplication.employee?.lastName || ''}`.trim()
+              ) || contractApplication.employee?.email || 'Unknown Employee',
+            position: contractApplication.job?.title || 'Domestic Worker',
+            nationality: contractApplication.employee?.profile?.nationality || 'N/A',
+            idNumber: contractApplication.employee?.profile?.idNumber || 'N/A'
+          },
+          terms: {
+            startDate: new Date().toISOString().split('T')[0],
+            duration: "24 months",
+            workingHours: contractApplication.job.workingHours || "8 hours/day, 6 days/week",
+            salary: `${contractApplication.job.salary} ${contractApplication.job.salaryCurrency}`,
+            accommodation: contractApplication.job.accommodation === 'PROVIDED' ? 'Provided' : 'Not Provided',
+            transportation: 'As per agreement',
+            probationPeriod: "3 months",
+            noticePeriod: "1 month"
+          },
+          responsibilities: contractApplication.job.duties || [
+            "General house cleaning and maintenance",
+            "Laundry and ironing",
+            "Cooking and meal preparation"
+          ],
+          benefits: contractApplication.job.benefits || [
+            "Medical insurance",
+            "Annual return ticket",
+            "30 days paid annual leave",
+            "Public holidays as per Omani law"
+          ],
+          createdDate: contractApplication.createdAt.split('T')[0],
+          expiryDate: new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          signed: {
+            employer: true,
+            employee: contractApplication.status === 'COMPLETED',
+            employerSignedAt: contractApplication.createdAt.split('T')[0],
+            employeeSignedAt: contractApplication.status === 'COMPLETED' ? new Date().toISOString().split('T')[0] : null
+          },
+          applicationId: contractApplication.id
+          ,
+          // Minimal identifiers needed to (re)generate a PDF on-demand
+          meta: {
+            jobId: contractApplication.job?.id,
+            employerId: contractApplication.job?.employer?.id,
+            employeeId: contractApplication.employee?.id
+          }
+        }
+
+        setContract(contractData)
+      } catch (error) {
+        console.error('Error loading contract:', error)
+        setContract(null)
+      } finally {
+        setLoading(false)
       }
-      
-      setContract(contractData)
-      setLoading(false)
     }
 
     loadContractData()
-  }, [])
+  }, [router])
 
-  const handleSignContract = () => {
+  const handleSignContract = async () => {
     if (!signature.trim()) {
       alert("Please provide your signature")
       return
     }
 
     setIsSigning(true)
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Update application step to CONTRACT_SIGNED
+      await jobService.updateApplicationStep(contract.applicationId, 'CONTRACT_SIGNED', {
+        signature: signature
+      })
+
       setContract({
         ...contract,
         status: "active",
@@ -125,20 +182,57 @@ export default function EmployeeContractPage() {
           employeeSignedAt: new Date().toISOString().split('T')[0]
         }
       })
-      setIsSigning(false)
       setSignature("")
-    }, 2000)
+    } catch (error) {
+      console.error('Error signing contract:', error)
+      alert('Failed to sign contract. Please try again.')
+    } finally {
+      setIsSigning(false)
+    }
   }
 
-  const handleDownloadContract = () => {
-    // Simulate download
-    const blob = new Blob([JSON.stringify(contract, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `contract-${contract.id}.pdf`
-    a.click()
-    URL.revokeObjectURL(url)
+  const handleDownloadContract = async () => {
+    try {
+      setIsDownloading(true)
+      // If we already have a generated PDF url on the contract object, open it.
+      if (contract?.pdfUrl) {
+        window.open(contract.pdfUrl, '_blank')
+        return
+      }
+
+      // Otherwise, request server to generate/return the PDF
+      const res = await fetch('/api/contracts/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          applicationId: contract.applicationId,
+          jobId: contract.meta?.jobId,
+          employerId: contract.meta?.employerId,
+          employeeId: contract.meta?.employeeId
+        })
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        throw new Error(text || `Failed to generate PDF (${res.status})`)
+      }
+
+      const data = await res.json()
+      const pdfUrl = data?.contract?.pdfUrl || data?.pdfUrl
+      if (!pdfUrl) {
+        throw new Error('PDF URL not returned by server')
+      }
+
+      // Save the url to state so subsequent clicks don't regenerate
+      setContract((prev: any) => ({ ...prev, pdfUrl }))
+      window.open(pdfUrl, '_blank')
+    } catch (e) {
+      console.error('Download error:', e)
+      alert('Could not generate or open the contract PDF. Please try again later.')
+    } finally {
+      setIsDownloading(false)
+    }
   }
 
   const getStatusBadge = (status: string) => {
@@ -167,6 +261,23 @@ export default function EmployeeContractPage() {
     )
   }
 
+  if (!contract) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <FileText className="h-16 w-16 text-gray-400 mx-auto" />
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">No Contract Available</h2>
+            <p className="text-gray-600 mt-2">You don't have any active contracts at the moment.</p>
+          </div>
+          <Button onClick={() => router.push('/portals/worker/jobs')}>
+            Browse Jobs
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
       <div className="max-w-6xl mx-auto p-6 space-y-6">
@@ -183,13 +294,23 @@ export default function EmployeeContractPage() {
           </div>
           <div className="flex items-center gap-3">
             {getStatusBadge(contract.status)}
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleDownloadContract}
               className="flex items-center gap-2"
+              disabled={isDownloading}
             >
-              <Download className="h-4 w-4" />
-              Download
+              {isDownloading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  Download
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -209,7 +330,7 @@ export default function EmployeeContractPage() {
                   </Badge>
                 </div>
                 <p className="text-gray-600 mb-3">
-                  Complete your profile to unlock full contract features and increase your job opportunities. 
+                  Complete your profile to unlock full contract features and increase your job opportunities.
                   Employers are 3x more likely to hire workers with complete profiles.
                 </p>
                 <div className="space-y-2">
@@ -220,7 +341,7 @@ export default function EmployeeContractPage() {
                   </div>
                 </div>
                 <div className="flex gap-3 mt-4">
-                  <Button 
+                  <Button
                     size="sm"
                     style={{ backgroundColor: KAZIPERT_COLORS.primary, color: 'white' }}
                   >
@@ -344,7 +465,7 @@ export default function EmployeeContractPage() {
                       </div>
                       <div className="text-xl font-bold text-green-700">{contract.terms.salary}</div>
                     </div>
-                    
+
                     <div className="grid gap-3 md:grid-cols-2">
                       <div className="p-3 bg-blue-50 rounded-lg">
                         <div className="font-medium flex items-center gap-2">
@@ -417,7 +538,7 @@ export default function EmployeeContractPage() {
                       <span className="font-medium">Important Notice</span>
                     </div>
                     <p className="text-sm text-amber-700">
-                      By signing this contract, you agree to all terms and conditions. 
+                      By signing this contract, you agree to all terms and conditions.
                       This is a legally binding agreement. Ensure you understand all clauses before proceeding.
                     </p>
                   </div>
@@ -436,7 +557,7 @@ export default function EmployeeContractPage() {
                     </p>
                   </div>
 
-                  <Button 
+                  <Button
                     onClick={handleSignContract}
                     disabled={isSigning || !signature.trim()}
                     className="w-full"
@@ -575,7 +696,7 @@ export default function EmployeeContractPage() {
                       Complete your profile to access premium features and better job opportunities
                     </p>
                   </div>
-                  <Button 
+                  <Button
                     size="sm"
                     style={{ backgroundColor: KAZIPERT_COLORS.primary, color: 'white' }}
                     className="w-full"

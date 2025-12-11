@@ -62,8 +62,11 @@ export function generateSessionToken(): string {
 
 export function verifyAccessToken(token: string): any {
     try {
+        // Debug logging
+        // console.log('Verifying token with secret starting with:', JWT_SECRET.substring(0, 5));
         return jwt.verify(token, JWT_SECRET);
     } catch (error) {
+        console.error('Token verification failed in verifyAccessToken:', error);
         return null;
     }
 }

@@ -42,7 +42,7 @@ export default function EmployerJobsPage() {
             <JobCard
               key={job.id}
               job={job}
-              onView={() => router.push(`/portals/employer/applications/${job.id}`)}
+              onView={() => router.push(`/portals/employer/jobs/${job.id}/applications`)}
               onEdit={() => router.push(`/portals/employer/post-job?jobId=${job.id}`)}
               onDelete={async () => {
                 if (confirm('Delete this job?')) {

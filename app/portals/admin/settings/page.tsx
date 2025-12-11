@@ -188,6 +188,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false)
   const [createLoading, setCreateLoading] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null)
   const [newAdmin, setNewAdmin] = useState({
     step: 1,
     firstName: "",
@@ -234,11 +235,14 @@ export default function SettingsPage() {
     }
   }
 
-  const createAdmin = async () => {
+  const createOrUpdateAdmin = async () => {
     setCreateLoading(true)
     try {
-      const response = await fetch('/api/admin/create', {
-        method: 'POST',
+      const url = editingAdmin ? `/api/admin/${editingAdmin.id}` : '/api/admin/create'
+      const method = editingAdmin ? 'PUT' : 'POST'
+      
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -250,37 +254,43 @@ export default function SettingsPage() {
       if (response.ok) {
         toast({
           title: "Success",
-          description: result.message,
+          description: editingAdmin ? "Admin updated successfully" : result.message,
         })
 
         // Reset form and close dialog
-        setNewAdmin({
-          step: 1,
-          firstName: "",
-          lastName: "",
-          email: "",
-          phone: "",
-          company: "",
-          role: "",
-          customPermissions: []
-        })
+        resetForm()
         setDialogOpen(false)
 
         // Refresh admin list
         fetchAdmins()
       } else {
-        throw new Error(result.error || 'Failed to create admin')
+        throw new Error(result.error || `Failed to ${editingAdmin ? 'update' : 'create'} admin`)
       }
     } catch (error) {
-      console.error('Error creating admin:', error)
+      console.error(`Error ${editingAdmin ? 'updating' : 'creating'} admin:`, error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create admin account",
+        description: error instanceof Error ? error.message : `Failed to ${editingAdmin ? 'update' : 'create'} admin account`,
         variant: "destructive"
       })
     } finally {
       setCreateLoading(false)
     }
+  }
+
+  const editAdmin = (admin: Admin) => {
+    setEditingAdmin(admin)
+    setNewAdmin({
+      step: 1,
+      firstName: admin.name.split(' ')[0] || '',
+      lastName: admin.name.split(' ').slice(1).join(' ') || '',
+      email: admin.email,
+      phone: '',
+      company: admin.department,
+      role: admin.role,
+      customPermissions: admin.permissions || []
+    })
+    setDialogOpen(true)
   }
 
   const deleteAdmin = async (adminId: string) => {
@@ -424,6 +434,7 @@ export default function SettingsPage() {
       role: "",
       customPermissions: []
     })
+    setEditingAdmin(null)
   }
 
   return (
@@ -513,10 +524,10 @@ export default function SettingsPage() {
                       <DialogHeader>
                         <DialogTitle className="text-blue-900 dark:text-blue-100 flex items-center gap-2 text-xl">
                           <User className="h-6 w-6" />
-                          Add New Administrator
+                          {editingAdmin ? 'Edit Administrator' : 'Add New Administrator'}
                         </DialogTitle>
                         <DialogDescription className="text-base text-gray-600 dark:text-gray-300">
-                          Create a new administrator account with specific permissions and access levels.
+                          {editingAdmin ? 'Update administrator account details and permissions.' : 'Create a new administrator account with specific permissions and access levels.'}
                         </DialogDescription>
                       </DialogHeader>
 
@@ -715,7 +726,7 @@ export default function SettingsPage() {
                             if (newAdmin.step < 4) {
                               setNewAdmin(prev => ({ ...prev, step: prev.step + 1 }))
                             } else {
-                              await createAdmin()
+                              await createOrUpdateAdmin()
                             }
                           }}
                           disabled={
@@ -734,7 +745,7 @@ export default function SettingsPage() {
                           ) : newAdmin.step === 4 ? (
                             <>
                               <CheckCircle className="h-4 w-4 mr-2" />
-                              Create Admin Account
+                              {editingAdmin ? 'Update Admin Account' : 'Create Admin Account'}
                             </>
                           ) : (
                             "Next Step"
@@ -805,7 +816,12 @@ export default function SettingsPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2 self-end sm:self-auto">
-                          <Button variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            onClick={() => editAdmin(admin)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button

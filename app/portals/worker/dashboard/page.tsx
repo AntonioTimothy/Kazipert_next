@@ -252,7 +252,7 @@ export default function EmployeeDashboard() {
       action: "messages",
       color: KAZIPERT_COLORS.secondary,
       bgColor: `${KAZIPERT_COLORS.secondary}15`,
-      route: "/portals/worker/messages"
+      route: "/portals/worker/support"
     }
   ]
 
