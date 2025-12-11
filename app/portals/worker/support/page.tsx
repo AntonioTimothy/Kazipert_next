@@ -153,75 +153,91 @@ export default function WorkerSupportPage() {
             {/* Support Chat Tab */}
             {activeTab === "support-chat" && (
               <div className="flex flex-col h-[60vh]">
-                {/* Chat Header */}
-                <div className="p-4 border-b">
-                  <h3 className="font-semibold text-lg">{selectedTicket.subject}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Created {new Date(selectedTicket.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {loading ? (
-                    <div className="text-center py-12">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                {selectedTicket ? (
+                  <>
+                    {/* Chat Header */}
+                    <div className="p-4 border-b">
+                      <h3 className="font-semibold text-lg">{selectedTicket.subject}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Created {new Date(selectedTicket.createdAt).toLocaleDateString()}
+                      </p>
                     </div>
-                  ) : selectedTicket?.messages?.map((msg: any) => (
-                    <div
-                      key={msg.id}
-                      className={`flex ${msg.sender.role === 'ADMIN' || msg.sender.role === 'SUPER_ADMIN' ? 'justify-start' : 'justify-end'}`}
-                    >
-                      <div
-                        className={`max-w-[70%] rounded-lg p-3 ${msg.sender.role === 'ADMIN' || msg.sender.role === 'SUPER_ADMIN'
-                          ? 'bg-muted rounded-tl-none'
-                          : 'rounded-tr-none text-white'
-                          }`}
-                        style={{
-                          backgroundColor: (msg.sender.role === 'ADMIN' || msg.sender.role === 'SUPER_ADMIN')
-                            ? currentTheme.colors.backgroundLight
-                            : currentTheme.colors.primary,
-                          color: (msg.sender.role === 'ADMIN' || msg.sender.role === 'SUPER_ADMIN') ? currentTheme.colors.text : currentTheme.colors.text
-                        }}
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-medium">
-                            {msg.sender.firstName} {msg.sender.lastName}
-                          </span>
-                          <span className="text-xs opacity-70">
-                            {new Date(msg.createdAt).toLocaleTimeString()}
-                          </span>
+
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                      {loading ? (
+                        <div className="text-center py-12">
+                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
                         </div>
-                        <p className="text-sm">{msg.message}</p>
+                      ) : selectedTicket?.messages?.map((msg: any) => (
+                        <div
+                          key={msg.id}
+                          className={`flex ${msg.sender.role === 'ADMIN' || msg.sender.role === 'SUPER_ADMIN' ? 'justify-start' : 'justify-end'}`}
+                        >
+                          <div
+                            className={`max-w-[70%] rounded-lg p-3 ${msg.sender.role === 'ADMIN' || msg.sender.role === 'SUPER_ADMIN'
+                              ? 'bg-muted rounded-tl-none'
+                              : 'rounded-tr-none text-white'
+                              }`}
+                            style={{
+                              backgroundColor: (msg.sender.role === 'ADMIN' || msg.sender.role === 'SUPER_ADMIN')
+                                ? currentTheme.colors.backgroundLight
+                                : currentTheme.colors.primary,
+                              color: (msg.sender.role === 'ADMIN' || msg.sender.role === 'SUPER_ADMIN') ? currentTheme.colors.text : currentTheme.colors.text
+                            }}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-medium">
+                                {msg.sender.firstName} {msg.sender.lastName}
+                              </span>
+                              <span className="text-xs opacity-70">
+                                {new Date(msg.createdAt).toLocaleTimeString()}
+                              </span>
+                            </div>
+                            <p className="text-sm">{msg.message}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Message Input */}
+                    <div className="p-4 border-t">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <Input
+                            placeholder="Type your message..."
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                            className="border-0 bg-background focus-visible:ring-1"
+                          />
+                        </div>
+                        <Button
+                          onClick={handleSendMessage}
+                          disabled={!newMessage.trim()}
+                          style={{
+                            backgroundColor: currentTheme.colors.primary,
+                            color: currentTheme.colors.text
+                          }}
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
-                  ))}
-                </div>
-
-                {/* Message Input */}
-                <div className="p-4 border-t">
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1">
-                      <Input
-                        placeholder="Type your message..."
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                        className="border-0 bg-background focus-visible:ring-1"
-                      />
-                    </div>
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={!newMessage.trim()}
-                      style={{
-                        backgroundColor: currentTheme.colors.primary,
-                        color: currentTheme.colors.text
-                      }}
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
+                  </>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-8">
+                    {loading ? (
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+                    ) : (
+                      <>
+                        <MessageSquare className="h-12 w-12 mb-4 opacity-20" />
+                        <p className="text-lg font-medium">No tickets found</p>
+                        <p className="text-sm">Create a new ticket to get started.</p>
+                      </>
+                    )}
                   </div>
-                </div>
+                )}
               </div>
             )}
 

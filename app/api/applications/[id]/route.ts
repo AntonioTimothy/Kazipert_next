@@ -37,9 +37,11 @@ export async function PUT(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const applicationId = params.id
+        // const applicationId = params.id
         const body = await request.json()
-        const { status } = body
+        const { status, applicationId } = body
+
+        console.log("the request to move to shortlisting is", status)
 
         // Verify the user owns this application or the job
         const application = await prisma.jobApplication.findUnique({

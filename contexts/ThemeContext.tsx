@@ -356,15 +356,18 @@ export const defaultThemes: Theme[] = [
     name: 'Kazipert Teal',
     category: 'professional',
     colors: {
-      primary: '#0d9488',
-      primaryLight: '#ccfbf1',
-      primaryDark: '#0f766e',
+      primary: '#198D95',
+      primaryLight: '#E0F2F3',
+      primaryDark: '#126E74',
+      // secondaryColor: '#8684BF',
+      // secondaryLight: '#E0F2F3',
+      // secondaryDark: '#126E74',
       background: '#ffffff',
       backgroundLight: '#f0fdfa',
       text: '#1e293b',
-      textMuted: '#64748b',
-      border: '#99f6e4',
-      accent: '#06b6d4',
+      textMuted: '#B9BBBD',
+      border: '#B9BBBD',
+      accent: '#F6EC40',
       success: '#059669',
       warning: '#d97706',
       error: '#dc2626',
@@ -436,7 +439,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setCurrentTheme(theme)
     localStorage.setItem('kazipert-theme', themeId)
     setIsThemeChangerOpen(false)
-    
+
     // Add theme transition class to body for smooth transition
     document.body.classList.add('theme-transitioning')
     setTimeout(() => {
@@ -450,7 +453,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const searchThemes = (query: string) => {
     const lowerQuery = query.toLowerCase()
-    return defaultThemes.filter(theme => 
+    return defaultThemes.filter(theme =>
       theme.name.toLowerCase().includes(lowerQuery) ||
       theme.category.toLowerCase().includes(lowerQuery) ||
       theme.id.toLowerCase().includes(lowerQuery)
@@ -495,13 +498,13 @@ export function getContrastRatio(color1: string, color2: string): number {
 
   const rgb1 = hexToRgb(color1)
   const rgb2 = hexToRgb(color2)
-  
+
   const luminance1 = (0.299 * rgb1.r + 0.587 * rgb1.g + 0.114 * rgb1.b) / 255
   const luminance2 = (0.299 * rgb2.r + 0.587 * rgb2.g + 0.114 * rgb2.b) / 255
-  
+
   const brightest = Math.max(luminance1, luminance2)
   const darkest = Math.min(luminance1, luminance2)
-  
+
   return (brightest + 0.05) / (darkest + 0.05)
 }
 
@@ -511,23 +514,23 @@ export function validateThemeAccessibility(theme: Theme): {
   issues: string[]
 } {
   const issues: string[] = []
-  
+
   // Check text contrast ratios
   const textBackgroundRatio = getContrastRatio(theme.colors.text, theme.colors.background)
   if (textBackgroundRatio < 4.5) {
     issues.push('Text contrast ratio below WCAG AA standard')
   }
-  
+
   const primaryBackgroundRatio = getContrastRatio(theme.colors.primary, theme.colors.background)
   if (primaryBackgroundRatio < 3) {
     issues.push('Primary color contrast ratio below minimum standard')
   }
-  
+
   // Check if colors are distinct enough
   if (theme.colors.primary === theme.colors.accent) {
     issues.push('Primary and accent colors are too similar')
   }
-  
+
   return {
     isValid: issues.length === 0,
     issues

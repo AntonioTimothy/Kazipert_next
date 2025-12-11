@@ -2,23 +2,22 @@
 
 import Image from "next/image";
 
- const employees = [
-    "/employee1.jpg",
-    "/employee2.jpg",
-    "/employee3.jpg",
-    "/employee4.jpg",
-    "/employee5.jpg",
-    "/employee6.jpg",
-    "/employee7.jpg",
-  ];
+const employees = [
+  "/employee1.jpg",
+  "/employee2.jpg",
+  "/employee3.jpg",
+  "/employee4.jpg",
+  "/employee5.jpg",
+  "/employee6.jpg",
+  "/employee7.jpg",
+];
 
-  // Pick 4 random employee header images
-  const cardImages = employees
-    .sort(() => 0.5 - Math.random())
-    .slice(0, 4);
+// Pick 4 random employee header images
+// Pick 4 employee header images (deterministic to avoid hydration errors)
+const cardImages = employees.slice(0, 4);
 
-export default function FeaturesSection () {
- 
+export default function FeaturesSection() {
+
 
   return (
     <section className="relative w-full bg-[#0F8A8D] py-24 overflow-hidden">
@@ -83,7 +82,7 @@ export default function FeaturesSection () {
 
       <div className="relative z-10 max-w-7xl mx-auto px-6">
 
-      
+
 
         {/* ---------------------------------------------------- */}
         {/* FOUR FEATURE / INSURANCE CARDS                       */}
@@ -122,7 +121,7 @@ export default function FeaturesSection () {
         </div>
 
 
-          {/* CENTER ROUND IMAGE */}
+        {/* CENTER ROUND IMAGE */}
         <div className="flex justify-left-16 mt-16">
           <div className="w-56 h-56 rounded-full overflow-hidden border-4 border-white/40 shadow-xl">
             <Image

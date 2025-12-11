@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { jobService } from "@/lib/services/jobService"
+import * as jobService from "@/lib/services/jobService"
 import {
   FileText,
   Clock,
@@ -47,7 +47,7 @@ export default function EmployeeApplicationsPage() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
-      
+
       const userData = sessionStorage.getItem("user")
       if (!userData) {
         router.push("/login")
@@ -61,10 +61,10 @@ export default function EmployeeApplicationsPage() {
       }
 
       setUser(parsedUser)
-      
+
       try {
         const applicationsData = await jobService.getApplications({ role: 'employee' })
-        setApplications(applicationsData || [])
+        setApplications(applicationsData.applications || [])
       } catch (error) {
         console.error('Error loading applications:', error)
         setApplications([])
@@ -77,7 +77,7 @@ export default function EmployeeApplicationsPage() {
   }, [router])
 
   const getStatusColor = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'PENDING': return 'bg-blue-500/10 text-blue-600'
       case 'UNDER_REVIEW': return 'bg-orange-500/10 text-orange-600'
       case 'ACCEPTED': return 'bg-green-500/10 text-green-600'
@@ -91,7 +91,7 @@ export default function EmployeeApplicationsPage() {
   }
 
   const getStatusIcon = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'PENDING': return FileText
       case 'UNDER_REVIEW': return Clock
       case 'ACCEPTED': return CheckCircle
@@ -127,9 +127,9 @@ export default function EmployeeApplicationsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => router.push('/employee/jobs')}
               className="flex items-center gap-2"
             >
@@ -228,7 +228,10 @@ export default function EmployeeApplicationsPage() {
 
                   <CardFooter className="flex gap-3">
                     {application.status === 'CONTRACT_SENT' && (
-                      <Button className="bg-purple-600 hover:bg-purple-700">
+                      <Button
+                        className="bg-purple-600 hover:bg-purple-700"
+                        onClick={() => application.contractUrl && window.open(application.contractUrl, '_blank')}
+                      >
                         <Download className="h-4 w-4 mr-2" />
                         Review Contract
                       </Button>
@@ -259,7 +262,7 @@ export default function EmployeeApplicationsPage() {
             <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No Applications Yet</h3>
             <p className="text-gray-600 mb-6">Start applying to jobs to track your progress here.</p>
-            <Button 
+            <Button
               onClick={() => router.push('/employee/jobs')}
               className="bg-blue-600 hover:bg-blue-700"
             >

@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useTheme } from "@/contexts/ThemeContext"
 import { cn } from "@/lib/utils"
-import { jobService } from "@/lib/services/jobService"
+import * as jobService from "@/lib/services/jobService"
 import {
   Briefcase,
   Calendar,
@@ -57,7 +57,7 @@ export default function EmployeeDashboard() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [profileComplete, setProfileComplete] = useState(false)
-  
+
   // Real data states
   const [applications, setApplications] = useState<any[]>([])
   const [jobs, setJobs] = useState<any[]>([])
@@ -75,7 +75,7 @@ export default function EmployeeDashboard() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
-      
+
       const userData = sessionStorage.getItem("user")
       if (!userData) {
         router.push("/login")
@@ -89,7 +89,7 @@ export default function EmployeeDashboard() {
       }
 
       setUser(parsedUser)
-      
+
       // Check if user needs verification
       if (!parsedUser.verified || !parsedUser.onboardingCompleted) {
         // Don't redirect automatically - just show the verification banner
@@ -108,16 +108,16 @@ export default function EmployeeDashboard() {
 
         // Calculate stats from actual data
         const totalApplications = applicationsData?.applications?.length || 0
-        const pendingApplications = applicationsData?.applications?.filter((app: any) => 
+        const pendingApplications = applicationsData?.applications?.filter((app: any) =>
           app.status === 'PENDING' || app.status === 'UNDER_REVIEW'
         ).length || 0
-        const interviewApplications = applicationsData?.applications?.filter((app: any) => 
+        const interviewApplications = applicationsData?.applications?.filter((app: any) =>
           app.status === 'INTERVIEW_SCHEDULED' || app.status === 'INTERVIEW_COMPLETED'
         ).length || 0
-        const acceptedApplications = applicationsData?.applications?.filter((app: any) => 
+        const acceptedApplications = applicationsData?.applications?.filter((app: any) =>
           app.status === 'ACCEPTED' || app.status === 'HIRED'
         ).length || 0
-        const rejectedApplications = applicationsData?.applications?.filter((app: any) => 
+        const rejectedApplications = applicationsData?.applications?.filter((app: any) =>
           app.status === 'REJECTED'
         ).length || 0
 
@@ -166,9 +166,9 @@ export default function EmployeeDashboard() {
 
   // Get upcoming interviews
   const upcomingInterviews = applications
-    .filter((app: any) => 
-      (app.status === 'INTERVIEW_SCHEDULED' || app.status === 'UNDER_REVIEW') && 
-      app.interviewDate && 
+    .filter((app: any) =>
+      (app.status === 'INTERVIEW_SCHEDULED' || app.status === 'UNDER_REVIEW') &&
+      app.interviewDate &&
       new Date(app.interviewDate) > new Date()
     )
     .slice(0, 2)
@@ -257,7 +257,7 @@ export default function EmployeeDashboard() {
   ]
 
   const getStatusColor = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'PENDING': return 'bg-blue-500/10 text-blue-600 border-blue-200'
       case 'UNDER_REVIEW': return 'bg-orange-500/10 text-orange-600 border-orange-200'
       case 'INTERVIEW_SCHEDULED': return 'bg-purple-500/10 text-purple-600 border-purple-200'
@@ -271,7 +271,7 @@ export default function EmployeeDashboard() {
   }
 
   const getStatusText = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'PENDING': return 'Applied'
       case 'UNDER_REVIEW': return 'Under Review'
       case 'INTERVIEW_SCHEDULED': return 'Interview'
@@ -304,12 +304,12 @@ export default function EmployeeDashboard() {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Recently'
-    
+
     const date = new Date(dateString)
     const now = new Date()
     const diffTime = Math.abs(now.getTime() - date.getTime())
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    
+
     if (diffDays === 1) return 'Yesterday'
     if (diffDays < 7) return `${diffDays} days ago`
     if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
@@ -321,8 +321,8 @@ export default function EmployeeDashboard() {
       router.push(route)
       return
     }
-    
-    switch(action) {
+
+    switch (action) {
       case 'find-jobs':
         router.push('/portals/worker/jobs')
         break
@@ -412,7 +412,7 @@ export default function EmployeeDashboard() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2" style={{ borderColor: KAZIPERT_COLORS.primary }}>
-              <AvatarFallback 
+              <AvatarFallback
                 className="text-white font-semibold text-sm sm:text-base"
                 style={{ backgroundColor: KAZIPERT_COLORS.primary }}
               >
@@ -437,8 +437,8 @@ export default function EmployeeDashboard() {
               </div>
             </div>
           </div>
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             onClick={() => router.push('/portals/worker/jobs')}
             style={{
               backgroundColor: KAZIPERT_COLORS.primary,
@@ -454,7 +454,7 @@ export default function EmployeeDashboard() {
 
         {/* Verification Banner - Show if not verified */}
         {!profileComplete && (
-          <Card 
+          <Card
             className="border-0 rounded-2xl overflow-hidden"
             style={{
               background: `linear-gradient(135deg, ${KAZIPERT_COLORS.primary}15 0%, ${KAZIPERT_COLORS.secondary}10 100%)`,
@@ -464,7 +464,7 @@ export default function EmployeeDashboard() {
             <CardContent className="p-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div 
+                  <div
                     className="p-2 rounded-lg flex-shrink-0"
                     style={{ backgroundColor: KAZIPERT_COLORS.primary + '20' }}
                   >
@@ -479,7 +479,7 @@ export default function EmployeeDashboard() {
                     </p>
                   </div>
                 </div>
-                <Button 
+                <Button
                   onClick={() => router.push('/portals/worker/verification')}
                   style={{
                     backgroundColor: KAZIPERT_COLORS.primary,
@@ -495,8 +495,8 @@ export default function EmployeeDashboard() {
                   <span style={{ color: KAZIPERT_COLORS.textLight }}>Progress</span>
                   <span style={{ color: KAZIPERT_COLORS.primary }}>{stats.profileStrength}%</span>
                 </div>
-                <Progress 
-                  value={stats.profileStrength} 
+                <Progress
+                  value={stats.profileStrength}
                   className="h-2 bg-white/50"
                 />
               </div>
@@ -507,23 +507,23 @@ export default function EmployeeDashboard() {
         {/* Quick Stats Grid - Mobile Optimized */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
           {quickStats.map((stat, index) => (
-            <div 
+            <div
               key={stat.title}
               className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-gray-200 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg"
               onClick={() => handleQuickAction(stat.action, stat.route)}
             >
               <div className="flex items-start justify-between mb-2 sm:mb-3">
-                <div 
+                <div
                   className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl"
                   style={{ backgroundColor: stat.bgColor }}
                 >
-                  <stat.icon 
-                    className="h-4 w-4 sm:h-5 sm:w-5" 
-                    style={{ color: stat.color }} 
+                  <stat.icon
+                    className="h-4 w-4 sm:h-5 sm:w-5"
+                    style={{ color: stat.color }}
                   />
                 </div>
-                <Badge 
-                  variant="secondary" 
+                <Badge
+                  variant="secondary"
                   className="text-xs border-0"
                   style={{
                     backgroundColor: stat.bgColor,
@@ -534,19 +534,19 @@ export default function EmployeeDashboard() {
                 </Badge>
               </div>
               <div className="space-y-1">
-                <div 
+                <div
                   className="text-lg sm:text-2xl font-bold truncate"
                   style={{ color: KAZIPERT_COLORS.text }}
                 >
                   {stat.value}
                 </div>
-                <div 
+                <div
                   className="text-xs sm:text-sm font-medium truncate"
                   style={{ color: KAZIPERT_COLORS.text }}
                 >
                   {stat.title}
                 </div>
-                <div 
+                <div
                   className="text-xs truncate"
                   style={{ color: KAZIPERT_COLORS.textLight }}
                 >
@@ -563,8 +563,8 @@ export default function EmployeeDashboard() {
             <h2 className="font-bold text-base sm:text-lg" style={{ color: KAZIPERT_COLORS.text }}>
               Quick Actions
             </h2>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               style={{ color: KAZIPERT_COLORS.primary }}
               className="text-xs sm:text-sm"
@@ -580,23 +580,23 @@ export default function EmployeeDashboard() {
                 onClick={() => handleQuickAction(action.action, action.route)}
                 className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-gray-200 transition-all duration-300 hover:scale-105 hover:shadow-lg group text-left"
               >
-                <div 
+                <div
                   className="p-2 sm:p-3 rounded-lg sm:rounded-xl w-fit mb-2 sm:mb-3"
                   style={{ backgroundColor: action.bgColor }}
                 >
-                  <action.icon 
-                    className="h-4 w-4 sm:h-6 sm:w-6" 
-                    style={{ color: action.color }} 
+                  <action.icon
+                    className="h-4 w-4 sm:h-6 sm:w-6"
+                    style={{ color: action.color }}
                   />
                 </div>
                 <div className="space-y-1">
-                  <div 
+                  <div
                     className="font-semibold text-sm sm:text-base group-hover:underline transition-colors truncate"
                     style={{ color: KAZIPERT_COLORS.text }}
                   >
                     {action.name}
                   </div>
-                  <div 
+                  <div
                     className="text-xs sm:text-sm truncate"
                     style={{ color: KAZIPERT_COLORS.textLight }}
                   >
@@ -626,8 +626,8 @@ export default function EmployeeDashboard() {
               <CardContent className="space-y-2 sm:space-y-3">
                 {recentApplications.length > 0 ? (
                   recentApplications.map((application) => (
-                    <div 
-                      key={application.id} 
+                    <div
+                      key={application.id}
                       className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
                       onClick={() => router.push(`/portals/worker/applications`)}
                     >
@@ -663,8 +663,8 @@ export default function EmployeeDashboard() {
                   <div className="text-center py-6 sm:py-8 text-gray-500">
                     <FileText className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-3 opacity-50" />
                     <p className="text-sm sm:text-base">No applications yet</p>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="mt-2 text-xs sm:text-sm"
                       onClick={() => router.push('/portals/worker/jobs')}
                     >
@@ -675,8 +675,8 @@ export default function EmployeeDashboard() {
               </CardContent>
               {recentApplications.length > 0 && (
                 <CardFooter className="pt-2">
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="w-full justify-between text-xs sm:text-sm"
                     style={{ color: KAZIPERT_COLORS.primary }}
                     onClick={() => router.push('/portals/worker/applications')}
@@ -742,7 +742,7 @@ export default function EmployeeDashboard() {
                   {upcomingInterviews.map((interview) => (
                     <div key={interview.id} className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-gray-50">
                       <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                        <div 
+                        <div
                           className="p-1.5 sm:p-2 rounded-lg flex-shrink-0"
                           style={{ backgroundColor: KAZIPERT_COLORS.secondary + '15' }}
                         >
@@ -798,7 +798,7 @@ export default function EmployeeDashboard() {
                   </div>
                   <Progress value={stats.profileStrength} className="h-2" />
                 </div>
-                
+
                 {!profileComplete && (
                   <>
                     <div className="space-y-2 text-xs sm:text-sm">
@@ -822,10 +822,10 @@ export default function EmployeeDashboard() {
                       </div>
                     </div>
 
-                    <Button 
+                    <Button
                       className="w-full text-xs sm:text-sm"
                       onClick={() => router.push('/portals/worker/verification')}
-                      style={{ 
+                      style={{
                         backgroundColor: KAZIPERT_COLORS.primary,
                         color: 'white'
                       }}

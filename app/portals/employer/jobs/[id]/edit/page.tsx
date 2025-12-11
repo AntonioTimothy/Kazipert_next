@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useTheme } from "@/contexts/ThemeContext"
-import { jobService } from "@/lib/services/jobService"
+import * as jobService from "@/lib/services/jobService"
 import { ArrowLeft, Save } from "lucide-react"
 
 const COLORS = {
@@ -158,6 +158,7 @@ export default function EditJobPage() {
                 <label className="text-sm font-medium mb-2 block">Monthly Salary</label>
                 <Input
                   type="number"
+                  readOnly
                   value={job.salary || ''}
                   onChange={(e) => setJob({ ...job, salary: parseInt(e.target.value) || 0 })}
                   placeholder="Salary amount"
@@ -173,8 +174,8 @@ export default function EditJobPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="OPEN">Open</SelectItem>
-                    <SelectItem value="PAUSED">Paused</SelectItem>
+                    <SelectItem value="ACTIVE">Active</SelectItem>
+                    <SelectItem value="DRAFT">Draft</SelectItem>
                     <SelectItem value="CLOSED">Closed</SelectItem>
                   </SelectContent>
                 </Select>

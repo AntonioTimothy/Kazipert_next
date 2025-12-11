@@ -1,4 +1,3 @@
-// app/employer/applications/page.tsx
 "use client"
 
 import { useEffect, useState } from "react"
@@ -9,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { jobService } from "@/lib/services/jobService"
+import { Progress } from "@/components/ui/progress"
+import * as jobService from "@/lib/services/jobService"
 import {
   Users,
   FileText,
@@ -70,7 +70,7 @@ export default function EmployerApplicationsPage() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
-      
+
       const userData = sessionStorage.getItem("user")
       if (!userData) {
         router.push("/login")
@@ -84,20 +84,20 @@ export default function EmployerApplicationsPage() {
       }
 
       setUser(parsedUser)
-      
+
       try {
         const [applicationsData, jobsData] = await Promise.all([
-          jobService.getApplications({ role: 'employer' }),
-          jobService.getJobs({ role: 'employer', status: 'ACTIVE' })
+          jobService.getApplications({ role: 'employer', userId: parsedUser.id }),
+          jobService.getJobs({ role: 'employer', status: 'ACTIVE', userId: parsedUser.id })
         ])
 
-        setApplications(applicationsData || [])
+        setApplications(applicationsData.applications || [])
         setJobs(jobsData.jobs || [])
 
         // Check if there's a specific application to show
         const applicationId = searchParams.get('application')
-        if (applicationId && applicationsData) {
-          const app = applicationsData.find((a: any) => a.id === applicationId)
+        if (applicationId && applicationsData.applications) {
+          const app = applicationsData.applications.find((a: any) => a.id === applicationId)
           if (app) setSelectedApplication(app)
         }
 
@@ -114,23 +114,48 @@ export default function EmployerApplicationsPage() {
   }, [router, searchParams])
 
   const updateApplicationStatus = async (applicationId: string, status: string) => {
-    try {
-      // This would call a new API endpoint to update application status
-      const response = await fetch(`/api/applications/${applicationId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-      })
+    // Check for single shortlist constraint
+    if (status === 'SHORTLISTED') {
+      const app = applications.find(a => a.id === applicationId);
+      if (app) {
+        const existingShortlist = applications.find(a =>
+          a.jobId === app.jobId &&
+          a.id !== applicationId &&
+          ['SHORTLISTED', 'CONTRACT_SENT', 'VISA_PROCESSING', 'FLIGHT_BOOKED', 'ARRIVED'].includes(a.status)
+        );
 
-      if (response.ok) {
-        setApplications(prev => prev.map(app => 
-          app.id === applicationId ? { ...app, status } : app
-        ))
-        
-        if (selectedApplication?.id === applicationId) {
-          setSelectedApplication(prev => ({ ...prev, status }))
+        if (existingShortlist) {
+          alert(`You have already shortlisted ${existingShortlist.employee?.firstName} for this job. You can only shortlist one candidate per job.`);
+          return;
         }
       }
+    }
+
+    try {
+      if (status === 'CONTRACT_SENT') {
+        // Trigger contract generation and email
+        // 1. Generate PDF
+        const genRes = await fetch(`/api/contracts/generate/${applicationId}`);
+        if (!genRes.ok) throw new Error('Failed to generate contract');
+        
+        // 2. Send Email (this also updates status to CONTRACT_SENT)
+        const emailRes = await fetch(`/api/email/send-contract/${applicationId}`, { method: 'POST' });
+        if (!emailRes.ok) throw new Error('Failed to send contract email');
+      } else {
+        // Use Server Action for other status updates
+        await jobService.updateApplicationStep(applicationId, status);
+      }
+
+      // Update local state
+      setApplications(prev => prev.map(app =>
+        app.id === applicationId ? { ...app, status } : app
+      ))
+
+      if (selectedApplication?.id === applicationId) {
+        setSelectedApplication(prev => ({ ...prev, status }))
+      }
+      
+      alert('Status updated successfully');
     } catch (error) {
       console.error('Error updating application:', error)
       alert('Failed to update application status')
@@ -138,7 +163,7 @@ export default function EmployerApplicationsPage() {
   }
 
   const getStatusColor = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'PENDING': return 'bg-blue-500/10 text-blue-600 border-blue-200'
       case 'UNDER_REVIEW': return 'bg-orange-500/10 text-orange-600 border-orange-200'
       case 'ACCEPTED': return 'bg-green-500/10 text-green-600 border-green-200'
@@ -152,7 +177,7 @@ export default function EmployerApplicationsPage() {
   }
 
   const getStatusText = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'PENDING': return 'New Application'
       case 'UNDER_REVIEW': return 'Interview Stage'
       case 'ACCEPTED': return 'Offer Accepted'
@@ -184,9 +209,9 @@ export default function EmployerApplicationsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => router.push('/employer/dashboard')}
               className="flex items-center gap-2"
             >
@@ -217,11 +242,10 @@ export default function EmployerApplicationsPage() {
               <TabsContent value={activeTab} className="space-y-4 mt-4">
                 {filteredApplications.length > 0 ? (
                   filteredApplications.map((application) => (
-                    <Card 
-                      key={application.id} 
-                      className={`cursor-pointer transition-all hover:shadow-lg ${
-                        selectedApplication?.id === application.id ? 'ring-2 ring-blue-500' : ''
-                      }`}
+                    <Card
+                      key={application.id}
+                      className={`cursor-pointer transition-all hover:shadow-lg ${selectedApplication?.id === application.id ? 'ring-2 ring-blue-500' : ''
+                        }`}
                       onClick={() => setSelectedApplication(application)}
                     >
                       <CardContent className="p-4">
@@ -271,7 +295,7 @@ export default function EmployerApplicationsPage() {
           {/* Application Details */}
           <div className="space-y-6">
             {selectedApplication ? (
-              <ApplicationDetails 
+              <ApplicationDetails
                 application={selectedApplication}
                 onStatusUpdate={updateApplicationStatus}
               />
@@ -295,7 +319,7 @@ function ApplicationDetails({ application, onStatusUpdate }: { application: any,
   const hiringSteps = [
     { step: 1, status: 'PENDING', title: 'Application Received', description: 'Candidate has applied', icon: FileText },
     { step: 2, status: 'UNDER_REVIEW', title: 'Interview Stage', description: 'Schedule and conduct interviews', icon: Video },
-    { step: 3, status: 'ACCEPTED', title: 'Offer Accepted', description: 'Candidate accepted the offer', icon: CheckCircle },
+    { step: 3, status: 'SHORTLISTED', title: 'Shortlisted', description: 'Candidate selected for the role', icon: Star },
     { step: 4, status: 'CONTRACT_SENT', title: 'Contract Sent', description: 'Digital contract prepared', icon: FileCheck },
     { step: 5, status: 'VISA_PROCESSING', title: 'Visa Processing', description: 'Work visa application', icon: ShieldCheck },
     { step: 6, status: 'FLIGHT_BOOKED', title: 'Flight Booked', description: 'Travel arrangements made', icon: Plane },
@@ -318,6 +342,13 @@ function ApplicationDetails({ application, onStatusUpdate }: { application: any,
             <div className="text-sm font-normal text-gray-600">{application.job?.title}</div>
           </div>
         </CardTitle>
+        <div className="mt-4 pt-4 border-t">
+          <div className="flex justify-between text-sm mb-2">
+            <span className="text-gray-500">Application Progress</span>
+            <span className="font-medium text-[#117c82]">{Math.round(((currentStepIndex + 1) / hiringSteps.length) * 100)}%</span>
+          </div>
+          <Progress value={((currentStepIndex + 1) / hiringSteps.length) * 100} className="h-2" />
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-6">
@@ -327,13 +358,12 @@ function ApplicationDetails({ application, onStatusUpdate }: { application: any,
           <div className="space-y-3">
             {hiringSteps.map((step, index) => (
               <div key={step.step} className="flex items-center gap-3">
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
-                  index <= currentStepIndex 
-                    ? 'bg-green-500 border-green-500 text-white' 
-                    : index === currentStepIndex + 1
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${index <= currentStepIndex
+                  ? 'bg-green-500 border-green-500 text-white'
+                  : index === currentStepIndex + 1
                     ? 'border-blue-500 text-blue-500'
                     : 'border-gray-300 text-gray-400'
-                }`}>
+                  }`}>
                   {index < currentStepIndex ? (
                     <CheckCircle className="h-4 w-4" />
                   ) : (
@@ -341,9 +371,8 @@ function ApplicationDetails({ application, onStatusUpdate }: { application: any,
                   )}
                 </div>
                 <div className="flex-1">
-                  <div className={`text-sm font-medium ${
-                    index <= currentStepIndex ? 'text-green-600' : 'text-gray-600'
-                  }`}>
+                  <div className={`text-sm font-medium ${index <= currentStepIndex ? 'text-green-600' : 'text-gray-600'
+                    }`}>
                     {step.title}
                   </div>
                   <div className="text-xs text-gray-500">{step.description}</div>
@@ -372,8 +401,8 @@ function ApplicationDetails({ application, onStatusUpdate }: { application: any,
             <div>
               <div className="text-gray-600">Languages</div>
               <div className="font-semibold">
-                {application.employee?.kycDetails?.languages ? 
-                  Object.keys(application.employee.kycDetails.languages).join(', ') : 
+                {application.employee?.kycDetails?.languages ?
+                  Object.keys(application.employee.kycDetails.languages).join(', ') :
                   'Not specified'
                 }
               </div>
@@ -397,14 +426,14 @@ function ApplicationDetails({ application, onStatusUpdate }: { application: any,
           <div className="grid grid-cols-2 gap-2">
             {application.status === 'PENDING' && (
               <>
-                <Button 
+                <Button
                   onClick={() => onStatusUpdate(application.id, 'UNDER_REVIEW')}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Video className="h-4 w-4 mr-2" />
                   Schedule Interview
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => onStatusUpdate(application.id, 'REJECTED')}
                 >
@@ -415,14 +444,14 @@ function ApplicationDetails({ application, onStatusUpdate }: { application: any,
             )}
             {application.status === 'UNDER_REVIEW' && (
               <>
-                <Button 
-                  onClick={() => onStatusUpdate(application.id, 'ACCEPTED')}
+                <Button
+                  onClick={() => onStatusUpdate(application.id, 'SHORTLISTED')}
                   className="bg-green-600 hover:bg-green-700"
                 >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Accept
+                  <Star className="h-4 w-4 mr-2" />
+                  Shortlist Candidate
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => onStatusUpdate(application.id, 'REJECTED')}
                 >
@@ -431,17 +460,17 @@ function ApplicationDetails({ application, onStatusUpdate }: { application: any,
                 </Button>
               </>
             )}
-            {application.status === 'ACCEPTED' && (
-              <Button 
+            {application.status === 'SHORTLISTED' && (
+              <Button
                 onClick={() => onStatusUpdate(application.id, 'CONTRACT_SENT')}
                 className="bg-purple-600 hover:bg-purple-700"
               >
                 <FileCheck className="h-4 w-4 mr-2" />
-                Send Contract
+                Generate Contract
               </Button>
             )}
             {application.status === 'CONTRACT_SENT' && (
-              <Button 
+              <Button
                 onClick={() => onStatusUpdate(application.id, 'VISA_PROCESSING')}
                 className="bg-indigo-600 hover:bg-indigo-700"
               >
@@ -450,7 +479,7 @@ function ApplicationDetails({ application, onStatusUpdate }: { application: any,
               </Button>
             )}
             {application.status === 'VISA_PROCESSING' && (
-              <Button 
+              <Button
                 onClick={() => onStatusUpdate(application.id, 'FLIGHT_BOOKED')}
                 className="bg-teal-600 hover:bg-teal-700"
               >
@@ -459,7 +488,7 @@ function ApplicationDetails({ application, onStatusUpdate }: { application: any,
               </Button>
             )}
             {application.status === 'FLIGHT_BOOKED' && (
-              <Button 
+              <Button
                 onClick={() => onStatusUpdate(application.id, 'ARRIVED')}
                 className="bg-emerald-600 hover:bg-emerald-700"
               >

@@ -174,7 +174,7 @@ export default function EmployerPaymentsPage() {
       icon: Briefcase,
       color: "text-blue-500",
       bgColor: "bg-blue-500/10",
-      route: "/employer/post-job"
+      route: "/portals/employer/post-job"
     },
     {
       name: "Browse Workers",
@@ -182,7 +182,7 @@ export default function EmployerPaymentsPage() {
       icon: Users,
       color: "text-green-500", 
       bgColor: "bg-green-500/10",
-      route: "/employer/workers"
+      route: "/portals/employer/workers"
     },
     {
       name: "Add Payment Method",
@@ -198,7 +198,7 @@ export default function EmployerPaymentsPage() {
       icon: MessageCircle,
       color: "text-orange-500",
       bgColor: "bg-orange-500/10", 
-      route: "/employer/support"
+      route: "/portals/employer/support"
     }
   ]
 
@@ -357,7 +357,7 @@ export default function EmployerPaymentsPage() {
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   <Button 
                     size="lg"
-                    onClick={() => router.push('/employer/post-job')}
+                    onClick={() => router.push('/portals/employer/post-job')}
                     style={{
                       backgroundColor: currentTheme.colors.primary,
                       color: currentTheme.colors.text
@@ -370,7 +370,7 @@ export default function EmployerPaymentsPage() {
                   <Button 
                     size="lg" 
                     variant="outline"
-                    onClick={() => router.push('/employer/workers')}
+                    onClick={() => router.push('/portals/employer/workers')}
                   >
                     <Users className="h-5 w-5 mr-2" />
                     Browse Workers

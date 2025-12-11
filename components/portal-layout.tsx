@@ -209,7 +209,7 @@ function NavigationItem({ item, isActive, sidebarCollapsed, currentTheme, pathna
         className={cn(
           "flex items-center gap-3 rounded-xl p-3 text-sm font-medium transition-all duration-200 hover:scale-[1.02]",
           isActive || isChildActive
-            ? "text-primary-foreground shadow-lg shadow-primary/20"
+            ? "text-primary-foreground"
             : "text-text-muted hover:bg-primary/5 hover:text-text",
           sidebarCollapsed ? "justify-center" : "",
           hasChildren ? "cursor-pointer" : ""

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { LoadingSpinner } from "@/components/loading-spinner"
+import { Progress } from "@/components/ui/progress"
 import {
   Briefcase,
   FileText,
@@ -18,6 +19,7 @@ import {
   Heart,
   Utensils,
   Car,
+  Video,
   Home as HomeIcon,
   Baby,
   Sprout,
@@ -44,6 +46,9 @@ import {
   Upload,
   MessageCircle,
   Stethoscope,
+  FileCheck,
+  ShieldCheck,
+  UserCheck
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -56,7 +61,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useTheme } from "@/contexts/ThemeContext"
 import { cn } from "@/lib/utils"
-import { jobService } from "@/lib/services/jobService"
+import * as jobService from "@/lib/services/jobService"
 import { ApplicationStepper } from "@/components/application-stepper"
 
 // Filter options
@@ -113,12 +118,12 @@ export default function WorkerJobsPage() {
 
       try {
         // Load jobs
-        const jobsData = await jobService.getJobs({ role: 'employee' })
+        const jobsData = await jobService.getJobs({ role: 'employee', userId: parsedUser.id })
         setJobs(jobsData.jobs || [])
 
         // Load applications with detailed progress
-        const applicationsData = await jobService.getApplications({ role: 'employee' })
-        setApplications(applicationsData || [])
+        const applicationsData = await jobService.getApplications({ role: 'employee', userId: parsedUser.id })
+        setApplications(applicationsData.applications || [])
 
         // Load saved jobs
         const savedJobsData = await jobService.getSavedJobs()
@@ -202,6 +207,7 @@ export default function WorkerJobsPage() {
     try {
       const response = await jobService.createApplication(
         selectedJobForApply.id,
+        user.id,
         applicationForm.coverLetter,
         isDraft
       )
@@ -509,6 +515,16 @@ export default function WorkerJobsPage() {
   const displayedJobs = sortedJobs.slice(0, currentPage * jobsPerPage)
   const hasMoreJobs = displayedJobs.length < sortedJobs.length
   const pendingApplications = getPendingApplications()
+
+  const hiringSteps = [
+    { step: 1, status: 'PENDING', title: 'Application Received', description: 'Candidate has applied', icon: FileText },
+    { step: 2, status: 'UNDER_REVIEW', title: 'Interview Stage', description: 'Schedule and conduct interviews', icon: Video }, // Note: Video icon needs import if not present, or use Camera/User
+    { step: 3, status: 'SHORTLISTED', title: 'Shortlisted', description: 'Candidate selected for the role', icon: Star },
+    { step: 4, status: 'CONTRACT_SENT', title: 'Contract Sent', description: 'Digital contract prepared', icon: FileCheck },
+    { step: 5, status: 'VISA_PROCESSING', title: 'Visa Processing', description: 'Work visa application', icon: ShieldCheck },
+    { step: 6, status: 'FLIGHT_BOOKED', title: 'Flight Booked', description: 'Travel arrangements made', icon: Plane },
+    { step: 7, status: 'ARRIVED', title: 'Employee Arrived', description: 'Ready to start work', icon: UserCheck }
+  ]
 
   return (
     <div className="min-h-screen" style={{ background: currentTheme.colors.background }}>
@@ -1301,5 +1317,6 @@ export default function WorkerJobsPage() {
         </DialogContent>
       </Dialog>
     </div>
+
   )
 }
