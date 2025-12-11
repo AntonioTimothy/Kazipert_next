@@ -29,7 +29,7 @@ async function getUserFromRequest(request: NextRequest) {
 // PUT /api/applications/[id] - Update application status
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const user = await getUserFromRequest(request)
@@ -37,11 +37,33 @@ export async function PUT(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        // const applicationId = params.id
+        const { id } = await params
+        const applicationId = id
         const body = await request.json()
-        const { status, applicationId } = body
+        const { status } = body
 
         console.log("the request to move to shortlisting is", status)
+
+        // Validate status against ApplicationStatus enum
+        const validStatuses = [
+            'PENDING', 'UNDER_REVIEW', 'SHORTLISTED', 'INTERVIEW_SCHEDULED',
+            'MEDICAL_PENDING', 'CONTRACT_PENDING', 'VISA_PROCESSING',
+            'FLIGHT_PENDING', 'READY_FOR_DEPLOYMENT', 'COMPLETED',
+            'REJECTED', 'WITHDRAWN', 'ACCEPTED' // Legacy support
+        ]
+        if (!status || !validStatuses.includes(status)) {
+            return NextResponse.json({
+                error: 'Invalid status value',
+                received: status,
+                validStatuses
+            }, { status: 400 })
+        }
+
+        // Map legacy status values to correct enum values
+        const statusMap: { [key: string]: string } = {
+            'ACCEPTED': 'COMPLETED'
+        }
+        const mappedStatus = statusMap[status] || status
 
         // Verify the user owns this application or the job
         const application = await prisma.jobApplication.findUnique({
@@ -65,7 +87,7 @@ export async function PUT(
         // Update application status
         const updatedApplication = await prisma.jobApplication.update({
             where: { id: applicationId },
-            data: { status },
+            data: { status: mappedStatus },
             include: {
                 job: {
                     include: {
@@ -106,7 +128,7 @@ export async function PUT(
 // GET /api/applications/[id] - Get specific application
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const user = await getUserFromRequest(request)
@@ -114,7 +136,8 @@ export async function GET(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const applicationId = params.id
+        const { id } = await params
+        const applicationId = id
 
         const application = await prisma.jobApplication.findUnique({
             where: { id: applicationId },

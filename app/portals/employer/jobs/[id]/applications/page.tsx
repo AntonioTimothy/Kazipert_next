@@ -1,6 +1,6 @@
 
 "use client"
-    
+
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import * as applicationService from '@/app/lib/services/applicationService';
@@ -12,7 +12,7 @@ import { CheckCircle } from 'lucide-react';
 
 export default function ApplicationsPage() {
     const router = useRouter();
-    const { jobId } = useParams() as { jobId: string };
+    const { id: jobId } = useParams() as { id: string };
     const [applications, setApplications] = useState<any[]>([]);
     const [job, setJob] = useState<any>(null);
     const [loading, setLoading] = useState(true);

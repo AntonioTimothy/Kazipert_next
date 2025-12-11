@@ -19,11 +19,19 @@ export default function PortalsPage() {
         router.push('/portals/employer/dashboard');
         break;
       case 'ADMIN':
-      case 'SUPER_ADMIN':
-      case 'HOSPITAL_ADMIN':
-      case 'PHOTO_STUDIO_ADMIN':
-      case 'EMBASSY_ADMIN':
         router.push('/portals/admin/dashboard');
+        break;
+      case 'SUPER_ADMIN':
+        router.push('/portals/super-admin/dashboard');
+        break;
+      case 'HOSPITAL_ADMIN':
+        router.push('/portals/hospital/dashboard');
+        break;
+      case 'PHOTO_STUDIO_ADMIN':
+        router.push('/portals/photo-studio/dashboard');
+        break;
+      case 'EMBASSY_ADMIN':
+        router.push('/portals/embassy/dashboard');
         break;
       default:
         router.push('/');

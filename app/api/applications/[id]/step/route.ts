@@ -41,7 +41,7 @@ async function getUserFromRequest(request: NextRequest) {
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         console.log('🔄 APPLICATION STEP API - PUT request received')
@@ -51,7 +51,7 @@ export async function PUT(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { id: applicationId } = params
+        const { id: applicationId } = await params
         const body = await request.json()
         const { step, interviewDate, interviewNotes, contractUrl, signature } = body
 
@@ -106,9 +106,28 @@ export async function PUT(
             updatedAt: new Date()
         }
 
-        // Set timestamp for the step
-        const timestampField = `${step.toLowerCase()}At`
-        updateData[timestampField] = new Date()
+        // Set timestamp for the step using explicit mapping to Prisma fields
+        const stepTimestampMap: Record<string, keyof typeof updateData> = {
+            APPLICATION_SUBMITTED: 'applicationSubmittedAt',
+            UNDER_REVIEW: 'underReviewAt',
+            SHORTLISTED: 'shortlistedAt',
+            INTERVIEW_SCHEDULED: 'interviewScheduledAt',
+            MEDICAL_REQUESTED: 'medicalRequestedAt',
+            MEDICAL_SUBMITTED: 'medicalSubmittedAt',
+            MEDICAL_APPROVED: 'medicalApprovedAt',
+            CONTRACT_SENT: 'contractSentAt',
+            CONTRACT_SIGNED: 'contractSignedAt',
+            VISA_APPLIED: 'visaAppliedAt',
+            VISA_APPROVED: 'visaApprovedAt',
+            FLIGHT_TICKET_SENT: 'flightTicketSentAt',
+            FLIGHT_TICKET_RECEIVED: 'flightTicketReceivedAt',
+            DEPLOYMENT_READY: 'deploymentReadyAt'
+        }
+
+        const tsField = stepTimestampMap[step]
+        if (tsField) {
+            updateData[tsField] = new Date()
+        }
 
         // Handle specific step data
         switch (step) {

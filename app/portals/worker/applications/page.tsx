@@ -263,7 +263,7 @@ export default function EmployeeApplicationsPage() {
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No Applications Yet</h3>
             <p className="text-gray-600 mb-6">Start applying to jobs to track your progress here.</p>
             <Button
-              onClick={() => router.push('/employee/jobs')}
+              onClick={() => router.push('portals/worker/jobs')}
               className="bg-blue-600 hover:bg-blue-700"
             >
               Browse Jobs

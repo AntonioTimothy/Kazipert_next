@@ -173,9 +173,9 @@ export default function EmployerDashboard() {
         const totalSpent = allJobs.reduce((sum, job) => sum + (job.salary || 0), 0)
         const avgSalary = allJobs.length > 0 ? totalSpent / allJobs.length : 0
 
-        const pendingApplications = allApplications.filter(app => app.status === 'PENDING').length
-        const reviewedApplications = allApplications.filter(app => app.status === 'UNDER_REVIEW').length
-        const acceptedApplications = allApplications.filter(app => app.status === 'ACCEPTED').length
+        const pendingApplications = allApplications.filter((app: any) => app.status === 'PENDING').length
+        const reviewedApplications = allApplications.filter((app: any) => app.status === 'UNDER_REVIEW').length
+        const acceptedApplications = allApplications.filter((app: any) => app.status === 'ACCEPTED').length
         const interviewRate = allApplications.length > 0 ? (reviewedApplications / allApplications.length) * 100 : 0
 
         setStats({
@@ -214,10 +214,10 @@ export default function EmployerDashboard() {
   const recentApplications = applications.slice(0, 5)
 
   // Get active employees (accepted applications)
-  const activeEmployees = applications.filter(app => app.status === 'ACCEPTED')
+  const activeEmployees = applications.filter((app: any) => app.status === 'ACCEPTED')
 
   // Get upcoming interviews (applications under review)
-  const upcomingInterviews = applications.filter(app => app.status === 'UNDER_REVIEW').slice(0, 3)
+  const upcomingInterviews = applications.filter((app: any) => app.status === 'UNDER_REVIEW').slice(0, 3)
 
   // Quick stats for dashboard
   const quickStats = [
@@ -229,7 +229,7 @@ export default function EmployerDashboard() {
       color: KAZIPERT_COLORS.primary,
       bgColor: `${KAZIPERT_COLORS.primary}15`,
       trend: stats.activeJobs > 0 ? "+" + Math.floor(stats.activeJobs * 0.5) : "0",
-      route: "/portals/employer/jobs?tab=posted"
+      route: "/portals/employer/jobs"
     },
     {
       title: "Applications",

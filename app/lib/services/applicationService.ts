@@ -63,3 +63,7 @@ export async function sendContractEmail(applicationId: string) {
         method: 'POST',
     });
 }
+export async function uploadMedicalReport(applicationId: string, file: any) {
+    // Placeholder to fix build error
+    return {};
+}

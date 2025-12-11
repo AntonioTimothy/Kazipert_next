@@ -1,10 +1,10 @@
 // proxy.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyAccessToken } from '@/lib/auth';
+import { verifyTokenEdge } from '@/lib/edge-auth';
 
 // CORRECT: Export as named "proxy" function
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Public routes that don't require authentication
@@ -44,9 +44,11 @@ export function middleware(request: NextRequest) {
   }
 
   // Verify access token
-  const decoded = verifyAccessToken(accessToken);
-  if (!decoded) {
-    console.log('❌ Invalid access token, clearing cookies and redirecting');
+  let decoded;
+  try {
+    decoded = await verifyTokenEdge(accessToken);
+  } catch (error) {
+    console.log('❌ Invalid access token, clearing cookies and redirecting', error);
     // Token invalid, clear cookies and redirect to login
     const response = NextResponse.redirect(new URL('/login', request.url));
     response.cookies.delete('access_token');

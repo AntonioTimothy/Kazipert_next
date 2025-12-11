@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
 
 const employees = [
   "/employee1.jpg",
@@ -12,11 +13,13 @@ const employees = [
   "/employee7.jpg",
 ];
 
-// Pick 4 random employee header images
-// Pick 4 employee header images (deterministic to avoid hydration errors)
-const cardImages = employees.slice(0, 4);
-
 export default function FeaturesSection() {
+  // Use a deterministic initial value for SSR, then randomize after mount to avoid hydration mismatch
+  const [cardImages, setCardImages] = useState<string[]>(() => employees.slice(0, 4));
+  useEffect(() => {
+    const shuffled = [...employees].sort(() => 0.5 - Math.random()).slice(0, 4);
+    setCardImages(shuffled);
+  }, []);
 
 
   return (
@@ -32,6 +35,7 @@ export default function FeaturesSection() {
           src="/employee1.jpg"
           alt="Background"
           fill
+          sizes="(min-width: 768px) 45vw, 100vw"
           className="object-cover"
         />
       </div>
@@ -42,6 +46,7 @@ export default function FeaturesSection() {
           src="/employee3.jpg"
           alt="Background"
           fill
+          sizes="(min-width: 768px) 55vw, 100vw"
           className="object-cover"
         />
       </div>
@@ -101,6 +106,7 @@ export default function FeaturesSection() {
                   src={img}
                   alt="Employee card"
                   fill
+                  sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
                   className="object-cover"
                 />
               </div>

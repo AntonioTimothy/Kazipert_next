@@ -129,9 +129,52 @@ export async function uploadMedicalDocument(applicationId: string, file: any) {
     return {};
 }
 
-export async function updateApplicationStep(applicationId: string, step: string) {
+export async function updateApplicationStep(applicationId: string, step: string, data?: any) {
     return prisma.jobApplication.update({
         where: { id: applicationId },
-        data: { status: step as any } // Cast to any to avoid enum issues if string is passed
+        data: {
+            status: step as any,
+            ...data
+        }
     });
 }
+
+export async function getApplication(applicationId: string) {
+    return prisma.jobApplication.findUnique({
+        where: { id: applicationId },
+        include: {
+            employee: { include: { profile: true } },
+            job: { include: { employer: true } },
+        },
+    });
+}
+
+export async function updateApplication(applicationId: string, data: any) {
+    return prisma.jobApplication.update({
+        where: { id: applicationId },
+        data,
+    });
+}
+
+export async function sendContract(applicationId: string, contractContent: string) {
+    // Update status to CONTRACT_PENDING and set timestamp
+    const updated = await prisma.jobApplication.update({
+        where: { id: applicationId },
+        data: {
+            status: 'CONTRACT_PENDING',
+            contractSentAt: new Date()
+        }
+    });
+
+    // Trigger email if needed (placeholder)
+    try {
+        await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/email/send-contract/${applicationId}`, {
+            method: 'POST',
+        });
+    } catch (e) {
+        console.error('Failed to trigger contract email:', e);
+    }
+
+    return updated;
+}
+

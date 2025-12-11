@@ -41,10 +41,6 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useEffect } from "react"
-import { useAuth } from "@/hooks/useAuth"
-
-
-
 interface WorkerOnboardingClientProps {
   initialUser: any
   initialProgress: any
@@ -53,22 +49,18 @@ interface WorkerOnboardingClientProps {
 
 export default function WorkerOnboardingClient({ initialUser, initialProgress }: WorkerOnboardingClientProps) {
   const router = useRouter()
-  const { setUser, syncWithSessionStorage } = useAuth()
-  
-  // Sync the initial user data with client-side auth state
-  useEffect(() => {
-    if (initialUser) {
-      setUser(initialUser)
-    }
-    syncWithSessionStorage()
-  }, [initialUser, setUser, syncWithSessionStorage])
 
   // Optional: Set up periodic token refresh
   useEffect(() => {
     const refreshInterval = setInterval(async () => {
       try {
-        // Call API route to refresh tokens
-        await fetch('/api/auth/refresh', { method: 'POST' })
+        const response = await fetch('/api/auth/refresh', { 
+          method: 'POST',
+          credentials: 'include'
+        })
+        if (!response.ok) {
+          console.log('Token refresh failed:', response.status)
+        }
       } catch (error) {
         console.error('Failed to refresh token:', error)
       }
